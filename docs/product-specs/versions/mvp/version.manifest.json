@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "product": "seren-meet",
+  "version": "mvp",
+  "status": "active",
+  "mode": "full",
+  "baseVersion": null,
+  "dependsOn": [],
+  "lastUpdated": "2026-06-08",
+  "documents": {
+    "readme": "README.md",
+    "spec": "spec.md",
+    "requirements": "requirements-list.md",
+    "acceptanceCriteria": "acceptance-criteria.md",
+    "implementationNotes": "implementation-notes.md",
+    "prototypeNotes": "prototype-notes.md",
+    "pilotWedge": "pilot-wedge.md"
+  },
+  "crossDomainDocuments": {
+    "designNotes": "../../../design-docs/versions/mvp/notes.md",
+    "prototype": "../../../design-docs/versions/mvp/prototype.html",
+    "architectureIndex": "../../../architecture/index.md",
+    "architectureDirectory": "../../../architecture/versions/mvp/",
+    "architectureStatus": "active",
+    "techStack": "../../../architecture/versions/mvp/tech-stack.md",
+    "developmentBlueprint": "../../../architecture/versions/mvp/development-blueprint.md",
+    "systemDesign": "../../../architecture/versions/mvp/system-design.md",
+    "dataModel": "../../../architecture/versions/mvp/data-model.md",
+    "apiMap": "../../../architecture/versions/mvp/api-map.md",
+    "deployment": "../../../architecture/versions/mvp/deployment.md"
+  },
+  "incrementalVersionPattern": {
+    "mode": "incremental",
+    "baseVersion": "mvp",
+    "dependsOn": [
+      "mvp"
+    ],
+    "changes": [],
+    "supersedes": [],
+    "overrides": []
+  }
+}

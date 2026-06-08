@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.serenmeet.audit.mapper.AuditLogMapper">
+  <sql id="AuditFilters">
+    <where>
+      <if test="keyword != null and keyword != ''">
+        and (actor_name ilike concat('%', #{keyword}, '%') or target_name ilike concat('%', #{keyword}, '%'))
+      </if>
+      <if test="action != null and action != '' and action != 'ALL'">
+        and action = #{action}
+      </if>
+      <if test="range == 'THIS_MONTH'">
+        and created_at &gt;= date_trunc('month', current_date)
+      </if>
+      <if test="range == 'LAST_7_DAYS'">
+        and created_at &gt;= current_timestamp - interval '7 days'
+      </if>
+    </where>
+  </sql>
+
+  <select id="selectAuditLogs" resultType="com.serenmeet.audit.dto.AuditLogItem">
+    select id, tenant_id as tenantId, actor_type as actorType, actor_name as actorName,
+           action, target_name as targetName, old_value as oldValue, new_value as newValue,
+           reason, created_at as createdAt
+    from audit_log
+    <include refid="AuditFilters" />
+    order by created_at desc, id desc
+    limit #{pageSize} offset #{offset}
+  </select>
+
+  <select id="countAuditLogs" resultType="long">
+    select count(*)
+    from audit_log
+    <include refid="AuditFilters" />
+  </select>
+</mapper>

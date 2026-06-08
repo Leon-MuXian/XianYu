@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "product": "seren-meet",
+  "productName": "闲遇",
+  "activeVersion": "mvp",
+  "activeStatus": "active",
+  "lastUpdated": "2026-06-08",
+  "current": {
+    "entry": "current.md",
+    "productSpec": {
+      "index": "index.md",
+      "versionIndex": "versions/index.md",
+      "versionManifest": "versions/mvp/version.manifest.json",
+      "readme": "versions/mvp/README.md",
+      "spec": "versions/mvp/spec.md",
+      "requirements": "versions/mvp/requirements-list.md",
+      "acceptanceCriteria": "versions/mvp/acceptance-criteria.md",
+      "implementationNotes": "versions/mvp/implementation-notes.md",
+      "prototypeNotes": "versions/mvp/prototype-notes.md",
+      "pilotWedge": "versions/mvp/pilot-wedge.md"
+    },
+    "designDocs": {
+      "index": "../design-docs/index.md",
+      "notes": "../design-docs/versions/mvp/notes.md",
+      "prototype": "../design-docs/versions/mvp/prototype.html"
+    },
+    "architectureDocs": {
+      "index": "../architecture/index.md",
+      "directory": "../architecture/versions/mvp/",
+      "status": "active",
+      "techStack": "../architecture/versions/mvp/tech-stack.md",
+      "developmentBlueprint": "../architecture/versions/mvp/development-blueprint.md",
+      "systemDesign": "../architecture/versions/mvp/system-design.md",
+      "dataModel": "../architecture/versions/mvp/data-model.md",
+      "apiMap": "../architecture/versions/mvp/api-map.md",
+      "deployment": "../architecture/versions/mvp/deployment.md"
+    },
+    "execPlanRecords": {
+      "completedIndex": "../exec-plans/completed/README.md",
+      "completedDirectory": "../exec-plans/completed/"
+    },
+    "decisions": {
+      "index": "../decisions/index.md",
+      "status": "empty"
+    },
+    "references": {
+      "index": "../references/index.md",
+      "documentationStandard": "../references/documentation-standard.md",
+      "researchStatus": "empty"
+    },
+    "checks": {
+      "docRules": "../checks/doc-rules.md",
+      "prototypeChecklist": "../checks/prototype-checklist.md"
+    }
+  },
+  "directories": {
+    "productSpecs": "./",
+    "designDocs": "../design-docs/",
+    "architecture": "../architecture/",
+    "execPlans": "../exec-plans/",
+    "decisions": "../decisions/",
+    "references": "../references/",
+    "generated": "../generated/",
+    "checks": "../checks/"
+  },
+  "qualityGates": [
+    "manifest_paths_exist",
+    "version_manifest_paths_exist",
+    "active_version_package_complete",
+    "markdown_links_resolve",
+    "prototype_html_parseable",
+    "current_entry_matches_manifest",
+    "architecture_index_exists",
+    "architecture_directory_exists"
+  ]
+}

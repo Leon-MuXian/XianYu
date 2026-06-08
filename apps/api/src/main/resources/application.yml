@@ -1,0 +1,35 @@
+server:
+  port: ${SEREN_MEET_SERVER_PORT:8080}
+
+spring:
+  application:
+    name: seren-meet-api
+  datasource:
+    url: ${SEREN_MEET_DB_URL:jdbc:postgresql://127.0.0.1:5432/seren_meet}
+    username: ${SEREN_MEET_DB_USER:seren_meet}
+    password: ${SEREN_MEET_DB_PASSWORD:seren_meet}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: set time zone 'Asia/Shanghai'
+  flyway:
+    enabled: ${SEREN_MEET_FLYWAY_ENABLED:true}
+  jackson:
+    time-zone: Asia/Shanghai
+
+seren-meet:
+  cors:
+    allowed-origins:
+      - ${SEREN_MEET_ADMIN_ORIGIN:http://127.0.0.1:5173}
+      - ${SEREN_MEET_ADMIN_FALLBACK_ORIGIN:http://127.0.0.1:5174}
+  tenant-expiry-freeze:
+    enabled: ${SEREN_MEET_TENANT_EXPIRY_FREEZE_ENABLED:true}
+    cron: ${SEREN_MEET_TENANT_EXPIRY_FREEZE_CRON:0 10 0 * * *}
+    zone: ${SEREN_MEET_TENANT_EXPIRY_FREEZE_ZONE:Asia/Shanghai}
+  admin-auth:
+    max-login-failures: ${SEREN_MEET_ADMIN_MAX_LOGIN_FAILURES:5}
+    failure-window-minutes: ${SEREN_MEET_ADMIN_FAILURE_WINDOW_MINUTES:10}
+    session-cleanup-cron: ${SEREN_MEET_ADMIN_SESSION_CLEANUP_CRON:0 30 3 * * *}
+    zone: ${SEREN_MEET_ADMIN_AUTH_ZONE:Asia/Shanghai}
+
+logging:
+  config: classpath:logback-spring.xml

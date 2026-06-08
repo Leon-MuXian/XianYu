@@ -1,0 +1,11 @@
+.idea
+.DS_Store
+.codex/tools/
+tmp
+node_modules/
+dist/
+target/
+logs/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]

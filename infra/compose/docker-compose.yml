@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: seren-meet-postgres
+    environment:
+      POSTGRES_DB: seren_meet
+      POSTGRES_USER: seren_meet
+      POSTGRES_PASSWORD: seren_meet
+    ports:
+      - "5432:5432"
+    volumes:
+      - seren_meet_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seren_meet -d seren_meet"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  seren_meet_pg_data:
