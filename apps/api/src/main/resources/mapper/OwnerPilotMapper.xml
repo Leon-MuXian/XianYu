@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.serenmeet.owner.mapper.OwnerPilotMapper">
+  <select id="selectOwnerProfile" resultType="map">
+    select t.id as "tenantId", t.name, t.city, t.status, t.trial_start_at as "trialStartAt",
+      t.trial_end_at as "trialEndAt", s.id as "storeId", s.address, s.contact_phone as "contactPhone",
+      coalesce(sw.wechat_id, dsw.wechat_id) as "supportWechatId",
+      coalesce(sw.display_text, dsw.display_text) as "supportText"
+    from tenant t
+    left join store s on s.tenant_id = t.id
+    left join support_wechat sw on sw.tenant_id = t.id and sw.enabled
+    left join support_wechat dsw on dsw.tenant_id is null and dsw.enabled
+    where t.id = #{tenantId}
+  </select>
+
+  <select id="selectDashboard" resultType="map">
+    select exists(select 1 from store where tenant_id = #{tenantId}) as "storeReady",
+      (select count(*)::integer from staff_account where tenant_id = #{tenantId} and status = 'active') as "staffCount",
+      (select count(*)::integer from service_item where tenant_id = #{tenantId} and status = 'active') as "serviceCount",
+      (select count(*)::integer from card_template where tenant_id = #{tenantId} and status = 'active') as "cardTemplateCount",
+      (select count(*)::integer from member where tenant_id = #{tenantId}) as "memberCount",
+      (select count(*)::integer from bookable_slot
+        where tenant_id = #{tenantId} and status = 'published' and start_at &gt; current_timestamp) as "futureSlotCount",
+      (select count(*)::integer from booking
+        where tenant_id = #{tenantId} and reserved_at::date = current_date and status != 'cancelled') as "todayBookings",
+      (select count(*)::integer
+        from member_card mc
+        join card_template ct on ct.id = mc.template_id
+        cross join platform_config pc
+        where mc.tenant_id = #{tenantId}
+          and pc.config_key = 'member_card.expiring_warn_days'
+          and (mc.base_status = 'suspended'
+            or mc.valid_until &lt; current_date
+            or (mc.card_type = 'count' and mc.remain_count = 0)
+            or mc.valid_until &lt;= current_date + cast(pc.value_text as integer)
+            or (mc.card_type = 'count' and mc.remain_count &lt;= ct.low_balance_threshold))) as "warningCount"
+  </select>
+
+  <select id="selectOnboardingDraft" resultType="map">
+    select store_profile_draft as "storeProfile", business_hours_draft as "businessHours",
+      resources_draft as resources, completion_status as completion, status
+    from store_onboarding_draft
+    where tenant_id = #{tenantId}
+  </select>
+
+  <select id="selectOnboardingDraftForUpdate" resultType="map">
+    select store_profile_draft, business_hours_draft, resources_draft, completion_status
+    from store_onboarding_draft
+    where tenant_id = #{tenantId}
+    for update
+  </select>
+
+  <select id="selectStores" resultType="map">
+    select id, name
+    from store
+    where tenant_id = #{tenantId}
+    order by id
+  </select>
+
+  <select id="selectStoreId" resultType="long">
+    select id
+    from store
+    where tenant_id = #{tenantId}
+  </select>
+
+  <select id="selectStoreDetail" resultType="map">
+    select s.id, s.name, t.city, s.address, s.contact_phone as "contactPhone",
+      s.business_categories as "businessCategories", s.service_tags as "serviceTags",
+      s.business_hours as "businessHours"
+    from store s
+    join tenant t on t.id = s.tenant_id
+    where s.tenant_id = #{tenantId}
+  </select>
+
+  <select id="insertStore" resultType="long" flushCache="true" affectData="true">
+    insert into store(
+      tenant_id, name, business_categories, service_tags, address, contact_phone, business_hours
+    ) values (
+      #{tenantId}, #{name}, cast(#{businessCategories} as jsonb), cast(#{serviceTags} as jsonb),
+      #{address}, #{contactPhone}, cast(#{businessHours} as jsonb)
+    )
+    returning id
+  </select>
+
+  <update id="updateTenantProfile">
+    update tenant
+    set name = #{name}, city = #{city}, updated_at = current_timestamp
+    where id = #{tenantId}
+  </update>
+
+  <update id="updateStoreProfile">
+    update store
+    set name = #{name}, business_categories = cast(#{businessCategories} as jsonb),
+      service_tags = cast(#{serviceTags} as jsonb), address = #{address},
+      contact_phone = #{contactPhone}, updated_at = current_timestamp
+    where tenant_id = #{tenantId}
+  </update>
+
+  <update id="updateStoreBusinessHours">
+    update store
+    set business_hours = cast(#{businessHours} as jsonb), updated_at = current_timestamp
+    where tenant_id = #{tenantId}
+  </update>
+
+  <update id="markOnboardingConverted">
+    update store_onboarding_draft
+    set status = 'converted', updated_at = current_timestamp
+    where tenant_id = #{tenantId}
+  </update>
+
+  <update id="updateStoreProfileDraft">
+    update store_onboarding_draft
+    set store_profile_draft = cast(#{payload} as jsonb),
+      completion_status = jsonb_set(completion_status, '{storeProfileDone}', 'true'::jsonb),
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and status = 'draft'
+  </update>
+
+  <update id="updateBusinessHoursDraft">
+    update store_onboarding_draft
+    set business_hours_draft = cast(#{payload} as jsonb),
+      completion_status = jsonb_set(completion_status, '{businessHoursDone}', 'true'::jsonb),
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and status = 'draft'
+  </update>
+
+  <update id="updateResourcesDraft">
+    update store_onboarding_draft
+    set resources_draft = cast(#{payload} as jsonb),
+      completion_status = jsonb_set(completion_status, '{resourceDone}', 'true'::jsonb),
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and status = 'draft'
+  </update>
+
+  <select id="selectResources" resultType="map">
+    select id, name, resource_type as "resourceType", capacity, enabled, sort_order as "sortOrder"
+    from resource
+    where tenant_id = #{tenantId}
+    order by sort_order, id
+  </select>
+
+  <select id="insertResource" resultType="long" flushCache="true" affectData="true">
+    insert into resource(tenant_id, store_id, name, resource_type, capacity, sort_order)
+    values (#{tenantId}, #{storeId}, #{name}, #{resourceType}, #{capacity}, #{sortOrder})
+    returning id
+  </select>
+
+  <update id="updateResource">
+    update resource
+    set name = #{name}, resource_type = #{resourceType}, capacity = #{capacity}, enabled = #{enabled},
+      sort_order = #{sortOrder}, updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{resourceId}
+  </update>
+
+  <select id="countEnabledResourcesExcluding" resultType="int">
+    select count(*) from resource where tenant_id = #{tenantId} and id != #{resourceId} and enabled
+  </select>
+
+  <select id="countResourceServiceBindings" resultType="int">
+    select count(*) from service_resource_binding where tenant_id = #{tenantId} and resource_id = #{resourceId}
+  </select>
+
+  <select id="countResourceFutureSlots" resultType="int">
+    select count(*) from bookable_slot
+    where tenant_id = #{tenantId} and resource_id = #{resourceId}
+  </select>
+
+  <delete id="deleteResource">
+    delete from resource where tenant_id = #{tenantId} and id = #{resourceId}
+  </delete>
+
+  <select id="selectStaff" resultType="map">
+    select id, login_name as "loginName", staff_name as "staffName", role_label as "roleLabel",
+      status, first_login as "firstLogin"
+    from staff_account
+    where tenant_id = #{tenantId}
+    order by id
+  </select>
+
+  <select id="insertStaffAccount" resultType="long" flushCache="true" affectData="true">
+    insert into staff_account(tenant_id, store_id, login_name, password_hash, staff_name, role_label)
+    values (#{tenantId}, #{storeId}, #{loginName}, #{passwordHash}, #{staffName}, #{roleLabel})
+    returning id
+  </select>
+
+  <insert id="insertStaffProfile">
+    insert into staff_profile(tenant_id, staff_account_id, display_name)
+    values (#{tenantId}, #{staffId}, #{displayName})
+  </insert>
+
+  <update id="updateStaffAccount">
+    update staff_account
+    set login_name = #{loginName}, staff_name = #{staffName}, role_label = #{roleLabel},
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{staffId}
+  </update>
+
+  <update id="updateStaffProfileName">
+    update staff_profile
+    set display_name = #{displayName}, updated_at = current_timestamp
+    where tenant_id = #{tenantId} and staff_account_id = #{staffId}
+  </update>
+
+  <update id="updateStaffPassword">
+    update staff_account
+    set password_hash = #{passwordHash}, first_login = true, updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{staffId}
+  </update>
+
+  <update id="updateStaffStatus">
+    update staff_account
+    set status = #{status}, updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{staffId}
+  </update>
+
+  <select id="countStaffCardScopes" resultType="int">
+    select count(*) from card_template_staff_scope where tenant_id = #{tenantId} and staff_account_id = #{staffId}
+  </select>
+
+  <select id="countStaffServiceBindings" resultType="int">
+    select count(*) from staff_service_binding where tenant_id = #{tenantId} and staff_account_id = #{staffId}
+  </select>
+
+  <select id="countStaffFutureSlots" resultType="int">
+    select count(*) from bookable_slot
+    where tenant_id = #{tenantId} and staff_account_id = #{staffId}
+  </select>
+
+  <delete id="deleteStaff">
+    delete from staff_account where tenant_id = #{tenantId} and id = #{staffId}
+  </delete>
+
+  <select id="selectServices" resultType="map">
+    select id, name, service_type as "serviceType", duration_min as "durationMin",
+      default_capacity as "defaultCapacity", deduct_count as "deductCount", status
+    from service_item
+    where tenant_id = #{tenantId}
+    order by id
+  </select>
+
+  <select id="insertService" resultType="long" flushCache="true" affectData="true">
+    insert into service_item(
+      tenant_id, store_id, name, service_type, duration_min, default_capacity, deduct_count, status
+    ) values (
+      #{tenantId}, #{storeId}, #{name}, #{serviceType}, #{durationMin}, #{capacity}, #{deductCount}, #{status}
+    )
+    returning id
+  </select>
+
+  <insert id="insertServiceResourceBinding">
+    insert into service_resource_binding(tenant_id, service_item_id, resource_id)
+    values (#{tenantId}, #{serviceId}, #{resourceId})
+  </insert>
+
+  <insert id="insertStaffServiceBinding">
+    insert into staff_service_binding(tenant_id, staff_account_id, service_item_id)
+    values (#{tenantId}, #{staffId}, #{serviceId})
+  </insert>
+
+  <select id="selectServiceResourceIds" resultType="long">
+    select resource_id from service_resource_binding
+    where tenant_id = #{tenantId} and service_item_id = #{serviceId}
+    order by resource_id
+  </select>
+
+  <select id="selectServiceStaffIds" resultType="long">
+    select staff_account_id from staff_service_binding
+    where tenant_id = #{tenantId} and service_item_id = #{serviceId}
+    order by staff_account_id
+  </select>
+
+  <update id="updateService">
+    update service_item
+    set name = #{name}, service_type = #{serviceType}, duration_min = #{durationMin},
+      default_capacity = #{capacity}, deduct_count = #{deductCount}, status = #{status},
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{serviceId}
+  </update>
+
+  <update id="updateServiceStatus">
+    update service_item set status = #{status}, updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{serviceId}
+  </update>
+
+  <delete id="deleteServiceResourceBindings">
+    delete from service_resource_binding where tenant_id = #{tenantId} and service_item_id = #{serviceId}
+  </delete>
+
+  <delete id="deleteStaffServiceBindings">
+    delete from staff_service_binding where tenant_id = #{tenantId} and service_item_id = #{serviceId}
+  </delete>
+
+  <select id="selectCardTemplates" resultType="map">
+    select id, name, card_type as "cardType", sale_price_yuan as "salePriceYuan",
+      total_count as "totalCount", valid_days as "validDays",
+      low_balance_threshold as "lowBalanceThreshold", status
+    from card_template
+    where tenant_id = #{tenantId}
+    order by id
+  </select>
+
+  <select id="insertCardTemplate" resultType="long" flushCache="true" affectData="true">
+    insert into card_template(
+      tenant_id, store_id, name, card_type, sale_price_yuan, total_count, valid_days, low_balance_threshold
+    ) values (
+      #{tenantId}, #{storeId}, #{name}, #{cardType}, #{salePrice}, #{totalCount}, #{validDays}, #{lowBalanceThreshold}
+    )
+    returning id
+  </select>
+
+  <insert id="insertCardServiceScope">
+    insert into card_template_service_scope(tenant_id, card_template_id, service_item_id)
+    values (#{tenantId}, #{cardTemplateId}, #{serviceId})
+  </insert>
+
+  <insert id="insertCardStaffScope">
+    insert into card_template_staff_scope(tenant_id, card_template_id, staff_account_id)
+    values (#{tenantId}, #{cardTemplateId}, #{staffId})
+  </insert>
+
+  <select id="selectCardServiceIds" resultType="long">
+    select service_item_id from card_template_service_scope
+    where tenant_id = #{tenantId} and card_template_id = #{templateId}
+    order by service_item_id
+  </select>
+
+  <select id="selectCardStaffIds" resultType="long">
+    select staff_account_id from card_template_staff_scope
+    where tenant_id = #{tenantId} and card_template_id = #{templateId}
+    order by staff_account_id
+  </select>
+
+  <update id="updateCardTemplate">
+    update card_template
+    set name = #{name}, card_type = #{cardType}, sale_price_yuan = #{salePrice},
+      total_count = #{totalCount}, valid_days = #{validDays}, low_balance_threshold = #{lowBalanceThreshold},
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{templateId}
+  </update>
+
+  <update id="updateCardTemplateStatus">
+    update card_template set status = #{status}, updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{templateId}
+  </update>
+
+  <delete id="deleteCardServiceScopes">
+    delete from card_template_service_scope where tenant_id = #{tenantId} and card_template_id = #{templateId}
+  </delete>
+
+  <delete id="deleteCardStaffScopes">
+    delete from card_template_staff_scope where tenant_id = #{tenantId} and card_template_id = #{templateId}
+  </delete>
+
+  <select id="selectMembers" resultType="map">
+    select id, name, member_no as "memberNo", contact_text as "contactText", bind_status as "bindStatus"
+    from member
+    where tenant_id = #{tenantId}
+    order by id desc
+  </select>
+
+  <select id="insertMember" resultType="long" flushCache="true" affectData="true">
+    insert into member(tenant_id, store_id, name, member_no, contact_text)
+    values (#{tenantId}, #{storeId}, #{name}, #{memberNo}, #{contactText})
+    returning id
+  </select>
+
+  <select id="selectOwnedMember" resultType="map">
+    select id, store_id as "storeId", name
+    from member
+    where id = #{memberId} and tenant_id = #{tenantId}
+  </select>
+
+  <select id="selectActiveCardTemplate" resultType="map">
+    select id, card_type as "cardType", total_count as "totalCount", valid_days as "validDays"
+    from card_template
+    where id = #{templateId} and tenant_id = #{tenantId} and status = 'active'
+  </select>
+
+  <select id="insertMemberCard" resultType="long" flushCache="true" affectData="true">
+    insert into member_card(
+      tenant_id, store_id, member_id, template_id, card_type, sale_price_yuan,
+      remain_count, valid_from, valid_until
+    ) values (
+      #{tenantId}, #{storeId}, #{memberId}, #{templateId}, #{cardType}, #{salePrice},
+      #{remainCount}, #{validFrom}, #{validUntil}
+    )
+    returning id
+  </select>
+
+  <select id="insertOfflineSale" resultType="long" flushCache="true" affectData="true">
+    insert into offline_sale_record(
+      tenant_id, store_id, member_id, member_card_id, sale_amount_yuan, sale_date,
+      pay_method_label, operator_type, operator_id
+    ) values (
+      #{tenantId}, #{storeId}, #{memberId}, #{memberCardId}, #{saleAmount}, #{saleDate},
+      #{payMethodLabel}, 'owner', #{operatorId}
+    )
+    returning id
+  </select>
+
+  <select id="selectEnabledIntegerConfig" resultType="int">
+    select cast(value_text as integer)
+    from platform_config
+    where config_key = #{configKey} and enabled
+  </select>
+
+  <update id="revokeActiveInvites">
+    update member_invite_code
+    set status = 'revoked', updated_at = current_timestamp
+    where tenant_id = #{tenantId} and member_id = #{memberId} and status = 'active'
+  </update>
+
+  <insert id="insertInvite">
+    insert into member_invite_code(
+      tenant_id, store_id, member_id, code_hash, display_code_tail, expires_at
+    ) values (
+      #{tenantId}, #{storeId}, #{memberId}, #{codeHash}, #{displayCodeTail}, #{expiresAt}
+    )
+  </insert>
+
+  <select id="selectSchedules" resultType="map">
+    select bs.id, bs.start_at as "startAt", bs.end_at as "endAt", bs.capacity,
+      bs.reserved_count as "reservedCount", bs.status, si.name as "serviceName",
+      sa.staff_name as "staffName", r.name as "resourceName"
+    from bookable_slot bs
+    join service_item si on si.id = bs.service_item_id
+    join staff_account sa on sa.id = bs.staff_account_id
+    join resource r on r.id = bs.resource_id
+    where bs.tenant_id = #{tenantId} and bs.start_at::date = #{scheduleDate}
+    order by bs.start_at
+  </select>
+
+  <select id="selectActiveService" resultType="map">
+    select id, store_id as "storeId"
+    from service_item
+    where id = #{serviceId} and tenant_id = #{tenantId} and status = 'active'
+  </select>
+
+  <select id="countActiveStaff" resultType="int">
+    select count(*)
+    from staff_account
+    where id = #{staffId} and tenant_id = #{tenantId} and status = 'active'
+  </select>
+
+  <select id="countEnabledResource" resultType="int">
+    select count(*)
+    from resource
+    where id = #{resourceId} and tenant_id = #{tenantId} and enabled
+  </select>
+
+  <select id="countStaffServiceBinding" resultType="int">
+    select count(*)
+    from staff_service_binding
+    where tenant_id = #{tenantId} and service_item_id = #{serviceId} and staff_account_id = #{staffId}
+  </select>
+
+  <select id="countServiceResourceBinding" resultType="int">
+    select count(*)
+    from service_resource_binding
+    where tenant_id = #{tenantId} and service_item_id = #{serviceId} and resource_id = #{resourceId}
+  </select>
+
+  <select id="insertBookableSlot" resultType="long" flushCache="true" affectData="true">
+    insert into bookable_slot(
+      tenant_id, store_id, service_item_id, staff_account_id, resource_id,
+      start_at, end_at, capacity, status, cancel_deadline_min
+    ) values (
+      #{tenantId}, #{storeId}, #{serviceId}, #{staffId}, #{resourceId},
+      #{startAt}, #{endAt}, #{capacity}, #{status}, #{cancelDeadlineMin}
+    )
+    returning id
+  </select>
+
+  <select id="selectReportSummary" resultType="map">
+    select (select coalesce(sum(sale_amount_yuan), 0)
+        from offline_sale_record
+        where tenant_id = #{tenantId}
+          and sale_date &gt;= date_trunc('month', current_date)::date) as "monthlySalesYuan",
+      (select count(*)::integer from booking where tenant_id = #{tenantId}) as bookings,
+      (select count(*)::integer from attendance_confirm where tenant_id = #{tenantId}) as attendances,
+      (select count(*)::integer from deduction_record where tenant_id = #{tenantId}) as deductions,
+      (select count(*)::integer
+        from member_card mc
+        join card_template ct on ct.id = mc.template_id
+        cross join platform_config pc
+        where mc.tenant_id = #{tenantId}
+          and pc.config_key = 'member_card.expiring_warn_days'
+          and (mc.base_status = 'suspended'
+            or mc.valid_until &lt; current_date
+            or (mc.card_type = 'count' and mc.remain_count = 0)
+            or mc.valid_until &lt;= current_date + cast(pc.value_text as integer)
+            or (mc.card_type = 'count' and mc.remain_count &lt;= ct.low_balance_threshold))) as "warningCount"
+  </select>
+
+  <select id="selectCardWarnings" resultType="map">
+    select mc.id, m.name as "memberName", ct.name as "cardName", mc.remain_count as "remainCount",
+      mc.valid_until as "validUntil",
+      case
+        when mc.base_status = 'suspended' then 'suspended'
+        when mc.valid_until &lt; current_date then 'expired'
+        when mc.card_type = 'count' and mc.remain_count = 0 then 'empty'
+        when mc.valid_until &lt;= current_date + cast(pc.value_text as integer) then 'expiring'
+        when mc.card_type = 'count' and mc.remain_count &lt;= ct.low_balance_threshold then 'low_balance'
+        else 'active'
+      end as status
+    from member_card mc
+    join member m on m.id = mc.member_id
+    join card_template ct on ct.id = mc.template_id
+    cross join platform_config pc
+    where mc.tenant_id = #{tenantId} and pc.config_key = 'member_card.expiring_warn_days'
+    order by mc.valid_until, mc.remain_count nulls last
+  </select>
+
+  <select id="selectOfflineSales" resultType="map">
+    select os.id, m.name as "memberName", ct.name as "cardName", os.sale_amount_yuan as "saleAmountYuan",
+      os.sale_date as "saleDate", os.pay_method_label as "payMethodLabel"
+    from offline_sale_record os
+    join member m on m.id = os.member_id
+    join member_card mc on mc.id = os.member_card_id
+    join card_template ct on ct.id = mc.template_id
+    where os.tenant_id = #{tenantId}
+    order by os.sale_date desc, os.id desc
+  </select>
+
+  <select id="selectBookingReport" resultType="map">
+    select b.id, m.name as "memberName", si.name as "serviceName", bs.start_at as "startAt", b.status,
+      exists(select 1 from attendance_confirm ac where ac.booking_id = b.id) as "attended"
+    from booking b
+    join member m on m.id = b.member_id
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    where b.tenant_id = #{tenantId}
+    order by bs.start_at desc, b.id desc
+  </select>
+
+  <select id="selectDeductionReport" resultType="map">
+    select dr.id, m.name as "memberName", si.name as "serviceName", dr.deduct_count as "deductCount",
+      dr.before_count as "beforeCount", dr.after_count as "afterCount", dr.deducted_at as "createdAt",
+      'deducted' as status
+    from deduction_record dr
+    join member m on m.id = dr.member_id
+    join booking b on b.id = dr.booking_id
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    where dr.tenant_id = #{tenantId}
+    order by dr.deducted_at desc
+  </select>
+
+  <select id="selectServiceReport" resultType="map">
+    select si.id, si.name as "serviceName", count(distinct b.id)::integer as "bookingCount",
+      count(distinct ac.id)::integer as "attendanceCount", count(distinct dr.id)::integer as "deductionCount"
+    from service_item si
+    left join bookable_slot bs on bs.service_item_id = si.id and bs.tenant_id = #{tenantId}
+    left join booking b on b.bookable_slot_id = bs.id and b.tenant_id = #{tenantId}
+    left join attendance_confirm ac on ac.booking_id = b.id and ac.tenant_id = #{tenantId}
+    left join deduction_record dr on dr.booking_id = b.id and dr.tenant_id = #{tenantId}
+    where si.tenant_id = #{tenantId}
+    group by si.id, si.name
+    order by "bookingCount" desc, si.id
+  </select>
+
+  <select id="countOwnedResource" resultType="int">
+    select count(*) from resource where tenant_id = #{tenantId} and id = #{id}
+  </select>
+
+  <select id="countOwnedStaff" resultType="int">
+    select count(*) from staff_account where tenant_id = #{tenantId} and id = #{id}
+  </select>
+
+  <select id="countOwnedService" resultType="int">
+    select count(*) from service_item where tenant_id = #{tenantId} and id = #{id}
+  </select>
+
+  <insert id="insertAudit">
+    insert into audit_log(
+      tenant_id, actor_type, actor_name, action, target_name, old_value, new_value, reason
+    ) values (
+      #{tenantId}, #{actorType}, #{actorName}, #{action}, #{targetName},
+      #{oldValue}, #{newValue}, #{reason}
+    )
+  </insert>
+</mapper>

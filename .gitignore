@@ -7,5 +7,10 @@ dist/
 target/
 logs/
 *.tsbuildinfo
+.swc/
+project.private.config.json
+.env
+infra/compose/.env
+infra/certs/
 __pycache__/
 *.py[cod]

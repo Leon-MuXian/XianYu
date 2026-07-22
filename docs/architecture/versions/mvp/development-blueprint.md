@@ -310,7 +310,18 @@ packages/design-tokens/
 - 金额字段明确单位，例如 `saleAmountYuan`。
 - 时间字段明确语义，例如 `trialEndAt`、`validUntil`、`deductedAt`。
 
-### 7.3 Lombok 使用规范
+### 7.3 Java 工程与持久化规范
+
+- Java 新增和修改代码遵循《阿里巴巴 Java 开发手册》，统一使用 4 空格缩进。
+- 依赖使用构造器注入；禁止字段注入、通配符 import 和 `System.out`/`System.err`。
+- 异常转换必须保留原始 cause；业务异常使用稳定错误码，不吞异常。
+- PostgreSQL 生产访问必须通过 MyBatis-Plus Mapper；简单单表操作优先 `BaseMapper`，复杂查询、行锁和 PostgreSQL 特性使用具名 Mapper XML。
+- `application` 只负责编排业务规则和事务，不接收 SQL 字符串，不使用 `JdbcTemplate` 或直接 JDBC。
+- 租户业务 Mapper 默认受 `TenantLineInnerInterceptor` 约束，并在 SQL 中显式携带 `tenant_id`；登录前身份查询和全局表只能使用可审计的 `@InterceptorIgnore` 白名单。
+- 测试代码可使用 `JdbcTemplate` 校验数据库事实，但不得以它替代生产 Mapper。
+- 本地和 CI 统一执行 `npm run check:java`；PMD 规则集使用 Java 21 兼容实现，覆盖阿里手册中可自动检查的命名、异常、集合、资源关闭和控制流规则。
+
+### 7.4 Lombok 使用规范
 
 Lombok 是技术栈选择，具体允许范围以 `tech-stack.md` 为准。本文件只约束落地使用：
 
@@ -319,7 +330,7 @@ Lombok 是技术栈选择，具体允许范围以 `tech-stack.md` 为准。本�
 - 领域规则方法必须显式命名，不用 Lombok 隐藏业务行为。
 - 关键状态变更方法必须保留可读的业务方法名，例如 `freezeTenant`、`deductMemberCard`。
 
-### 7.4 TypeScript 和 Vue/Taro 规范
+### 7.5 TypeScript 和 Vue/Taro 规范
 
 - 组件使用 PascalCase。
 - 页面目录使用 kebab-case。

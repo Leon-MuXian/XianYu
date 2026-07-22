@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Seren Meet Alibaba Java baseline"
+  xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>
+    Java 21 compatible rules implementing the mandatory, machine-checkable subset of the Alibaba Java Coding
+    Guidelines used by this repository.
+  </description>
+
+  <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace" />
+  <rule ref="category/java/bestpractices.xml/AvoidUsingHardCodedIP" />
+  <rule ref="category/java/bestpractices.xml/LooseCoupling" />
+  <rule ref="category/java/bestpractices.xml/UnusedFormalParameter" />
+  <rule ref="category/java/bestpractices.xml/UnusedPrivateField" />
+  <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod" />
+
+  <rule ref="category/java/codestyle.xml/ClassNamingConventions" />
+  <rule ref="category/java/codestyle.xml/ControlStatementBraces" />
+  <rule ref="category/java/codestyle.xml/FieldNamingConventions" />
+  <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions" />
+  <rule ref="category/java/codestyle.xml/LocalVariableNamingConventions" />
+  <rule ref="category/java/codestyle.xml/MethodNamingConventions" />
+  <rule ref="category/java/codestyle.xml/UnnecessaryImport" />
+
+  <rule ref="category/java/design.xml/AvoidCatchingGenericException" />
+  <rule ref="category/java/design.xml/SimplifyBooleanReturns" />
+
+  <rule ref="category/java/errorprone.xml/AvoidBranchingStatementAsLastInLoop" />
+  <rule ref="category/java/errorprone.xml/CloseResource" />
+  <rule ref="category/java/errorprone.xml/EmptyCatchBlock" />
+  <rule ref="category/java/errorprone.xml/AvoidLosingExceptionInformation" />
+
+  <rule ref="category/java/performance.xml/AppendCharacterWithChar" />
+  <rule ref="category/java/performance.xml/ConsecutiveAppendsShouldReuse" />
+</ruleset>

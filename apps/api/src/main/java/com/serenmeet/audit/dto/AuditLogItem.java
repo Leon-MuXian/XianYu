@@ -1,6 +1,6 @@
 package com.serenmeet.audit.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 平台操作记录列表行。
@@ -15,6 +15,6 @@ public record AuditLogItem(
   String oldValue,
   String newValue,
   String reason,
-  LocalDateTime createdAt
+  OffsetDateTime createdAt
 ) {
 }

@@ -1,6 +1,8 @@
 package com.serenmeet.common;
 
 import jakarta.validation.ConstraintViolationException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 后台 API 的统一异常处理，避免前端吞掉字段错误和页面阻断。
@@ -25,11 +28,11 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException exception) {
-    String message = exception.getBindingResult().getFieldErrors().stream()
-      .findFirst()
-      .map(error -> error.getField() + "：" + error.getDefaultMessage())
-      .orElse("表单字段不完整");
-    return ResponseEntity.badRequest().body(ApiResponse.fail("FIELD_ERROR", message));
+    Map<String, String> fieldErrors = new LinkedHashMap<>();
+    exception.getBindingResult().getFieldErrors().forEach(error ->
+      fieldErrors.putIfAbsent(error.getField(), error.getDefaultMessage())
+    );
+    return ResponseEntity.badRequest().body(ApiResponse.fieldError("请检查表单内容", fieldErrors));
   }
 
   @ExceptionHandler({
@@ -40,6 +43,12 @@ public class ApiExceptionHandler {
   })
   public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception exception) {
     return ResponseEntity.badRequest().body(ApiResponse.fail("BAD_REQUEST", "请求参数不正确"));
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(NoResourceFoundException exception) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+      .body(ApiResponse.fail("RESOURCE_NOT_FOUND", "请求资源不存在"));
   }
 
   @ExceptionHandler(Exception.class)

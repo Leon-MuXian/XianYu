@@ -1,14 +1,16 @@
 # 闲遇 MVP API 映射
 
-文档日期：2026-06-07  
+文档日期：2026-07-21
 状态：active architecture  
 范围：完整 MVP
 
 ## 1. 总则
 
-- API 统一前缀：`/api/v1`。
+- 应用内部保持 `/auth`、`/owner`、`/staff`、`/member`、`/admin` 路径；Nginx 对外统一增加 `/api` 并在转发时剥离。
 - 店长端、教练端、会员端、平台后台共用同一后端服务。
-- 所有响应必须包含 `requestId`。
+- OpenAPI `/v3/api-docs` 是唯一网络契约，前端类型由其生成。
+- 所有响应统一为 `requestId/success/data/error`。
+- 关键写操作必须提供 `Idempotency-Key`；同键不同请求返回冲突。
 - 租户业务 API 的 `tenant_id` 来自登录上下文，不信任前端传值。
 - 租户冻结后，店长、教练、会员端业务写操作全部阻断。
 - 平台后台不得代门店创建会员、发卡、预约、到店或核销。
@@ -19,10 +21,10 @@
 
 ```json
 {
-  "success": true,
   "requestId": "req_20260607_8f3a91c2",
+  "success": true,
   "data": {},
-  "message": "ok"
+  "error": null
 }
 ```
 
@@ -30,19 +32,15 @@
 
 ```json
 {
-  "success": true,
   "requestId": "req_20260607_8f3a91c2",
+  "success": true,
   "data": {
     "items": [],
-    "page": {
-      "pageNo": 1,
-      "pageSize": 20,
-      "total": 126,
-      "totalPages": 7,
-      "hasNext": true
-    }
+    "total": 126,
+    "page": 1,
+    "pageSize": 20
   },
-  "message": "ok"
+  "error": null
 }
 ```
 
@@ -50,12 +48,15 @@
 
 ```json
 {
-  "success": false,
   "requestId": "req_20260607_8f3a91c2",
-  "errorCode": "FIELD_ERROR",
-  "message": "请检查表单内容",
-  "fieldErrors": {
-    "name": "会员姓名不能为空"
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "FIELD_ERROR",
+    "message": "请检查表单内容",
+    "fieldErrors": {
+      "name": "会员姓名不能为空"
+    }
   }
 }
 ```

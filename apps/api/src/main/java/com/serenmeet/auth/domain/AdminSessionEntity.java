@@ -2,7 +2,7 @@ package com.serenmeet.auth.domain;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,19 +11,28 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@TableName("admin_session")
+@TableName("auth_session")
 public class AdminSessionEntity {
 
-  /** 会话令牌，前端以 Bearer token 形式携带。 */
+  /** 原始令牌的 SHA-256，不保存客户端持有的明文令牌。 */
   @TableId
-  private String token;
+  private String tokenHash;
 
-  /** 对应后台账号 ID。 */
-  private Long adminUserId;
+  /** 会话角色：admin、owner、staff、member。 */
+  private String actorType;
+
+  /** 登录主体 ID。 */
+  private String subjectId;
+
+  /** 租户 ID；平台管理员为空。 */
+  private Long tenantId;
 
   /** 会话创建时间。 */
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   /** 会话过期时间，过期后必须重新登录。 */
-  private LocalDateTime expiresAt;
+  private OffsetDateTime expiresAt;
+
+  /** 主动退出或安全撤销时间。 */
+  private OffsetDateTime revokedAt;
 }

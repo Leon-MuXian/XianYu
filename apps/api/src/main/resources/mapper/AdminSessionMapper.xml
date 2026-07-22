@@ -2,17 +2,19 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.serenmeet.auth.mapper.AdminSessionMapper">
-  <select id="findUserByToken" resultType="com.serenmeet.auth.dto.AdminUserView">
-    select u.id, u.username, u.display_name as displayName
-    from admin_session s
-    join admin_user u on u.id = s.admin_user_id
-    where s.token = #{token}
+  <select id="findAdminUserByTokenHash" resultType="com.serenmeet.auth.dto.AdminUserView">
+    select u.id, u.login_name as username, u.display_name as displayName
+    from auth_session s
+    join admin_user u on u.id::varchar = s.subject_id
+    where s.token_hash = #{tokenHash}
+      and s.actor_type = 'admin'
       and s.expires_at &gt; current_timestamp
-      and u.enabled = true
+      and s.revoked_at is null
+      and u.status = 'active'
   </select>
 
   <delete id="deleteExpiredSessions">
-    delete from admin_session
-    where expires_at &lt;= #{now}
+    delete from auth_session
+    where expires_at &lt;= #{now} or revoked_at is not null
   </delete>
 </mapper>

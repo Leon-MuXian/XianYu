@@ -182,7 +182,7 @@ MVP 不做线上支付，但门店仍需要知道线下卖了多少卡。痛点�
 
 ## 7. 工程映射优先级
 
-当前 `docs/architecture/versions/mvp/` 状态为等待重新输出。后续工程映射应按三阶段拆分。
+当前 `docs/architecture/versions/mvp/` 已按三阶段完成工程映射，实现事实见 `implementation-status.md` 和 `prototype-implementation-map.json`。
 
 ### 7.1 Phase 1：权益事实账本
 
@@ -195,7 +195,7 @@ MVP 不做线上支付，但门店仍需要知道线下卖了多少卡。痛点�
 - `OfflineSaleRecord`
 - `AttendanceConfirm`
 - `DeductionRecord`
-- `ReportSnapshot` 或实时预警查询
+- 直接基于事实表的实时报表与预警查询
 
 关键要求：
 
@@ -273,4 +273,3 @@ MVP 不做线上支付，但门店仍需要知道线下卖了多少卡。痛点�
 - 本文件定义第一阶段验证重点和后续设计、工程重排方向。
 
 若后续正式调整页面契约或需求优先级，应同步更新 `spec.md`、`requirements-list.md`、`acceptance-criteria.md`、`prototype-notes.md` 和 UI 原型。
-

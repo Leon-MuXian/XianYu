@@ -14,21 +14,33 @@ public class AdminWebMvcConfig implements WebMvcConfigurer {
 
   private final AdminAuthInterceptor authInterceptor;
   private final AdminUserArgumentResolver adminUserArgumentResolver;
+  private final BusinessAuthInterceptor businessAuthInterceptor;
+  private final CurrentSessionArgumentResolver currentSessionArgumentResolver;
 
-  public AdminWebMvcConfig(AdminAuthInterceptor authInterceptor, AdminUserArgumentResolver adminUserArgumentResolver) {
+  public AdminWebMvcConfig(
+    AdminAuthInterceptor authInterceptor,
+    AdminUserArgumentResolver adminUserArgumentResolver,
+    BusinessAuthInterceptor businessAuthInterceptor,
+    CurrentSessionArgumentResolver currentSessionArgumentResolver
+  ) {
     this.authInterceptor = authInterceptor;
     this.adminUserArgumentResolver = adminUserArgumentResolver;
+    this.businessAuthInterceptor = businessAuthInterceptor;
+    this.currentSessionArgumentResolver = currentSessionArgumentResolver;
   }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
     registry.addInterceptor(authInterceptor)
       .addPathPatterns("/admin/**")
-      .excludePathPatterns("/admin/auth/login");
+      .excludePathPatterns("/admin/auth/login", "/actuator/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html");
+    registry.addInterceptor(businessAuthInterceptor)
+      .addPathPatterns("/owner/**", "/staff/**", "/member/**");
   }
 
   @Override
   public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
     resolvers.add(adminUserArgumentResolver);
+    resolvers.add(currentSessionArgumentResolver);
   }
 }

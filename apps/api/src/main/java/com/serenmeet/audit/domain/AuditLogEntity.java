@@ -3,7 +3,7 @@ package com.serenmeet.audit.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -44,5 +44,5 @@ public class AuditLogEntity {
   private String reason;
 
   /** 操作发生时间。 */
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 }

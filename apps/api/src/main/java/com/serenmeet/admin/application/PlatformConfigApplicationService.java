@@ -10,7 +10,7 @@ import com.serenmeet.audit.application.AuditApplicationService;
 import com.serenmeet.audit.domain.AuditAction;
 import com.serenmeet.common.ApiException;
 import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -67,14 +67,14 @@ public class PlatformConfigApplicationService {
     validateValue(entity, request.newValue());
     String oldValue = entity.getValueText();
     entity.setValueText(request.newValue());
-    entity.setUpdatedAt(LocalDateTime.now(clock));
+    entity.setUpdatedAt(OffsetDateTime.now(clock));
     platformConfigMapper.updateById(entity);
     auditService.record(null, actor.username(), AuditAction.UPDATE_CONFIG.code(), entity.getName(), oldValue, request.newValue(), request.reason());
     return toResponse(entity);
   }
 
   private void validateValue(PlatformConfigEntity entity, String newValue) {
-    if (!"INTEGER".equals(entity.getValueType())) {
+    if (!"integer".equals(entity.getValueType())) {
       throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "CONFIG_VALUE_TYPE_UNSUPPORTED", "配置项类型暂不支持");
     }
     try {

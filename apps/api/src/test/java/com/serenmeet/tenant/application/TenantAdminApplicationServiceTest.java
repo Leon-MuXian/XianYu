@@ -21,6 +21,7 @@ import com.serenmeet.common.ApiException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +66,7 @@ class TenantAdminApplicationServiceTest {
   @Test
   void extendTrialUnfreezesFrozenTenant() {
     TenantEntity tenant = tenant(2L, "鲸喜训练", TenantStatus.FROZEN.code(), LocalDate.of(2026, 5, 28));
-    tenant.setFrozenReason("试用到期");
+    tenant.setFreezeReason("试用到期");
     TenantDetailProjection detail = new TenantDetailProjection();
     detail.setId(2L);
     detail.setStatus(TenantStatus.EXTENDED.code());
@@ -77,8 +78,10 @@ class TenantAdminApplicationServiceTest {
 
     assertThat(updated.status()).isEqualTo(TenantStatus.EXTENDED.code());
     assertThat(tenant.getStatus()).isEqualTo(TenantStatus.EXTENDED.code());
-    assertThat(tenant.getFrozenReason()).isNull();
-    assertThat(tenant.getTrialEndAt()).isEqualTo(LocalDate.of(2026, 6, 30));
+    assertThat(tenant.getFreezeReason()).isNull();
+    assertThat(tenant.getTrialEndAt()).isEqualTo(
+      LocalDate.of(2026, 6, 30).atTime(LocalTime.MAX).atZone(CLOCK.getZone()).toOffsetDateTime()
+    );
     verify(tenantMapper).updateById(tenant);
     verify(auditService).record(
       eq(2L),
@@ -119,7 +122,7 @@ class TenantAdminApplicationServiceTest {
     tenant.setId(id);
     tenant.setName(name);
     tenant.setStatus(status);
-    tenant.setTrialEndAt(trialEndAt);
+    tenant.setTrialEndAt(trialEndAt.atStartOfDay(CLOCK.getZone()).toOffsetDateTime());
     return tenant;
   }
 

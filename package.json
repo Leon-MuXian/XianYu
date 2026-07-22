@@ -1,0 +1,31 @@
+{
+  "name": "seren-meet-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/admin-web",
+    "apps/miniprogram-*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check:docs": "node scripts/check-docs.mjs",
+    "check:java": "node scripts/check-java-boundaries.mjs && mvn -q -DskipTests pmd:check --file apps/api/pom.xml",
+    "generate:api": "npm run generate --workspace @serenmeet/shared-types",
+    "check:api": "npm run check --workspace @serenmeet/shared-types",
+    "build:packages": "npm run build --workspace @serenmeet/shared-types && npm run build --workspace @serenmeet/api-client && npm run build --workspace @serenmeet/business-components",
+    "build:web": "npm run build --workspace @serenmeet/admin-web",
+    "typecheck:web": "npm run typecheck --workspace @serenmeet/admin-web",
+    "build:miniapps": "npm run build:packages && npm run build:weapp --workspaces --if-present",
+    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@vue/babel-plugin-jsx": "1.5.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

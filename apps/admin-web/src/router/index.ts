@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/services/api'
+import { resolveAdminRoute } from './authGuard'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,13 +23,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.path !== '/login' && !getToken()) {
-    return '/login'
-  }
-  if (to.path === '/login' && getToken()) {
-    return '/tenants'
-  }
-  return true
+  return resolveAdminRoute(to.path, getToken())
 })
 
 export default router

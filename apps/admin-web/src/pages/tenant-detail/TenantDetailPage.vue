@@ -36,7 +36,7 @@ onMounted(load)
         </div>
         <div class="title-actions">
           <el-button @click="router.push('/tenants')">返回列表</el-button>
-          <el-button type="danger" :disabled="tenant.status === 'FROZEN'" @click="router.push(`/tenants/${tenant.id}/freeze`)">冻结租户</el-button>
+          <el-button type="danger" :disabled="tenant.status === 'frozen'" @click="router.push(`/tenants/${tenant.id}/freeze`)">冻结租户</el-button>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ onMounted(load)
             <div class="field-box wide"><span>门店地址</span><strong>{{ tenant.store.address }}</strong></div>
             <div class="field-box wide"><span>经营项目 / 服务标签</span><strong>{{ tenant.store.businessCategories }} / {{ tenant.store.serviceTags }}</strong></div>
             <div class="field-box wide"><span>营业时间</span><strong>{{ tenant.store.businessHours }}</strong></div>
-            <div v-if="tenant.status === 'FROZEN' && tenant.frozenReason" class="field-box wide"><span>冻结原因</span><strong>{{ tenant.frozenReason }}</strong></div>
+            <div v-if="tenant.status === 'frozen' && tenant.frozenReason" class="field-box wide"><span>冻结原因</span><strong>{{ tenant.frozenReason }}</strong></div>
           </div>
 
           <h2 class="section-heading">试点观测</h2>
@@ -72,19 +72,19 @@ onMounted(load)
 
           <h2 class="section-heading">试点健康信号</h2>
           <div class="step-list">
-            <div class="step-card"><b>账</b><div><strong>权益台账已接入</strong><small>发卡、绑定、核销后余额变化均由后端数据沉淀。</small></div><StatusTag status="TRIALING" text="正常" /></div>
-            <div class="step-card"><b>用</b><div><strong>员工核销活跃</strong><small>通过到店和核销数据判断门店是否真正使用。</small></div><StatusTag status="EXTENDED" text="观察" /></div>
-            <div class="step-card"><b>险</b><div><strong>预警处理节奏</strong><small>低余额和到期提醒影响客服续期判断。</small></div><StatusTag status="EXPIRING" text="关注" /></div>
+            <div class="step-card"><b>账</b><div><strong>权益台账已接入</strong><small>发卡、绑定、核销后余额变化均由后端数据沉淀。</small></div><StatusTag status="trialing" text="正常" /></div>
+            <div class="step-card"><b>用</b><div><strong>员工核销活跃</strong><small>通过到店和核销数据判断门店是否真正使用。</small></div><StatusTag status="extended" text="观察" /></div>
+            <div class="step-card"><b>险</b><div><strong>预警处理节奏</strong><small>低余额和到期提醒影响客服续期判断。</small></div><StatusTag status="expiring" text="关注" /></div>
           </div>
         </div>
 
         <div class="admin-card">
           <h2>冻结和续期影响</h2>
           <div class="step-list">
-            <div class="step-card"><b>店</b><div><strong>店长端</strong><small>冻结后只允许进入冻结页和客服信息。</small></div><StatusTag :status="tenant.status === 'FROZEN' ? 'FROZEN' : 'TRIALING'" :text="tenant.status === 'FROZEN' ? '暂停' : '可用'" /></div>
-            <div class="step-card"><b>教</b><div><strong>员工端</strong><small>冻结后名单、到店、核销和记录不可用。</small></div><StatusTag :status="tenant.status === 'FROZEN' ? 'FROZEN' : 'EXTENDED'" :text="tenant.status === 'FROZEN' ? '暂停' : '活跃'" /></div>
-            <div class="step-card"><b>会</b><div><strong>会员端</strong><small>冻结后约课、取消和候补禁用，只读卡包摘要。</small></div><StatusTag :status="tenant.status === 'FROZEN' ? 'FROZEN' : 'EXTENDED'" :text="tenant.status === 'FROZEN' ? '暂停' : '可见'" /></div>
-            <div class="step-card"><b>数</b><div><strong>历史数据</strong><small>冻结和解冻都不删除会员卡、到店、核销和预警记录。</small></div><StatusTag status="TRIALING" text="保留" /></div>
+            <div class="step-card"><b>店</b><div><strong>店长端</strong><small>冻结后只允许进入冻结页和客服信息。</small></div><StatusTag :status="tenant.status === 'frozen' ? 'frozen' : 'trialing'" :text="tenant.status === 'frozen' ? '暂停' : '可用'" /></div>
+            <div class="step-card"><b>教</b><div><strong>员工端</strong><small>冻结后名单、到店、核销和记录不可用。</small></div><StatusTag :status="tenant.status === 'frozen' ? 'frozen' : 'extended'" :text="tenant.status === 'frozen' ? '暂停' : '活跃'" /></div>
+            <div class="step-card"><b>会</b><div><strong>会员端</strong><small>冻结后约课、取消和候补禁用，只读卡包摘要。</small></div><StatusTag :status="tenant.status === 'frozen' ? 'frozen' : 'extended'" :text="tenant.status === 'frozen' ? '暂停' : '可见'" /></div>
+            <div class="step-card"><b>数</b><div><strong>历史数据</strong><small>冻结和解冻都不删除会员卡、到店、核销和预警记录。</small></div><StatusTag status="trialing" text="保留" /></div>
           </div>
         </div>
       </div>

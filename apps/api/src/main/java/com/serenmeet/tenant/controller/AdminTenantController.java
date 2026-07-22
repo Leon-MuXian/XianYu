@@ -1,6 +1,8 @@
 package com.serenmeet.tenant.controller;
 
 import com.serenmeet.auth.dto.AdminUserView;
+import com.serenmeet.auth.support.SessionPrincipal;
+import com.serenmeet.common.IdempotencyWorkflow;
 import com.serenmeet.tenant.application.TenantAdminApplicationService;
 import com.serenmeet.tenant.dto.ExtendTenantRequest;
 import com.serenmeet.tenant.dto.FreezeTenantRequest;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminTenantController {
 
   private final TenantAdminApplicationService tenantService;
+  private final IdempotencyWorkflow idempotency;
 
-  public AdminTenantController(TenantAdminApplicationService tenantService) {
+  public AdminTenantController(TenantAdminApplicationService tenantService, IdempotencyWorkflow idempotency) {
     this.tenantService = tenantService;
+    this.idempotency = idempotency;
   }
 
   /**
@@ -57,23 +62,41 @@ public class AdminTenantController {
    * 冻结租户。
    */
   @PostMapping("/{tenantId}/freeze")
-  public ApiResponse<TenantDetailResponse> freezeTenant(
+  public ApiResponse<Object> freezeTenant(
     AdminUserView actor,
     @PathVariable Long tenantId,
+    @RequestHeader("Idempotency-Key") String idempotencyKey,
     @Valid @RequestBody FreezeTenantRequest request
   ) {
-    return ApiResponse.ok(tenantService.freezeTenant(tenantId, request, actor));
+    return ApiResponse.ok(idempotency.execute(
+      adminPrincipal(actor),
+      "admin.freeze-tenant." + tenantId,
+      idempotencyKey,
+      request,
+      () -> tenantService.freezeTenant(tenantId, request, actor)
+    ));
   }
 
   /**
    * 调整期限并解冻。
    */
   @PostMapping("/{tenantId}/extend-trial")
-  public ApiResponse<TenantDetailResponse> extendTrial(
+  public ApiResponse<Object> extendTrial(
     AdminUserView actor,
     @PathVariable Long tenantId,
+    @RequestHeader("Idempotency-Key") String idempotencyKey,
     @Valid @RequestBody ExtendTenantRequest request
   ) {
-    return ApiResponse.ok(tenantService.extendTrial(tenantId, request, actor));
+    return ApiResponse.ok(idempotency.execute(
+      adminPrincipal(actor),
+      "admin.extend-tenant." + tenantId,
+      idempotencyKey,
+      request,
+      () -> tenantService.extendTrial(tenantId, request, actor)
+    ));
+  }
+
+  private SessionPrincipal adminPrincipal(AdminUserView actor) {
+    return new SessionPrincipal("admin", actor.id().toString(), null, null, true, false);
   }
 }

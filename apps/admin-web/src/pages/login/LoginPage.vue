@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { adminApi } from '@/services/api'
 
 const router = useRouter()
-const username = ref('admin@serenmeet')
-const password = ref('admin123')
+const username = ref('')
+const password = ref('')
 const loading = ref(false)
 const error = ref('')
 

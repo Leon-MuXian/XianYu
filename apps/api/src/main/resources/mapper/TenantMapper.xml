@@ -9,7 +9,7 @@
     <result column="status" property="status" />
     <result column="trial_start_at" property="trialStartAt" />
     <result column="trial_end_at" property="trialEndAt" />
-    <result column="frozen_reason" property="frozenReason" />
+    <result column="freeze_reason" property="frozenReason" />
     <result column="support_wechat_id" property="supportWechatId" />
     <association property="store" resultMap="StoreViewMap" />
     <association property="snapshot" resultMap="BusinessSnapshotMap" />
@@ -35,7 +35,7 @@
       <arg column="low_balance_count" javaType="int" />
       <arg column="expiring_count" javaType="int" />
       <arg column="monthly_sales_yuan" javaType="java.math.BigDecimal" />
-      <arg column="last_activity_at" javaType="java.time.LocalDateTime" />
+      <arg column="last_activity_at" javaType="java.time.OffsetDateTime" />
     </constructor>
   </resultMap>
 
@@ -44,35 +44,48 @@
       <if test="keyword != null and keyword != ''">
         and (t.name ilike concat('%', #{keyword}, '%') or t.city ilike concat('%', #{keyword}, '%'))
       </if>
-      <if test="status != null and status != '' and status != 'ALL'">
-        and t.status = #{status}
+      <if test="status != null and status != '' and status.toLowerCase() != 'all'">
+        and t.status = lower(#{status})
       </if>
-      <if test="expiry == 'EXPIRED'">
-        and t.trial_end_at &lt; current_date
+      <if test="expiry != null and expiry.toLowerCase() == 'expired'">
+        and t.trial_end_at &lt; current_timestamp
       </if>
-      <if test="expiry == 'WITHIN_7_DAYS'">
-        and t.trial_end_at between current_date and current_date + interval '7 days'
+      <if test="expiry != null and expiry.toLowerCase() == 'within_7_days'">
+        and t.trial_end_at between current_timestamp and current_timestamp + interval '7 days'
       </if>
-      <if test="expiry == 'AFTER_7_DAYS'">
-        and t.trial_end_at &gt; current_date + interval '7 days'
+      <if test="expiry != null and expiry.toLowerCase() == 'after_7_days'">
+        and t.trial_end_at &gt; current_timestamp + interval '7 days'
       </if>
     </where>
   </sql>
 
   <select id="selectTenantList" resultType="com.serenmeet.tenant.mapper.TenantListRow">
     select t.id, t.name, t.city,
-           t.trial_start_at as trialStartAt,
-           t.trial_end_at as trialEndAt,
+           t.trial_start_at::date as trialStartAt,
+           t.trial_end_at::date as trialEndAt,
            t.status,
-           coalesce(tenant_wechat.wechat_id, default_wechat.wechat_id, t.support_wechat_id) as supportWechatId,
-           coalesce(s.issued_cards, 0) as issuedCards,
-           coalesce(s.deductions, 0) as deductions,
-           coalesce(s.warning_count, 0) as warningCount,
-           coalesce(s.monthly_sales_yuan, 0) as monthlySalesYuan
+           coalesce(tenant_wechat.wechat_id, default_wechat.wechat_id) as supportWechatId,
+           coalesce(f.issued_cards, 0) as issuedCards,
+           coalesce(f.deductions, 0) as deductions,
+           coalesce(f.warning_count, 0) as warningCount,
+           coalesce(f.monthly_sales_yuan, 0) as monthlySalesYuan
     from tenant t
-    left join tenant_business_snapshot s on s.tenant_id = t.id
     left join support_wechat tenant_wechat on tenant_wechat.tenant_id = t.id
     left join support_wechat default_wechat on default_wechat.tenant_id is null
+    left join lateral (
+      select
+        (select count(*) from member_card mc where mc.tenant_id = t.id) as issued_cards,
+        (select count(*) from deduction_record dr where dr.tenant_id = t.id) as deductions,
+        (select count(*) from member_card mc left join card_template ct on ct.id = mc.template_id
+          where mc.tenant_id = t.id and (
+            mc.base_status = 'suspended' or mc.valid_until &lt; current_date or
+            (mc.card_type = 'count' and mc.remain_count = 0) or
+            (mc.valid_until between current_date and current_date + 7) or
+            (mc.card_type = 'count' and mc.remain_count &lt;= coalesce(ct.low_balance_threshold, 0))
+          )) as warning_count,
+        (select coalesce(sum(os.sale_amount_yuan), 0) from offline_sale_record os
+          where os.tenant_id = t.id and os.sale_date &gt;= date_trunc('month', current_date)::date) as monthly_sales_yuan
+    ) f on true
     <include refid="TenantFilters" />
     order by t.trial_end_at asc, t.id asc
     limit #{pageSize} offset #{offset}
@@ -86,38 +99,63 @@
 
   <select id="selectStats" resultType="com.serenmeet.tenant.dto.TenantStatsResponse">
     select count(*) as total,
-           count(*) filter (where status = 'TRIALING') as trialing,
-           count(*) filter (where status = 'EXPIRING') as expiring,
-           count(*) filter (where status = 'FROZEN') as frozen,
-           count(*) filter (where status = 'EXTENDED') as extended
+           count(*) filter (where status = 'trialing') as trialing,
+           count(*) filter (where status = 'expiring') as expiring,
+           count(*) filter (where status = 'frozen') as frozen,
+           count(*) filter (where status = 'extended') as extended
     from tenant
   </select>
 
   <select id="selectTenantDetail" resultMap="TenantDetailMap">
     select t.id, t.name, t.city, t.status,
-           t.trial_start_at,
-           t.trial_end_at,
-           t.frozen_reason,
-           coalesce(tenant_wechat.wechat_id, default_wechat.wechat_id, t.support_wechat_id) as support_wechat_id,
+           t.trial_start_at::date as trial_start_at,
+           t.trial_end_at::date as trial_end_at,
+           t.freeze_reason,
+           coalesce(tenant_wechat.wechat_id, default_wechat.wechat_id) as support_wechat_id,
            st.name as store_name,
-           st.business_categories,
-           st.service_tags,
+           st.business_categories::text as business_categories,
+           st.service_tags::text as service_tags,
            st.address,
            st.contact_phone,
-           st.business_hours,
-           coalesce(s.issued_cards, 0) as issued_cards,
-           coalesce(s.checkins, 0) as checkins,
-           coalesce(s.deductions, 0) as deductions,
-           coalesce(s.warning_count, 0) as warning_count,
-           coalesce(s.low_balance_count, 0) as low_balance_count,
-           coalesce(s.expiring_count, 0) as expiring_count,
-           coalesce(s.monthly_sales_yuan, 0) as monthly_sales_yuan,
-           s.last_activity_at
+           st.business_hours::text as business_hours,
+           coalesce(f.issued_cards, 0) as issued_cards,
+           coalesce(f.checkins, 0) as checkins,
+           coalesce(f.deductions, 0) as deductions,
+           coalesce(f.warning_count, 0) as warning_count,
+           coalesce(f.low_balance_count, 0) as low_balance_count,
+           coalesce(f.expiring_count, 0) as expiring_count,
+           coalesce(f.monthly_sales_yuan, 0) as monthly_sales_yuan,
+           f.last_activity_at
     from tenant t
     left join store st on st.tenant_id = t.id
-    left join tenant_business_snapshot s on s.tenant_id = t.id
     left join support_wechat tenant_wechat on tenant_wechat.tenant_id = t.id
     left join support_wechat default_wechat on default_wechat.tenant_id is null
+    left join lateral (
+      select
+        (select count(*) from member_card mc where mc.tenant_id = t.id) as issued_cards,
+        (select count(*) from attendance_confirm ar where ar.tenant_id = t.id) as checkins,
+        (select count(*) from deduction_record dr where dr.tenant_id = t.id) as deductions,
+        (select count(*) from member_card mc left join card_template ct on ct.id = mc.template_id
+          where mc.tenant_id = t.id and (
+            mc.base_status = 'suspended' or mc.valid_until &lt; current_date or
+            (mc.card_type = 'count' and mc.remain_count = 0) or
+            (mc.valid_until between current_date and current_date + 7) or
+            (mc.card_type = 'count' and mc.remain_count &lt;= coalesce(ct.low_balance_threshold, 0))
+          )) as warning_count,
+        (select count(*) from member_card mc join card_template ct on ct.id = mc.template_id
+          where mc.tenant_id = t.id and mc.base_status = 'active' and mc.card_type = 'count'
+            and mc.remain_count &gt; 0 and mc.remain_count &lt;= coalesce(ct.low_balance_threshold, 0)
+            and mc.valid_until &gt;= current_date) as low_balance_count,
+        (select count(*) from member_card mc where mc.tenant_id = t.id and mc.base_status = 'active'
+          and mc.valid_until between current_date and current_date + 7) as expiring_count,
+        (select coalesce(sum(os.sale_amount_yuan), 0) from offline_sale_record os
+          where os.tenant_id = t.id and os.sale_date &gt;= date_trunc('month', current_date)::date) as monthly_sales_yuan,
+        greatest(
+          (select max(os.created_at) from offline_sale_record os where os.tenant_id = t.id),
+          (select max(ar.confirmed_at) from attendance_confirm ar where ar.tenant_id = t.id),
+          (select max(dr.created_at) from deduction_record dr where dr.tenant_id = t.id)
+        ) as last_activity_at
+    ) f on true
     where t.id = #{tenantId}
   </select>
 
@@ -125,23 +163,24 @@
     select id, name, city, status,
            trial_start_at as trialStartAt,
            trial_end_at as trialEndAt,
-           frozen_reason as frozenReason,
-           support_wechat_id as supportWechatId,
+           freeze_reason as freezeReason,
+           frozen_at as frozenAt,
            created_at as createdAt,
            updated_at as updatedAt
     from tenant
-    where status != 'FROZEN'
-      and trial_end_at &lt; current_date
+    where status != 'frozen'
+      and trial_end_at &lt; current_timestamp
     order by trial_end_at asc, id asc
   </select>
 
   <update id="freezeExpiredTenant">
     update tenant
-    set status = 'FROZEN',
-        frozen_reason = #{reason},
+    set status = 'frozen',
+        freeze_reason = #{reason},
+        frozen_at = #{updatedAt},
         updated_at = #{updatedAt}
     where id = #{tenantId}
-      and status != 'FROZEN'
-      and trial_end_at &lt; current_date
+      and status != 'frozen'
+      and trial_end_at &lt; current_timestamp
   </update>
 </mapper>

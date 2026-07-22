@@ -89,7 +89,7 @@ onMounted(load)
         </el-table-column>
         <el-table-column prop="impactScope" label="影响范围" min-width="210" />
         <el-table-column label="状态" width="120">
-          <template #default="{ row }"><StatusTag :status="row.enabled ? 'TRIALING' : 'FROZEN'" :text="row.enabled ? '启用' : '停用'" /></template>
+          <template #default="{ row }"><StatusTag :status="row.enabled ? 'trialing' : 'frozen'" :text="row.enabled ? '启用' : '停用'" /></template>
         </el-table-column>
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
@@ -160,10 +160,10 @@ onMounted(load)
 
     <el-dialog v-model="rulesOpen" title="生效规则" width="560">
       <div class="rules-list">
-        <div class="step-card"><b>新</b><div><strong>只影响后续流程</strong><small>不会批量改写已有租户到期日或已生成邀请码。</small></div><StatusTag status="EXTENDED" text="后续" /></div>
-        <div class="step-card"><b>验</b><div><strong>值校验</strong><small>整数、分钟、天数等配置按后端规则校验。</small></div><StatusTag status="EXPIRING" text="必检" /></div>
-        <div class="step-card"><b>因</b><div><strong>原因必填</strong><small>每次修改必须填写可追溯原因。</small></div><StatusTag status="EXPIRING" text="必填" /></div>
-        <div class="step-card"><b>审</b><div><strong>审计记录</strong><small>记录配置键、旧值、新值、操作人和原因。</small></div><StatusTag status="EXTENDED" text="写入" /></div>
+        <div class="step-card"><b>新</b><div><strong>只影响后续流程</strong><small>不会批量改写已有租户到期日或已生成邀请码。</small></div><StatusTag status="extended" text="后续" /></div>
+        <div class="step-card"><b>验</b><div><strong>值校验</strong><small>整数、分钟、天数等配置按后端规则校验。</small></div><StatusTag status="expiring" text="必检" /></div>
+        <div class="step-card"><b>因</b><div><strong>原因必填</strong><small>每次修改必须填写可追溯原因。</small></div><StatusTag status="expiring" text="必填" /></div>
+        <div class="step-card"><b>审</b><div><strong>审计记录</strong><small>记录配置键、旧值、新值、操作人和原因。</small></div><StatusTag status="extended" text="写入" /></div>
       </div>
     </el-dialog>
   </section>

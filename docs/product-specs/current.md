@@ -39,6 +39,7 @@
 | 数据库设计 | `../architecture/versions/mvp/data-model.md` |
 | API 映射 | `../architecture/versions/mvp/api-map.md` |
 | 部署映射 | `../architecture/versions/mvp/deployment.md` |
+| 实现状态 | `../architecture/versions/mvp/implementation-status.md` |
 | 当前状态 | 最终版完整工程映射已输出 |
 
 ## 过程和背景

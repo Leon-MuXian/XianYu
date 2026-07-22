@@ -4,13 +4,16 @@ import com.serenmeet.admin.application.PlatformConfigApplicationService;
 import com.serenmeet.admin.dto.PlatformConfigResponse;
 import com.serenmeet.admin.dto.UpdatePlatformConfigRequest;
 import com.serenmeet.auth.dto.AdminUserView;
+import com.serenmeet.auth.support.SessionPrincipal;
 import com.serenmeet.common.ApiResponse;
+import com.serenmeet.common.IdempotencyWorkflow;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,9 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminPlatformConfigController {
 
   private final PlatformConfigApplicationService configService;
+  private final IdempotencyWorkflow idempotency;
 
-  public AdminPlatformConfigController(PlatformConfigApplicationService configService) {
+  public AdminPlatformConfigController(PlatformConfigApplicationService configService, IdempotencyWorkflow idempotency) {
     this.configService = configService;
+    this.idempotency = idempotency;
   }
 
   @GetMapping
@@ -37,11 +42,18 @@ public class AdminPlatformConfigController {
   }
 
   @PutMapping("/{configKey}")
-  public ApiResponse<PlatformConfigResponse> updateConfig(
+  public ApiResponse<Object> updateConfig(
     AdminUserView actor,
     @PathVariable String configKey,
+    @RequestHeader("Idempotency-Key") String idempotencyKey,
     @Valid @RequestBody UpdatePlatformConfigRequest request
   ) {
-    return ApiResponse.ok(configService.updateConfig(configKey, request, actor));
+    return ApiResponse.ok(idempotency.execute(
+      new SessionPrincipal("admin", actor.id().toString(), null, null, true, false),
+      "admin.update-config." + configKey,
+      idempotencyKey,
+      request,
+      () -> configService.updateConfig(configKey, request, actor)
+    ));
   }
 }

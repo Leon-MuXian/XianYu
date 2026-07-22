@@ -7,7 +7,7 @@ spring:
   datasource:
     url: ${SEREN_MEET_DB_URL:jdbc:postgresql://127.0.0.1:5432/seren_meet}
     username: ${SEREN_MEET_DB_USER:seren_meet}
-    password: ${SEREN_MEET_DB_PASSWORD:seren_meet}
+    password: ${SEREN_MEET_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-init-sql: set time zone 'Asia/Shanghai'
@@ -15,6 +15,23 @@ spring:
     enabled: ${SEREN_MEET_FLYWAY_ENABLED:true}
   jackson:
     time-zone: Asia/Shanghai
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 seren-meet:
   cors:
@@ -30,6 +47,17 @@ seren-meet:
     failure-window-minutes: ${SEREN_MEET_ADMIN_FAILURE_WINDOW_MINUTES:10}
     session-cleanup-cron: ${SEREN_MEET_ADMIN_SESSION_CLEANUP_CRON:0 30 3 * * *}
     zone: ${SEREN_MEET_ADMIN_AUTH_ZONE:Asia/Shanghai}
+  bootstrap-admin:
+    username: ${SEREN_MEET_BOOTSTRAP_ADMIN_USERNAME:}
+    password: ${SEREN_MEET_BOOTSTRAP_ADMIN_PASSWORD:}
+    display-name: ${SEREN_MEET_BOOTSTRAP_ADMIN_DISPLAY_NAME:}
+  wechat:
+    owner:
+      app-id: ${SEREN_MEET_OWNER_WECHAT_APP_ID:}
+      secret: ${SEREN_MEET_OWNER_WECHAT_APP_SECRET:}
+    member:
+      app-id: ${SEREN_MEET_MEMBER_WECHAT_APP_ID:}
+      secret: ${SEREN_MEET_MEMBER_WECHAT_APP_SECRET:}
 
 logging:
   config: classpath:logback-spring.xml

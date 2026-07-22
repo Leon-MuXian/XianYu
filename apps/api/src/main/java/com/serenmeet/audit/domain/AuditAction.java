@@ -10,6 +10,6 @@ public enum AuditAction {
   UPDATE_CONFIG;
 
   public String code() {
-    return name();
+    return name().toLowerCase();
   }
 }

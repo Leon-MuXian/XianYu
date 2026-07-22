@@ -129,7 +129,7 @@ onMounted(load)
         <section class="reference-panel preview-section">
           <div class="side-card-head">
             <h2>冻结页预览</h2>
-            <StatusTag :status="form.enabled ? 'EXTENDED' : 'FROZEN'" :text="form.enabled ? '展示中' : '已停用'" />
+            <StatusTag :status="form.enabled ? 'extended' : 'frozen'" :text="form.enabled ? '展示中' : '已停用'" />
           </div>
           <div class="phone-preview" :class="{ muted: !form.enabled }">
             <div class="phone-status"><span>9:41</span><span>5G 100%</span></div>
@@ -151,9 +151,9 @@ onMounted(load)
             <h2>三端展示规则</h2>
           </div>
           <div class="step-list compact">
-            <div class="step-card"><b><el-icon><Phone /></el-icon></b><div><strong>店长冻结页</strong><small>展示客服微信 {{ form.wechatId || 'SerenMeet-CS' }} 和续期说明。</small></div><StatusTag status="EXTENDED" text="展示" /></div>
-            <div class="step-card"><b><el-icon><User /></el-icon></b><div><strong>员工冻结页</strong><small>提示联系门店，不展示平台续期操作。</small></div><StatusTag status="EXPIRING" text="提示" /></div>
-            <div class="step-card"><b><el-icon><User /></el-icon></b><div><strong>会员冻结页</strong><small>提示联系门店，卡包保持只读。</small></div><StatusTag status="EXPIRING" text="提示" /></div>
+            <div class="step-card"><b><el-icon><Phone /></el-icon></b><div><strong>店长冻结页</strong><small>展示客服微信 {{ form.wechatId || 'SerenMeet-CS' }} 和续期说明。</small></div><StatusTag status="extended" text="展示" /></div>
+            <div class="step-card"><b><el-icon><User /></el-icon></b><div><strong>员工冻结页</strong><small>提示联系门店，不展示平台续期操作。</small></div><StatusTag status="expiring" text="提示" /></div>
+            <div class="step-card"><b><el-icon><User /></el-icon></b><div><strong>会员冻结页</strong><small>提示联系门店，卡包保持只读。</small></div><StatusTag status="expiring" text="提示" /></div>
           </div>
         </section>
       </div>

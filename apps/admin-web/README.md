@@ -1,82 +1,32 @@
 # 闲遇 Admin Web
 
-`apps/admin-web` 是闲遇 MVP 的平台后台 Web 工程，面向平台内部运营人员使用。当前实现覆盖账号登录、租户管理、租户详情、冻结与延期处理、客服微信配置、平台配置和操作记录页面。
+`apps/admin-web` 是平台内部运营后台，覆盖管理员登录、租户列表与真实业务信号、租户详情、冻结/延期、客服微信、平台配置和审计记录。
 
-工程使用 Vue 3、Vite、TypeScript、Vue Router 和 Element Plus。接口请求集中在 `src/services/api.ts`，默认连接本地 API `http://127.0.0.1:8080`。
-
-## 工程情况
-
-- 应用入口：`src/main.ts`
-- 路由：`src/router/index.ts`
-- 页面：`src/pages/`
-- 布局：`src/layouts/AdminLayout.vue`
-- API 封装：`src/services/api.ts`
-- 样式与 token：`src/styles/`
-
-默认登录信息：
-
-- 账号：`admin@serenmeet`
-- 密码：`admin123`
-
-后台不提供注册入口。账号由 API 的 Flyway 初始化数据创建。
+后台不提供注册入口，也不预填或展示任何固定登录凭据。首个管理员由 API 的一次性环境变量引导创建。
 
 ## 本地运行
 
-前置要求：
-
-- Node.js 20+
-- npm
-- 已启动 `apps/api`
-
-安装依赖：
+依赖由根 npm workspace 统一安装和锁定：
 
 ```bash
-npm install
-```
-
-启动开发服务：
-
-```bash
-npm run dev
-```
-
-也可以从仓库根目录运行：
-
-```bash
-./scripts/dev-admin.sh
-```
-
-默认访问地址为 `http://127.0.0.1:5173`。
-
-如需连接非默认 API，启动或构建前设置：
-
-```bash
-VITE_API_BASE_URL=http://127.0.0.1:8080 npm run dev
-```
-
-常用命令：
-
-```bash
+npm ci
 npm run typecheck
-npm run build
-npm run preview
+npm run test
+npm run build:web
+npm run dev --workspace @serenmeet/admin-web
 ```
 
-## Docker 打包和部署
+默认开发地址为 `http://127.0.0.1:5173`，默认直连 `http://127.0.0.1:8080`。连接其他 API 时设置 `VITE_API_BASE_URL`。
 
-在仓库根目录构建镜像：
+后台请求复用 `@serenmeet/api-client`，网络响应和错误结构来自共享 OpenAPI 契约；冻结、延期和平台配置等关键写操作携带 `Idempotency-Key`。
+
+## 容器
+
+Compose 从仓库根 workspace 构建后台镜像，并以 `/api` 作为浏览器端 API 基址：
 
 ```bash
-docker build -f apps/admin-web/Dockerfile \
-  --build-arg VITE_API_BASE_URL=/api \
-  -t seren-meet-admin-web:local \
-  apps/admin-web
+docker compose --env-file infra/compose/.env \
+  -f infra/compose/docker-compose.yml build admin-web
 ```
 
-运行镜像：
-
-```bash
-docker run --rm -p 8081:80 seren-meet-admin-web:local
-```
-
-镜像使用 Nginx 托管 Vite 构建后的静态资源，并对 Vue Router 做 `try_files` 回退。生产部署时推荐由外层 Nginx 或网关将 `/api/` 反向代理到 `apps/api` 服务；如果 API 使用独立域名，可在构建时把 `VITE_API_BASE_URL` 设置为完整 HTTPS 地址。
+镜像内 Nginx 提供 SPA 回退和静态资源缓存，外层 Nginx 负责 `/api` 反向代理。

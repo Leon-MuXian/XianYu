@@ -31,7 +31,7 @@
 - 完成 `apps/admin-web/` Vue 3 + TypeScript + Vite 平台后台应用。
 - 完成后台登录、租户列表、租户详情、冻结、延期并解冻、客服微信配置、平台配置和操作记录页面。
 - 完成 `apps/api/` Spring Boot 平台后台 API，包括登录会话、租户查询、冻结、延期、客服微信、平台配置和审计记录。
-- 完成 PostgreSQL + Flyway 初始化基线，初始化数据只保留 `admin@serenmeet` 默认账号、平台配置和默认客服微信。
+- 完成 PostgreSQL + Flyway 初始化基线；历史默认后台账号已由 2026-07-21 治理移除，首个账号改为一次性环境变量引导。
 - 完成 `packages/design-tokens/` 和 `packages/admin-components/` 基础入口。
 - 完成本地开发脚本、Docker Compose PostgreSQL、前后端 Dockerfile 和子工程 README。
 

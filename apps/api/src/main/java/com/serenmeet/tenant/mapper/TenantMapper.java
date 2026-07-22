@@ -1,15 +1,17 @@
 package com.serenmeet.tenant.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.serenmeet.tenant.domain.TenantEntity;
 import com.serenmeet.tenant.dto.TenantStatsResponse;
 import java.util.List;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import org.apache.ibatis.annotations.Param;
 
 /**
  * 租户 Mapper。
  */
+@InterceptorIgnore(tenantLine = "true")
 public interface TenantMapper extends BaseMapper<TenantEntity> {
 
   List<TenantListRow> selectTenantList(
@@ -31,6 +33,6 @@ public interface TenantMapper extends BaseMapper<TenantEntity> {
   int freezeExpiredTenant(
     @Param("tenantId") Long tenantId,
     @Param("reason") String reason,
-    @Param("updatedAt") LocalDateTime updatedAt
+    @Param("updatedAt") OffsetDateTime updatedAt
   );
 }

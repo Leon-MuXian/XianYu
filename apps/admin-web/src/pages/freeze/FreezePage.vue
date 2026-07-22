@@ -55,7 +55,7 @@ onMounted(load)
           <h1>冻结{{ tenant.name }}</h1>
           <p>冻结会暂停三端业务操作，但历史数据、会员卡和预约记录都保留。</p>
         </div>
-        <StatusTag status="FROZEN" text="高风险" />
+        <StatusTag status="frozen" text="高风险" />
       </div>
 
       <div class="detail-grid">
@@ -83,10 +83,10 @@ onMounted(load)
         <div class="admin-card">
           <h2>冻结影响</h2>
           <div class="step-list">
-            <div class="step-card"><b>店</b><div><strong>店长端</strong><small>只允许进入冻结页和客服信息。</small></div><StatusTag status="FROZEN" text="暂停" /></div>
-            <div class="step-card"><b>教</b><div><strong>员工端</strong><small>名单、到店、核销和记录不可用。</small></div><StatusTag status="FROZEN" text="暂停" /></div>
-            <div class="step-card"><b>会</b><div><strong>会员端</strong><small>约课、取消和候补禁用，只读卡包摘要。</small></div><StatusTag status="FROZEN" text="暂停" /></div>
-            <div class="step-card"><b>数</b><div><strong>历史数据</strong><small>不删除历史预约、售卡和核销记录。</small></div><StatusTag status="TRIALING" text="保留" /></div>
+            <div class="step-card"><b>店</b><div><strong>店长端</strong><small>只允许进入冻结页和客服信息。</small></div><StatusTag status="frozen" text="暂停" /></div>
+            <div class="step-card"><b>教</b><div><strong>员工端</strong><small>名单、到店、核销和记录不可用。</small></div><StatusTag status="frozen" text="暂停" /></div>
+            <div class="step-card"><b>会</b><div><strong>会员端</strong><small>约课、取消和候补禁用，只读卡包摘要。</small></div><StatusTag status="frozen" text="暂停" /></div>
+            <div class="step-card"><b>数</b><div><strong>历史数据</strong><small>不删除历史预约、售卡和核销记录。</small></div><StatusTag status="trialing" text="保留" /></div>
           </div>
         </div>
       </div>

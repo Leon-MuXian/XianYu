@@ -32,8 +32,8 @@ const freezeForm = reactive({
 
 const rows = computed(() => data.value?.page.items || [])
 const stats = computed(() => data.value?.stats)
-const canExtend = computed(() => !!selectedTenant.value && selectedTenant.value.status === 'FROZEN' && !!extendForm.newTrialEndAt && !!extendForm.reason.trim() && !submitting.value)
-const canFreeze = computed(() => !!selectedTenant.value && selectedTenant.value.status !== 'FROZEN' && !!freezeForm.reason.trim() && freezeForm.confirmed && !submitting.value)
+const canExtend = computed(() => !!selectedTenant.value && selectedTenant.value.status === 'frozen' && !!extendForm.newTrialEndAt && !!extendForm.reason.trim() && !submitting.value)
+const canFreeze = computed(() => !!selectedTenant.value && selectedTenant.value.status !== 'frozen' && !!freezeForm.reason.trim() && freezeForm.confirmed && !submitting.value)
 
 async function load() {
   loading.value = true
@@ -141,10 +141,10 @@ onMounted(load)
       <el-input v-model="filters.keyword" class="filter-input" placeholder="搜索租户名称或城市" clearable @keyup.enter="query" />
       <el-select v-model="filters.status" class="filter-select">
         <el-option label="状态：全部" value="ALL" />
-        <el-option label="试用中" value="TRIALING" />
-        <el-option label="即将到期" value="EXPIRING" />
-        <el-option label="已冻结" value="FROZEN" />
-        <el-option label="已延长" value="EXTENDED" />
+        <el-option label="试用中" value="trialing" />
+        <el-option label="即将到期" value="expiring" />
+        <el-option label="已冻结" value="frozen" />
+        <el-option label="已延长" value="extended" />
       </el-select>
       <el-select v-model="filters.expiry" class="filter-select wide">
         <el-option label="到期：全部" value="ALL" />
@@ -246,7 +246,7 @@ onMounted(load)
                 <i aria-hidden="true"></i>
                 <strong>{{ selectedTenant.statusText }}</strong>
               </div>
-              <small>{{ selectedTenant.status === 'FROZEN' ? '三端业务入口已暂停' : '运营状态正常追踪' }}</small>
+              <small>{{ selectedTenant.status === 'frozen' ? '三端业务入口已暂停' : '运营状态正常追踪' }}</small>
             </div>
             <div class="summary-cell"><span>试用到期</span><strong>{{ selectedTenant.trialEndAt }}</strong></div>
             <div class="summary-cell"><span>客服微信</span><strong>{{ selectedTenant.supportWechatId || '未配置' }}</strong></div>
@@ -272,10 +272,10 @@ onMounted(load)
             </div>
           </section>
 
-          <section v-if="selectedTenant.status === 'FROZEN' && selectedTenant.frozenReason" class="frozen-reason-card">
+          <section v-if="selectedTenant.status === 'frozen' && selectedTenant.frozenReason" class="frozen-reason-card">
             <div class="frozen-reason-title">
               <span>冻结原因</span>
-              <StatusTag status="FROZEN" text="已冻结" />
+              <StatusTag status="frozen" text="已冻结" />
             </div>
             <p>{{ selectedTenant.frozenReason }}</p>
           </section>
@@ -301,19 +301,19 @@ onMounted(load)
                 <i aria-hidden="true"></i>
                 <strong>{{ selectedTenant.statusText }}</strong>
               </div>
-              <small>{{ selectedTenant.status === 'FROZEN' ? '仅可延期并解冻' : '可冻结账户' }}</small>
+              <small>{{ selectedTenant.status === 'frozen' ? '仅可延期并解冻' : '可冻结账户' }}</small>
             </div>
             <div class="summary-cell"><span>当前到期日</span><strong>{{ selectedTenant.trialEndAt }}</strong></div>
             <div class="summary-cell"><span>客服微信</span><strong>{{ selectedTenant.supportWechatId || '未配置' }}</strong></div>
           </div>
 
-          <section v-if="selectedTenant.status !== 'FROZEN'" class="adjust-section freeze-section">
+          <section v-if="selectedTenant.status !== 'frozen'" class="adjust-section freeze-section">
             <div class="adjust-section-title">
               <div>
                 <h3>冻结账户</h3>
                 <p>暂停店长、教练和会员端业务操作，历史数据保留。</p>
               </div>
-              <StatusTag status="TRIALING" text="可操作" />
+              <StatusTag status="trialing" text="可操作" />
             </div>
             <el-form label-position="top">
               <el-form-item label="冻结原因（必填）">
@@ -327,13 +327,13 @@ onMounted(load)
             </div>
           </section>
 
-          <section v-if="selectedTenant.status === 'FROZEN'" class="adjust-section extend-section">
+          <section v-if="selectedTenant.status === 'frozen'" class="adjust-section extend-section">
             <div class="adjust-section-title">
               <div>
                 <h3>延期并解冻</h3>
                 <p>调整试用到期日，可同时恢复冻结租户的业务入口。</p>
               </div>
-              <StatusTag status="EXTENDED" text="写入审计" />
+              <StatusTag status="extended" text="写入审计" />
             </div>
             <div v-if="selectedTenant.frozenReason" class="frozen-reason-mini">
               <span>当前冻结原因</span>

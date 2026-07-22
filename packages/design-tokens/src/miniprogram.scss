@@ -1,0 +1,25 @@
+page { background: #f5f7f2; color: #17211b; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; }
+.page { min-height: 100vh; padding: 24px 20px 40px; box-sizing: border-box; }
+.brand { color: #2f7d6e; font-size: 14px; font-weight: 700; }
+.title { display: block; margin-top: 10px; font-size: 28px; font-weight: 700; line-height: 1.25; }
+.subtitle { display: block; margin-top: 8px; color: #60706a; font-size: 14px; line-height: 1.7; }
+.panel { margin-top: 20px; padding: 18px; border: 1px solid #dce5df; border-radius: 8px; background: #fff; }
+.panel-title { display: block; font-size: 17px; font-weight: 700; }
+.field { margin-top: 16px; }
+.label { display: block; margin-bottom: 7px; color: #3d4b45; font-size: 13px; font-weight: 600; }
+.input { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #cbd8d1; border-radius: 8px; background: #fff; }
+.button { display: flex; align-items: center; justify-content: center; min-height: 46px; margin-top: 18px; border: 0; border-radius: 8px; background: #2f7d6e; color: #fff; font-size: 15px; font-weight: 700; }
+.button::after { border: 0; }
+.button.secondary { background: #fff; color: #2f7d6e; border: 1px solid #2f7d6e; }
+.button[disabled] { background: #b8c5bf; color: #fff; }
+.message { display: block; margin-top: 12px; color: #c64a46; font-size: 13px; line-height: 1.5; }
+.metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.metric { min-height: 82px; padding: 14px; border: 1px solid #dce5df; border-radius: 8px; background: #fff; box-sizing: border-box; }
+.metric-value { display: block; font-size: 24px; font-weight: 700; }
+.metric-label { display: block; margin-top: 6px; color: #60706a; font-size: 12px; }
+.list-row { padding: 15px 0; border-bottom: 1px solid #edf2ee; }
+.list-row:last-child { border-bottom: 0; }
+.row-title { display: block; font-size: 15px; font-weight: 650; }
+.row-meta { display: block; margin-top: 5px; color: #60706a; font-size: 12px; line-height: 1.5; }
+.status { display: inline-flex; padding: 4px 8px; border-radius: 999px; background: #e4f1ec; color: #195b50; font-size: 12px; }
+button, input { outline: none; }

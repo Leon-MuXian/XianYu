@@ -1,0 +1,36 @@
+    name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [mvp, main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run check:docs
+      - run: npm run check:api
+      - run: npm run check:java
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build:web
+      - run: npm run build:miniapps
+      - run: mvn test --file apps/api/pom.xml
+      - run: docker compose -f infra/compose/docker-compose.yml config --quiet
+        env:
+          SEREN_MEET_DB_PASSWORD: ci-compose-validation-only
+      - run: docker compose -f infra/compose/docker-compose.yml build api admin-web
+        env:
+          SEREN_MEET_DB_PASSWORD: ci-compose-validation-only

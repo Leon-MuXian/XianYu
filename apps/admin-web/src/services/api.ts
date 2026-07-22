@@ -1,5 +1,4 @@
 import type {
-  ApiResponse,
   AuditLogItem,
   LoginResponse,
   PageResponse,
@@ -8,6 +7,7 @@ import type {
   TenantDetail,
   TenantListResponse
 } from '@/types/admin'
+import { createApiClient, createIdempotencyKey } from '@serenmeet/api-client'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080'
 const TOKEN_KEY = 'serenmeet_admin_token'
@@ -24,29 +24,26 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY)
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers = new Headers(options.headers)
-  headers.set('Content-Type', 'application/json')
-  const token = getToken()
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
-
-  const response = await fetch(`${API_BASE}${path}`, { ...options, headers })
-  const text = await response.text()
-  let payload: ApiResponse<T> | null = null
-  if (text) {
-    try {
-      payload = JSON.parse(text) as ApiResponse<T>
-    } catch {
-      payload = null
+const client = createApiClient({
+  baseUrl: API_BASE,
+  getToken,
+  transport: async request => {
+    const response = await fetch(request.url, {
+      method: request.method,
+      headers: request.headers,
+      body: request.data === undefined ? undefined : JSON.stringify(request.data)
+    })
+    const text = await response.text()
+    let data: unknown = null
+    if (text) {
+      try { data = JSON.parse(text) } catch { data = null }
     }
+    return { statusCode: response.status, data }
   }
-  if (!response.ok || !payload || !payload.success) {
-    const fallback = response.status ? `请求失败：HTTP ${response.status}` : '请求失败：服务无响应'
-    throw new Error(payload?.error?.message || (payload?.requestId ? `请求失败：${payload.requestId}` : fallback))
-  }
-  return payload.data
+})
+
+function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: unknown, idempotencyKey?: string) {
+  return client.request<T>(method, path, data, idempotencyKey)
 }
 
 function toQuery(params: Record<string, string | number | boolean | undefined | null>) {
@@ -62,10 +59,7 @@ function toQuery(params: Record<string, string | number | boolean | undefined | 
 
 export const adminApi = {
   async login(username: string, password: string) {
-    const data = await request<LoginResponse>('/admin/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password })
-    })
+    const data = await request<LoginResponse>('POST', '/admin/auth/login', { username, password })
     setToken(data.token)
     return data
   },
@@ -77,29 +71,23 @@ export const adminApi = {
     page?: number
     pageSize?: number
   }) {
-    return request<TenantListResponse>(`/admin/tenants${toQuery(params)}`)
+    return request<TenantListResponse>('GET', `/admin/tenants${toQuery(params)}`)
   },
 
   getTenant(id: number) {
-    return request<TenantDetail>(`/admin/tenants/${id}`)
+    return request<TenantDetail>('GET', `/admin/tenants/${id}`)
   },
 
   freezeTenant(id: number, reason: string, confirmed: boolean) {
-    return request<TenantDetail>(`/admin/tenants/${id}/freeze`, {
-      method: 'POST',
-      body: JSON.stringify({ reason, confirmed })
-    })
+    return request<TenantDetail>('POST', `/admin/tenants/${id}/freeze`, { reason, confirmed }, createIdempotencyKey('admin-freeze'))
   },
 
   extendTenant(id: number, payload: { newTrialEndAt: string; reason: string; internalNote?: string }) {
-    return request<TenantDetail>(`/admin/tenants/${id}/extend-trial`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    })
+    return request<TenantDetail>('POST', `/admin/tenants/${id}/extend-trial`, payload, createIdempotencyKey('admin-extend'))
   },
 
   getSupportWechat() {
-    return request<SupportWechat>('/admin/support-wechat')
+    return request<SupportWechat>('GET', '/admin/support-wechat')
   },
 
   updateSupportWechat(payload: {
@@ -109,21 +97,15 @@ export const adminApi = {
     enabled: boolean
     reason: string
   }) {
-    return request<SupportWechat>('/admin/support-wechat', {
-      method: 'PUT',
-      body: JSON.stringify(payload)
-    })
+    return request<SupportWechat>('PUT', '/admin/support-wechat', payload, createIdempotencyKey('admin-support-wechat'))
   },
 
   listConfigs(params: { keyword?: string; editableOnly?: boolean }) {
-    return request<PlatformConfig[]>(`/admin/configs${toQuery(params)}`)
+    return request<PlatformConfig[]>('GET', `/admin/configs${toQuery(params)}`)
   },
 
   updateConfig(configKey: string, payload: { newValue: string; reason: string }) {
-    return request<PlatformConfig>(`/admin/configs/${encodeURIComponent(configKey)}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload)
-    })
+    return request<PlatformConfig>('PUT', `/admin/configs/${encodeURIComponent(configKey)}`, payload, createIdempotencyKey('admin-config'))
   },
 
   listAuditLogs(params: {
@@ -133,6 +115,6 @@ export const adminApi = {
     page?: number
     pageSize?: number
   }) {
-    return request<PageResponse<AuditLogItem>>(`/admin/audit-logs${toQuery(params)}`)
+    return request<PageResponse<AuditLogItem>>('GET', `/admin/audit-logs${toQuery(params)}`)
   }
 }

@@ -17,6 +17,7 @@
 7. `versions/mvp/data-model.md`：确认数据库设计。
 8. `versions/mvp/api-map.md`：确认四端 API 映射。
 9. `versions/mvp/deployment.md`：确认部署方式。
+10. `versions/mvp/implementation-status.md`：确认正式范围与实际代码状态。
 
 ## 当前状态
 
@@ -35,3 +36,4 @@
 | 数据库设计 | `versions/mvp/data-model.md` | 全局数据模型、表设计、索引、事务和约束。 |
 | API 映射 | `versions/mvp/api-map.md` | 店长端、教练端、会员端、平台后台完整 API。 |
 | 部署映射 | `versions/mvp/deployment.md` | 最终部署拓扑、环境、发布流程和运维边界。 |
+| 实现状态 | `versions/mvp/implementation-status.md` | 四端、业务域、质量门禁和阶段门的实际状态。 |

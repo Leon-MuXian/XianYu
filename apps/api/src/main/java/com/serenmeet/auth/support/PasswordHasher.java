@@ -2,6 +2,7 @@ package com.serenmeet.auth.support;
 
 import com.serenmeet.common.ApiException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.HexFormat;
@@ -15,6 +16,21 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class PasswordHasher {
+
+  private static final int ITERATIONS = 210_000;
+  private static final int SALT_BYTES = 16;
+  private static final int HASH_BYTES = 32;
+  private final SecureRandom secureRandom = new SecureRandom();
+
+  /**
+   * 生成 PBKDF2-SHA256 密码哈希。
+   */
+  public String encode(String rawPassword) {
+    byte[] salt = new byte[SALT_BYTES];
+    secureRandom.nextBytes(salt);
+    byte[] hash = pbkdf2(rawPassword, salt, ITERATIONS, HASH_BYTES);
+    return "pbkdf2_sha256$" + ITERATIONS + "$" + HexFormat.of().formatHex(salt) + "$" + HexFormat.of().formatHex(hash);
+  }
 
   /**
    * 校验 PBKDF2-SHA256 密码。
@@ -36,7 +52,7 @@ public class PasswordHasher {
   }
 
   private ApiException invalidHash() {
-      throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "PASSWORD_HASH_INVALID", "后台账号密码配置异常");
+    return new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "PASSWORD_HASH_INVALID", "后台账号密码配置异常");
   }
 
   private byte[] pbkdf2(String rawPassword, byte[] salt, int iterations, int length) {

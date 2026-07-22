@@ -1,0 +1,11 @@
+.git
+.idea
+.codex
+node_modules
+**/node_modules
+**/dist
+**/target
+logs
+tmp
+*.log
+*.tsbuildinfo

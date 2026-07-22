@@ -1,86 +1,57 @@
 # 闲遇 API
 
-`apps/api` 是闲遇 MVP 的 Spring Boot 后端工程，当前主要承载平台后台 Web 所需的后台登录、租户查询、冻结/延期、平台配置、客服微信配置和审计记录接口。工程使用 Java 21、Spring Boot 3.3、MyBatis-Plus、Flyway 和 PostgreSQL。
+`apps/api` 是闲遇 MVP 的 Spring Boot 模块化单体，承载统一认证、租户业务、权益账本、最小预约履约链路和平台后台接口。工程使用 Java 21、Spring Boot 3.3、MyBatis-Plus、Flyway 和 PostgreSQL。
 
-## 工程情况
+## 安全初始化
 
-- 应用入口：`src/main/java/com/serenmeet/SerenMeetApplication.java`
-- 配置文件：`src/main/resources/application.yml`
-- 数据库迁移：`src/main/resources/db/migration/`
-- MyBatis XML：`src/main/resources/mapper/`
-- 测试目录：`src/test/java/com/serenmeet/`
+仓库不包含默认管理员账号或密码。管理员表为空时，只有以下三个变量同时存在才会创建首个管理员：
 
-当前初始化数据只保留：
+- `SEREN_MEET_BOOTSTRAP_ADMIN_USERNAME`
+- `SEREN_MEET_BOOTSTRAP_ADMIN_PASSWORD`，至少 12 位
+- `SEREN_MEET_BOOTSTRAP_ADMIN_DISPLAY_NAME`
 
-- 平台后台默认账号：`admin@serenmeet`
-- 默认密码：`admin123`
-- 平台配置：试用天数、到期提醒、邀请码有效期、取消截止、会员卡到期提醒
-- 默认客服微信配置：`SerenMeet-CS`
-
-初始化数据不再写入 mock 租户、门店、业务快照或演示审计记录。租户数据应由后续真实业务流程产生。
+初始化只执行一次，明文密码不会写入数据库或日志。平台配置和默认客服展示信息不是登录凭据。
 
 ## 本地运行
 
-前置要求：
-
-- JDK 21
-- Maven 3.9+
-- Docker Desktop 或可用的 Docker Compose
-
-从仓库根目录启动 PostgreSQL：
+需要 JDK 21、Maven 3.9+、Docker 和 Node.js 20+。先按 `infra/compose/.env.example` 创建本机环境文件，再从仓库根目录运行：
 
 ```bash
 ./scripts/compose-up.sh
 ```
 
-启动 API：
+也可以只准备 PostgreSQL，然后从 `apps/api/.env.example` 创建不提交的 `apps/api/.env`，再启动 API：
 
 ```bash
 ./scripts/dev-api.sh
 ```
 
-也可以直接在本目录运行：
+开发者工具模拟器使用 `SPRING_PROFILES_ACTIVE=local`，此时微信登录使用本地替身。手机真机调试真实微信登录时改为 `trial`，并在 `.env` 注入店长端 AppID/AppSecret；YAML 不保存任何凭据默认值。
 
-```bash
-mvn spring-boot:run
-```
-
-默认服务地址为 `http://127.0.0.1:8080`。应用启动时 Flyway 会自动执行迁移。
-
-常用环境变量：
+常用变量：
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `SEREN_MEET_SERVER_PORT` | `8080` | API 监听端口 |
 | `SEREN_MEET_DB_URL` | `jdbc:postgresql://127.0.0.1:5432/seren_meet` | PostgreSQL JDBC 地址 |
 | `SEREN_MEET_DB_USER` | `seren_meet` | 数据库用户名 |
-| `SEREN_MEET_DB_PASSWORD` | `seren_meet` | 数据库密码 |
+| `SEREN_MEET_DB_PASSWORD` | 无，必填 | 数据库密码 |
 | `SEREN_MEET_ADMIN_ORIGIN` | `http://127.0.0.1:5173` | 后台 Web 跨域来源 |
 | `SEREN_MEET_FLYWAY_ENABLED` | `true` | 是否启用 Flyway |
 
-运行测试：
+运行真实 PostgreSQL 集成测试：
 
 ```bash
 mvn test
 ```
 
-## Docker 打包和部署
+macOS Docker Desktop 使用非默认 socket 时可显式设置 `DOCKER_HOST`。
 
-在仓库根目录构建镜像：
+## 运维入口
 
-```bash
-docker build -f apps/api/Dockerfile -t seren-meet-api:local apps/api
-```
+- OpenAPI：`/v3/api-docs`
+- Liveness：`/actuator/health/liveness`
+- Readiness：`/actuator/health/readiness`
+- 对外部署统一由 Nginx 增加 `/api`，转发时剥离此前缀。
 
-运行容器时需要连接 PostgreSQL。示例使用仓库 Compose 创建的数据库容器：
-
-```bash
-docker run --rm -p 8080:8080 \
-  --network compose_default \
-  -e SEREN_MEET_DB_URL=jdbc:postgresql://postgres:5432/seren_meet \
-  -e SEREN_MEET_DB_USER=seren_meet \
-  -e SEREN_MEET_DB_PASSWORD=seren_meet \
-  seren-meet-api:local
-```
-
-生产或试点部署建议用 Docker Compose 编排 `postgres`、`api`、`admin-web` 和反向代理。API 容器必须通过环境变量注入数据库连接、CORS 来源和运行端口；数据库迁移随应用启动执行。
+完整编排、环境变量和显式数据库重建步骤见 `docs/architecture/versions/mvp/deployment.md`。

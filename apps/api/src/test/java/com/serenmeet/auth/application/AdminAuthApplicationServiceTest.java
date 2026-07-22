@@ -6,6 +6,7 @@ import com.serenmeet.auth.mapper.AdminSessionMapper;
 import com.serenmeet.auth.mapper.AdminUserMapper;
 import com.serenmeet.auth.support.AdminLoginRateLimiter;
 import com.serenmeet.auth.support.PasswordHasher;
+import com.serenmeet.auth.support.TokenHasher;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -36,13 +37,20 @@ class AdminAuthApplicationServiceTest {
 
   @BeforeEach
   void setUp() {
-    service = new AdminAuthApplicationService(adminUserMapper, adminSessionMapper, passwordHasher, loginRateLimiter, CLOCK);
+    service = new AdminAuthApplicationService(
+      adminUserMapper,
+      adminSessionMapper,
+      passwordHasher,
+      loginRateLimiter,
+      new TokenHasher(),
+      CLOCK
+    );
   }
 
   @Test
   void logoutRevokesSessionToken() {
     service.logout("session-token");
 
-    verify(adminSessionMapper).deleteById("session-token");
+    verify(adminSessionMapper).deleteById(new TokenHasher().hash("session-token"));
   }
 }

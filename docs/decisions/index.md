@@ -4,8 +4,9 @@
 
 ## 当前决策
 
-- 当前暂无具体决策记录。
-- 后续只有长期有效、需要解释原因的产品或工程判断，才新增 PDR。
+- `PDR-0001-rewrite-mvp-baseline.md`：无存量环境前提下重写完整 V1 基线。
+- `PDR-0002-unified-opaque-session.md`：四端统一数据库支持的不透明会话。
+- `PDR-0003-phase-one-minimum-booking.md`：阶段一前置最小会员预约以保持履约事实完整。
 
 ## 命名
 

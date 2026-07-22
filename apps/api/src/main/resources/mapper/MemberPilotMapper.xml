@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.serenmeet.member.mapper.MemberPilotMapper">
+  <select id="lockActiveInvite" resultType="map">
+    select id
+    from member_invite_code
+    where code_hash = #{codeHash} and status = 'active' and expires_at &gt; current_timestamp
+    for update
+  </select>
+
+  <select id="selectInviteDetails" resultType="map">
+    select mic.id as "inviteId", mic.tenant_id as "tenantId", mic.member_id as "memberId",
+      mic.expires_at as "expiresAt", m.name as "memberName", s.name as "storeName",
+      s.address, s.contact_phone as "contactPhone",
+      coalesce(json_agg(json_build_object(
+        'cardId', mc.id,
+        'cardName', ct.name,
+        'cardType', mc.card_type,
+        'remainCount', mc.remain_count,
+        'validUntil', mc.valid_until
+      )) filter (where mc.id is not null), '[]') as cards
+    from member_invite_code mic
+    join member m on m.id = mic.member_id
+    join store s on s.id = mic.store_id
+    left join member_card mc on mc.member_id = m.id and mc.tenant_id = mic.tenant_id
+    left join card_template ct on ct.id = mc.template_id
+    where mic.code_hash = #{codeHash}
+      and mic.status = 'active'
+      and mic.expires_at &gt; current_timestamp
+    group by mic.id, m.id, s.id
+  </select>
+
+  <select id="selectIdentityOpenidForUpdate" resultType="string">
+    select openid
+    from member_wechat_identity
+    where id = #{identityId}
+    for update
+  </select>
+
+  <update id="markInviteUsed">
+    update member_invite_code
+    set status = 'used', bound_openid = #{openid}, updated_at = current_timestamp
+    where id = #{inviteId} and status = 'active' and expires_at &gt; current_timestamp
+  </update>
+
+  <update id="bindIdentity">
+    update member_wechat_identity
+    set tenant_id = #{tenantId}, member_id = #{memberId}, last_login_at = current_timestamp
+    where id = #{identityId} and member_id is null
+  </update>
+
+  <update id="markMemberBound">
+    update member
+    set bind_status = 'bound', updated_at = current_timestamp
+    where id = #{memberId} and tenant_id = #{tenantId}
+  </update>
+
+  <update id="attachTenantToSessions">
+    update auth_session
+    set tenant_id = #{tenantId}
+    where actor_type = 'member' and subject_id = #{subjectId} and revoked_at is null
+  </update>
+
+  <select id="selectMemberRef" resultType="map">
+    select tenant_id as "tenantId", member_id as "memberId"
+    from member_wechat_identity
+    where id = #{identityId} and member_id is not null
+  </select>
+
+  <select id="countActiveCards" resultType="int">
+    select count(*)
+    from member_card
+    where tenant_id = #{tenantId}
+      and member_id = #{memberId}
+      and base_status = 'active'
+      and valid_until &gt;= current_date
+      and (card_type = 'period' or remain_count &gt; 0)
+  </select>
+
+  <select id="countFutureBookings" resultType="int">
+    select count(*)
+    from booking b
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    where b.tenant_id = #{tenantId}
+      and b.member_id = #{memberId}
+      and b.status = 'reserved'
+      and bs.start_at &gt; current_timestamp
+  </select>
+
+  <select id="selectMemberProfile" resultType="map">
+    select m.id, m.name, m.member_no as "memberNo", m.contact_text as "contactText",
+      s.id as "storeId", s.name as "storeName", s.address, s.contact_phone as "contactPhone",
+      t.status as "tenantStatus", coalesce(sw.wechat_id, dsw.wechat_id) as "supportWechatId"
+    from member m
+    join store s on s.id = m.store_id
+    join tenant t on t.id = m.tenant_id
+    left join support_wechat sw on sw.tenant_id = t.id and sw.enabled
+    left join support_wechat dsw on dsw.tenant_id is null and dsw.enabled
+    where m.id = #{memberId} and m.tenant_id = #{tenantId}
+  </select>
+
+  <select id="selectCards" resultType="map">
+    select mc.id, ct.name, mc.card_type as "cardType", mc.remain_count as "remainCount",
+      mc.valid_from as "validFrom", mc.valid_until as "validUntil",
+      case
+        when mc.base_status = 'suspended' then 'suspended'
+        when mc.valid_until &lt; current_date then 'expired'
+        when mc.card_type = 'count' and mc.remain_count = 0 then 'empty'
+        when mc.valid_until &lt;= current_date + cast(pc.value_text as integer) then 'expiring'
+        when mc.card_type = 'count' and mc.remain_count &lt;= ct.low_balance_threshold then 'low_balance'
+        else 'active'
+      end as status,
+      coalesce(string_agg(distinct si.name, '、'), '') as "serviceScope",
+      coalesce(string_agg(distinct sa.staff_name, '、'), '') as "staffScope"
+    from member_card mc
+    join card_template ct on ct.id = mc.template_id
+    cross join platform_config pc
+    left join card_template_service_scope css on css.card_template_id = ct.id
+    left join service_item si on si.id = css.service_item_id
+    left join card_template_staff_scope cts on cts.card_template_id = ct.id
+    left join staff_account sa on sa.id = cts.staff_account_id
+    where mc.tenant_id = #{tenantId}
+      and mc.member_id = #{memberId}
+      and pc.config_key = 'member_card.expiring_warn_days'
+    group by mc.id, ct.id, pc.value_text
+    order by mc.valid_until, mc.id
+  </select>
+
+  <select id="selectServices" resultType="map">
+    select bs.id as "slotId", si.id as "serviceId", si.name as "serviceName",
+      si.service_type as "serviceType", si.duration_min as "durationMin", sa.id as "staffId",
+      sa.staff_name as "staffName", r.name as "resourceName", bs.start_at as "startAt",
+      bs.end_at as "endAt", bs.capacity, bs.reserved_count as "reservedCount",
+      (bs.capacity - bs.reserved_count) as "availableCount", bs.cancel_deadline_min as "cancelDeadlineMin"
+    from bookable_slot bs
+    join service_item si on si.id = bs.service_item_id
+    join staff_account sa on sa.id = bs.staff_account_id
+    join resource r on r.id = bs.resource_id
+    where bs.tenant_id = #{tenantId} and bs.status = 'published' and bs.start_at &gt; current_timestamp
+    order by bs.start_at
+  </select>
+
+  <select id="selectAvailableCards" resultType="map">
+    select mc.id, ct.name, mc.card_type as "cardType", mc.remain_count as "remainCount",
+      si.deduct_count as "deductCount", mc.valid_until as "validUntil"
+    from bookable_slot bs
+    join service_item si on si.id = bs.service_item_id
+    join member_card mc on mc.tenant_id = bs.tenant_id and mc.member_id = #{memberId}
+    join card_template ct on ct.id = mc.template_id
+    where bs.id = #{slotId}
+      and bs.tenant_id = #{tenantId}
+      and bs.status = 'published'
+      and mc.base_status = 'active'
+      and mc.valid_from &lt;= current_date
+      and mc.valid_until &gt;= current_date
+      and (mc.card_type = 'period' or mc.remain_count &gt;= si.deduct_count)
+      and exists(
+        select 1
+        from card_template_service_scope css
+        where css.card_template_id = ct.id and css.service_item_id = bs.service_item_id
+      )
+      and (not exists(
+          select 1 from card_template_staff_scope cts0 where cts0.card_template_id = ct.id
+        ) or exists(
+          select 1
+          from card_template_staff_scope cts
+          where cts.card_template_id = ct.id and cts.staff_account_id = bs.staff_account_id
+        ))
+    order by mc.valid_until, mc.id
+  </select>
+
+  <update id="reserveSlot">
+    update bookable_slot
+    set reserved_count = reserved_count + 1, updated_at = current_timestamp
+    where id = #{slotId}
+      and tenant_id = #{tenantId}
+      and status = 'published'
+      and start_at &gt; current_timestamp
+      and reserved_count &lt; capacity
+  </update>
+
+  <select id="insertBooking" resultType="long" flushCache="true" affectData="true">
+    insert into booking(tenant_id, store_id, bookable_slot_id, member_id, member_card_id)
+    select #{tenantId}, bs.store_id, bs.id, #{memberId}, #{memberCardId}
+    from bookable_slot bs
+    where bs.id = #{slotId} and bs.tenant_id = #{tenantId}
+    returning id
+  </select>
+
+  <select id="selectBookings" resultType="map">
+    select b.id, b.status, si.name as "serviceName", sa.staff_name as "staffName",
+      r.name as "resourceName", bs.start_at as "startAt", bs.end_at as "endAt", ct.name as "cardName"
+    from booking b
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    join staff_account sa on sa.id = bs.staff_account_id
+    join resource r on r.id = bs.resource_id
+    join member_card mc on mc.id = b.member_card_id
+    join card_template ct on ct.id = mc.template_id
+    where b.tenant_id = #{tenantId} and b.member_id = #{memberId}
+    order by bs.start_at desc
+  </select>
+
+  <select id="selectRecords" resultType="map">
+    select dr.id, dr.deduct_count as "deductCount", dr.before_count as "beforeCount",
+      dr.after_count as "afterCount", dr.deducted_at as "deductedAt", si.name as "serviceName",
+      sn.staff_note_text as "staffNoteText", sn.member_feedback_text as "memberFeedbackText"
+    from deduction_record dr
+    join booking b on b.id = dr.booking_id
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    left join service_note sn on sn.booking_id = b.id
+    where dr.tenant_id = #{tenantId} and dr.member_id = #{memberId}
+    order by dr.deducted_at desc
+  </select>
+
+  <select id="selectBookingDetail" resultType="map">
+    select b.id, si.name as "serviceName", sa.staff_name as "staffName",
+      r.name as "resourceName", bs.start_at as "startAt", bs.end_at as "endAt"
+    from booking b
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    join staff_account sa on sa.id = bs.staff_account_id
+    join resource r on r.id = bs.resource_id
+    where b.id = #{bookingId} and b.tenant_id = #{tenantId} and b.member_id = #{memberId}
+  </select>
+</mapper>

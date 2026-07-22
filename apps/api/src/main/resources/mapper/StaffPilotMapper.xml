@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.serenmeet.staff.mapper.StaffPilotMapper">
+  <select id="selectAccount" resultType="map">
+    select sa.id, sa.login_name as "loginName", sa.staff_name as "staffName",
+      sa.role_label as "roleLabel", sa.status, sa.first_login as "firstLogin",
+      s.name as "storeName", s.address, s.contact_phone as "contactPhone",
+      s.business_hours as "businessHours", t.status as "tenantStatus"
+    from staff_account sa
+    join store s on s.id = sa.store_id
+    join tenant t on t.id = sa.tenant_id
+    where sa.id = #{staffId} and sa.tenant_id = #{tenantId}
+  </select>
+
+  <select id="selectProfile" resultType="map">
+    select sa.id, sa.staff_name as "staffName", sa.role_label as "roleLabel",
+      sa.first_login as "firstLogin", sp.display_name as "displayName",
+      sp.specialty_text as "specialtyText", sp.intro_text as "introText",
+      s.name as "storeName", s.address, s.contact_phone as "contactPhone",
+      s.business_hours as "businessHours", s.business_categories as "businessCategories",
+      s.service_tags as "serviceTags"
+    from staff_account sa
+    join staff_profile sp on sp.staff_account_id = sa.id
+    join store s on s.id = sa.store_id
+    where sa.id = #{staffId} and sa.tenant_id = #{tenantId}
+  </select>
+
+  <update id="updateProfile">
+    update staff_profile
+    set display_name = #{displayName}, specialty_text = #{specialtyText},
+      intro_text = #{introText}, updated_at = current_timestamp
+    where staff_account_id = #{staffId} and tenant_id = #{tenantId}
+  </update>
+
+  <update id="finishFirstLogin">
+    update staff_account
+    set first_login = false, updated_at = current_timestamp
+    where id = #{staffId} and tenant_id = #{tenantId}
+  </update>
+
+  <select id="selectToday" resultType="map">
+    select bs.id as "slotId", si.name as "serviceName", r.name as "resourceName",
+      bs.start_at as "startAt", bs.end_at as "endAt", bs.capacity,
+      bs.reserved_count as "reservedCount",
+      count(b.id) filter (where b.status = 'reserved') as "waitingArrival",
+      count(b.id) filter (where b.status = 'arrived') as "waitingDeduction"
+    from bookable_slot bs
+    join service_item si on si.id = bs.service_item_id
+    join resource r on r.id = bs.resource_id
+    left join booking b on b.bookable_slot_id = bs.id and b.status != 'cancelled'
+    where bs.tenant_id = #{tenantId}
+      and bs.staff_account_id = #{staffId}
+      and bs.start_at::date = current_date
+      and bs.status = 'published'
+    group by bs.id, si.id, r.id
+    order by bs.start_at
+  </select>
+
+  <select id="countAssignedSlot" resultType="int">
+    select count(*)
+    from bookable_slot
+    where id = #{slotId} and tenant_id = #{tenantId} and staff_account_id = #{staffId}
+  </select>
+
+  <select id="selectRoster" resultType="map">
+    select b.id as "bookingId", b.status, m.id as "memberId", m.name as "memberName",
+      ct.name as "cardName", mc.card_type as "cardType", mc.remain_count as "remainCount",
+      mc.valid_until as "validUntil", si.deduct_count as "deductCount"
+    from booking b
+    join member m on m.id = b.member_id
+    join member_card mc on mc.id = b.member_card_id
+    join card_template ct on ct.id = mc.template_id
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    where b.tenant_id = #{tenantId}
+      and b.bookable_slot_id = #{slotId}
+      and bs.staff_account_id = #{staffId}
+      and b.status != 'cancelled'
+    order by b.id
+  </select>
+
+  <select id="selectBookingForAttendance" resultType="map">
+    select b.id, b.status, b.store_id as "storeId", b.member_id as "memberId",
+      b.member_card_id as "memberCardId"
+    from booking b
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    where b.id = #{bookingId} and b.tenant_id = #{tenantId} and bs.staff_account_id = #{staffId}
+    for update of b
+  </select>
+
+  <select id="selectAttendance" resultType="map">
+    select id as "attendanceId", booking_id as "bookingId", confirmed_at as "confirmedAt"
+    from attendance_confirm
+    where booking_id = #{bookingId} and tenant_id = #{tenantId}
+  </select>
+
+  <select id="insertAttendance" resultType="long" flushCache="true" affectData="true">
+    insert into attendance_confirm(
+      tenant_id, store_id, booking_id, member_id, member_card_id, confirmed_by_staff_id
+    ) values (
+      #{tenantId}, #{storeId}, #{bookingId}, #{memberId}, #{memberCardId}, #{staffId}
+    )
+    returning id
+  </select>
+
+  <update id="markBookingArrived">
+    update booking
+    set status = 'arrived', updated_at = current_timestamp
+    where id = #{bookingId} and tenant_id = #{tenantId}
+  </update>
+
+  <select id="selectDeductionContext" resultType="map">
+    select b.id, b.status, b.store_id as "storeId", b.member_id as "memberId",
+      b.member_card_id as "memberCardId", si.deduct_count as "deductCount",
+      ac.id as "attendanceId"
+    from booking b
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    left join attendance_confirm ac on ac.booking_id = b.id
+    where b.id = #{bookingId} and b.tenant_id = #{tenantId} and bs.staff_account_id = #{staffId}
+    for update of b
+  </select>
+
+  <select id="selectCardForDeductionForUpdate" resultType="map">
+    select card_type as "cardType", remain_count as "remainCount", base_status as "baseStatus",
+      valid_from as "validFrom", valid_until as "validUntil"
+    from member_card
+    where id = #{memberCardId} and tenant_id = #{tenantId}
+    for update
+  </select>
+
+  <update id="deductCardBalance">
+    update member_card
+    set remain_count = remain_count - #{deductCount}, updated_at = current_timestamp
+    where id = #{memberCardId}
+      and tenant_id = #{tenantId}
+      and remain_count &gt;= #{deductCount}
+  </update>
+
+  <select id="insertDeduction" resultType="long" flushCache="true" affectData="true">
+    insert into deduction_record(
+      tenant_id, store_id, booking_id, attendance_id, member_id, member_card_id,
+      deduct_count, before_count, after_count, deducted_by_staff_id
+    ) values (
+      #{tenantId}, #{storeId}, #{bookingId}, #{attendanceId}, #{memberId}, #{memberCardId},
+      #{deductCount}, #{beforeCount}, #{afterCount}, #{staffId}
+    )
+    returning id
+  </select>
+
+  <update id="markBookingDeducted">
+    update booking
+    set status = 'deducted', updated_at = current_timestamp
+    where id = #{bookingId} and tenant_id = #{tenantId}
+  </update>
+
+  <select id="selectBookingForNote" resultType="map">
+    select b.id, b.status, dr.id as "deductionId"
+    from booking b
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    left join deduction_record dr on dr.booking_id = b.id
+    where b.id = #{bookingId} and b.tenant_id = #{tenantId} and bs.staff_account_id = #{staffId}
+    for update of b
+  </select>
+
+  <insert id="upsertServiceNote">
+    insert into service_note(
+      tenant_id, booking_id, deduction_record_id, staff_note_text, member_feedback_text
+    ) values (
+      #{tenantId}, #{bookingId}, #{deductionId}, #{staffNote}, #{memberFeedback}
+    )
+    on conflict (booking_id) do update
+    set staff_note_text = excluded.staff_note_text,
+      member_feedback_text = excluded.member_feedback_text,
+      updated_at = current_timestamp
+  </insert>
+
+  <update id="markBookingNoteDone">
+    update booking
+    set status = 'note_done', updated_at = current_timestamp
+    where id = #{bookingId} and tenant_id = #{tenantId}
+  </update>
+
+  <select id="selectRecords" resultType="map">
+    select dr.id, dr.booking_id as "bookingId", m.name as "memberName",
+      si.name as "serviceName", dr.deduct_count as "deductCount",
+      dr.before_count as "beforeCount", dr.after_count as "afterCount",
+      dr.deducted_at as "deductedAt", sn.staff_note_text as "staffNoteText"
+    from deduction_record dr
+    join booking b on b.id = dr.booking_id
+    join member m on m.id = dr.member_id
+    join bookable_slot bs on bs.id = b.bookable_slot_id
+    join service_item si on si.id = bs.service_item_id
+    left join service_note sn on sn.booking_id = b.id
+    where dr.tenant_id = #{tenantId} and dr.deducted_by_staff_id = #{staffId}
+    order by dr.deducted_at desc
+  </select>
+
+  <select id="selectDeductionByBooking" resultType="map">
+    select id as "deductionId", booking_id as "bookingId", deduct_count as "deductCount",
+      before_count as "beforeCount", after_count as "afterCount", 'deducted' as status
+    from deduction_record
+    where booking_id = #{bookingId} and tenant_id = #{tenantId}
+  </select>
+</mapper>

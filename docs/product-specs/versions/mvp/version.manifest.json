@@ -6,7 +6,7 @@
   "mode": "full",
   "baseVersion": null,
   "dependsOn": [],
-  "lastUpdated": "2026-06-08",
+  "lastUpdated": "2026-07-21",
   "documents": {
     "readme": "README.md",
     "spec": "spec.md",
@@ -27,7 +27,9 @@
     "systemDesign": "../../../architecture/versions/mvp/system-design.md",
     "dataModel": "../../../architecture/versions/mvp/data-model.md",
     "apiMap": "../../../architecture/versions/mvp/api-map.md",
-    "deployment": "../../../architecture/versions/mvp/deployment.md"
+    "deployment": "../../../architecture/versions/mvp/deployment.md",
+    "implementationStatus": "../../../architecture/versions/mvp/implementation-status.md",
+    "prototypeImplementationMap": "../../../architecture/versions/mvp/prototype-implementation-map.json"
   },
   "incrementalVersionPattern": {
     "mode": "incremental",

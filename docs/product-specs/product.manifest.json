@@ -4,7 +4,7 @@
   "productName": "闲遇",
   "activeVersion": "mvp",
   "activeStatus": "active",
-  "lastUpdated": "2026-06-08",
+  "lastUpdated": "2026-07-21",
   "current": {
     "entry": "current.md",
     "productSpec": {
@@ -33,7 +33,8 @@
       "systemDesign": "../architecture/versions/mvp/system-design.md",
       "dataModel": "../architecture/versions/mvp/data-model.md",
       "apiMap": "../architecture/versions/mvp/api-map.md",
-      "deployment": "../architecture/versions/mvp/deployment.md"
+      "deployment": "../architecture/versions/mvp/deployment.md",
+      "implementationStatus": "../architecture/versions/mvp/implementation-status.md"
     },
     "execPlanRecords": {
       "completedIndex": "../exec-plans/completed/README.md",

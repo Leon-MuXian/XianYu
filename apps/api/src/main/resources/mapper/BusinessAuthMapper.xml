@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.serenmeet.auth.mapper.BusinessAuthMapper">
+  <select id="selectOwnerIdentity" resultType="map">
+    select id, tenant_id as "tenantId"
+    from owner_wechat_identity
+    where openid = #{openid}
+  </select>
+
+  <select id="selectMemberIdentity" resultType="map">
+    select id, tenant_id as "tenantId"
+    from member_wechat_identity
+    where openid = #{openid}
+  </select>
+
+  <select id="selectStaffCredential" resultType="map">
+    select id, tenant_id as "tenantId", password_hash as "passwordHash", status
+    from staff_account
+    where login_name = #{loginName}
+  </select>
+
+  <select id="selectSessionPrincipal" resultType="map">
+    select s.actor_type as "actorType", s.subject_id as "subjectId", s.tenant_id as "tenantId",
+      t.status as "tenantStatus",
+      case when s.actor_type = 'member' then exists(
+        select 1
+        from member_wechat_identity mwi
+        where mwi.id = cast(s.subject_id as bigint) and mwi.member_id is not null
+      ) else true end as bound,
+      case when s.actor_type = 'staff' then coalesce((
+        select sa.first_login
+        from staff_account sa
+        where sa.id = cast(s.subject_id as bigint) and sa.status = 'active'
+      ), false) else false end as "firstLogin"
+    from auth_session s
+    left join tenant t on t.id = s.tenant_id
+    where s.token_hash = #{tokenHash}
+      and s.revoked_at is null
+      and s.expires_at &gt; current_timestamp
+  </select>
+
+  <select id="selectEnabledIntegerConfig" resultType="int">
+    select cast(value_text as integer)
+    from platform_config
+    where config_key = #{configKey} and enabled
+  </select>
+
+  <select id="insertTenant" resultType="long" flushCache="true" affectData="true">
+    insert into tenant(name, city, status, trial_start_at, trial_end_at)
+    values (#{name}, '', 'trialing', #{trialStartAt}, #{trialEndAt})
+    returning id
+  </select>
+
+  <select id="insertOwnerIdentity" resultType="long" flushCache="true" affectData="true">
+    insert into owner_wechat_identity(tenant_id, openid)
+    values (#{tenantId}, #{openid})
+    returning id
+  </select>
+
+  <select id="insertMemberIdentity" resultType="long" flushCache="true" affectData="true">
+    insert into member_wechat_identity(openid)
+    values (#{openid})
+    returning id
+  </select>
+
+  <insert id="insertOnboardingDraft">
+    insert into store_onboarding_draft(tenant_id, owner_openid)
+    values (#{tenantId}, #{openid})
+  </insert>
+
+  <update id="touchOwnerIdentity">
+    update owner_wechat_identity
+    set last_login_at = current_timestamp
+    where id = #{identityId}
+  </update>
+
+  <update id="touchMemberIdentity">
+    update member_wechat_identity
+    set last_login_at = current_timestamp
+    where id = #{identityId}
+  </update>
+
+  <select id="countActiveStaff" resultType="int">
+    select count(*)
+    from staff_account
+    where id = #{staffId} and status = 'active'
+  </select>
+
+  <select id="countStore" resultType="int">
+    select count(*)
+    from store
+    where tenant_id = #{tenantId}
+  </select>
+</mapper>

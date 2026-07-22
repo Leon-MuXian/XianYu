@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.serenmeet.common.mapper.IdempotencyRequestMapper">
+  <insert id="insertClaim">
+    insert into idempotency_request(
+      actor_type, actor_id, operation, idempotency_key, request_hash, expires_at
+    ) values (
+      #{actorType}, #{actorId}, #{operation}, #{idempotencyKey}, #{requestHash}, #{expiresAt}
+    )
+    on conflict (actor_type, actor_id, operation, idempotency_key) do nothing
+  </insert>
+
+  <select id="selectClaim" resultType="map">
+    select request_hash as "requestHash", response_body::text as "responseBody"
+    from idempotency_request
+    where actor_type = #{actorType}
+      and actor_id = #{actorId}
+      and operation = #{operation}
+      and idempotency_key = #{idempotencyKey}
+  </select>
+
+  <update id="completeClaim">
+    update idempotency_request
+    set response_status = 200, response_body = cast(#{responseBody} as jsonb)
+    where actor_type = #{actorType}
+      and actor_id = #{actorId}
+      and operation = #{operation}
+      and idempotency_key = #{idempotencyKey}
+  </update>
+
+  <delete id="releaseClaim">
+    delete from idempotency_request
+    where actor_type = #{actorType}
+      and actor_id = #{actorId}
+      and operation = #{operation}
+      and idempotency_key = #{idempotencyKey}
+      and response_body is null
+  </delete>
+</mapper>

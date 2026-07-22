@@ -4,19 +4,21 @@ package com.serenmeet.tenant.support;
  * 租户生命周期状态。
  */
 public enum TenantStatus {
-  TRIALING("试用中"),
-  EXPIRING("即将到期"),
-  FROZEN("已冻结"),
-  EXTENDED("已延长");
+  TRIALING("trialing", "试用中"),
+  EXPIRING("expiring", "即将到期"),
+  FROZEN("frozen", "已冻结"),
+  EXTENDED("extended", "已延长");
 
+  private final String code;
   private final String text;
 
-  TenantStatus(String text) {
+  TenantStatus(String code, String text) {
+    this.code = code;
     this.text = text;
   }
 
   public String code() {
-    return name();
+    return code;
   }
 
   public String text() {

@@ -10,7 +10,7 @@ import com.serenmeet.audit.application.AuditApplicationService;
 import com.serenmeet.audit.domain.AuditAction;
 import com.serenmeet.common.ApiException;
 import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +50,7 @@ public class SupportWechatApplicationService {
     entity.setDisplayText(request.displayText());
     entity.setDisplayScope(request.displayScope());
     entity.setEnabled(request.enabled() == null || request.enabled());
-    entity.setUpdatedAt(LocalDateTime.now(clock));
+    entity.setUpdatedAt(OffsetDateTime.now(clock));
     supportWechatMapper.updateById(entity);
     auditService.record(null, actor.username(), AuditAction.UPDATE_SUPPORT_WECHAT.code(), "默认客服", oldValue, entity.getWechatId(), request.reason());
     return toResponse(entity);

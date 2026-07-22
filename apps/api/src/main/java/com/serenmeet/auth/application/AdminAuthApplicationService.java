@@ -10,10 +10,10 @@ import com.serenmeet.auth.mapper.AdminSessionMapper;
 import com.serenmeet.auth.mapper.AdminUserMapper;
 import com.serenmeet.auth.support.AdminLoginRateLimiter;
 import com.serenmeet.auth.support.PasswordHasher;
+import com.serenmeet.auth.support.TokenHasher;
 import com.serenmeet.common.ApiException;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.OffsetDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +28,7 @@ public class AdminAuthApplicationService {
   private final AdminSessionMapper adminSessionMapper;
   private final PasswordHasher passwordHasher;
   private final AdminLoginRateLimiter loginRateLimiter;
+  private final TokenHasher tokenHasher;
   private final Clock clock;
 
   public AdminAuthApplicationService(
@@ -35,12 +36,14 @@ public class AdminAuthApplicationService {
     AdminSessionMapper adminSessionMapper,
     PasswordHasher passwordHasher,
     AdminLoginRateLimiter loginRateLimiter,
+    TokenHasher tokenHasher,
     Clock clock
   ) {
     this.adminUserMapper = adminUserMapper;
     this.adminSessionMapper = adminSessionMapper;
     this.passwordHasher = passwordHasher;
     this.loginRateLimiter = loginRateLimiter;
+    this.tokenHasher = tokenHasher;
     this.clock = clock;
   }
 
@@ -51,24 +54,25 @@ public class AdminAuthApplicationService {
   public LoginResponse login(LoginRequest request) {
     loginRateLimiter.checkAllowed(request.username());
     AdminUserEntity user = adminUserMapper.selectOne(
-      new LambdaQueryWrapper<AdminUserEntity>().eq(AdminUserEntity::getUsername, request.username())
+      new LambdaQueryWrapper<AdminUserEntity>().eq(AdminUserEntity::getLoginName, request.username())
     );
-    if (user == null || !Boolean.TRUE.equals(user.getEnabled()) || !passwordHasher.matches(request.password(), user.getPasswordHash())) {
+    if (user == null || !"active".equals(user.getStatus()) || !passwordHasher.matches(request.password(), user.getPasswordHash())) {
       loginRateLimiter.recordFailure(request.username());
       throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "账号或密码错误");
     }
     loginRateLimiter.recordSuccess(request.username());
 
-    String token = UUID.randomUUID().toString().replace("-", "");
-    LocalDateTime now = LocalDateTime.now(clock);
-    LocalDateTime expiresAt = now.plusHours(12);
+    String token = tokenHasher.generateToken();
+    OffsetDateTime now = OffsetDateTime.now(clock);
+    OffsetDateTime expiresAt = now.plusHours(12);
     AdminSessionEntity session = new AdminSessionEntity();
-    session.setToken(token);
-    session.setAdminUserId(user.getId());
+    session.setTokenHash(tokenHasher.hash(token));
+    session.setActorType("admin");
+    session.setSubjectId(user.getId().toString());
     session.setCreatedAt(now);
     session.setExpiresAt(expiresAt);
     adminSessionMapper.insert(session);
-    return new LoginResponse(token, expiresAt, new AdminUserView(user.getId(), user.getUsername(), user.getDisplayName()));
+    return new LoginResponse(token, expiresAt, new AdminUserView(user.getId(), user.getLoginName(), user.getDisplayName()));
   }
 
   /**
@@ -76,7 +80,7 @@ public class AdminAuthApplicationService {
    */
   @Transactional
   public void logout(String token) {
-    adminSessionMapper.deleteById(token);
+    adminSessionMapper.deleteById(tokenHasher.hash(token));
   }
 
   /**
@@ -84,7 +88,7 @@ public class AdminAuthApplicationService {
    */
   public AdminUserView requireUser(String authorizationHeader) {
     String token = requireToken(authorizationHeader);
-    AdminUserView user = adminSessionMapper.findUserByToken(token);
+    AdminUserView user = adminSessionMapper.findAdminUserByTokenHash(tokenHasher.hash(token));
     if (user == null) {
       throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_REQUIRED", "请先登录平台后台");
     }

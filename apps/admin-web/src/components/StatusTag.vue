@@ -7,12 +7,7 @@ defineProps<{
 }>()
 
 function klass(status: string) {
-  return {
-    TRIALING: 'trialing',
-    EXPIRING: 'expiring',
-    FROZEN: 'frozen',
-    EXTENDED: 'extended'
-  }[status] || 'trialing'
+  return ['trialing', 'expiring', 'frozen', 'extended'].includes(status) ? status : 'trialing'
 }
 </script>
 

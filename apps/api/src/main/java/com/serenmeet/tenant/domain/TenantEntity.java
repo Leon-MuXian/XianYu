@@ -1,10 +1,10 @@
 package com.serenmeet.tenant.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,24 +26,25 @@ public class TenantEntity {
   /** 租户所在城市，用于后台筛选和运营判断。 */
   private String city;
 
-  /** 租户状态：TRIALING、EXPIRING、FROZEN、EXTENDED。 */
+  /** 租户状态：trialing、expiring、frozen、extended。 */
   private String status;
 
   /** 试用开始日期。 */
-  private LocalDate trialStartAt;
+  private OffsetDateTime trialStartAt;
 
   /** 试用或人工延长后的到期日期。 */
-  private LocalDate trialEndAt;
+  private OffsetDateTime trialEndAt;
 
   /** 冻结原因，未冻结时为空。 */
-  private String frozenReason;
+  @TableField("freeze_reason")
+  private String freezeReason;
 
-  /** 冻结页展示的客服微信文本 ID。 */
-  private String supportWechatId;
+  /** 最近冻结时间，未冻结时为空。 */
+  private OffsetDateTime frozenAt;
 
   /** 租户自动开通时间。 */
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   /** 租户状态或期限最近更新时间。 */
-  private LocalDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 }

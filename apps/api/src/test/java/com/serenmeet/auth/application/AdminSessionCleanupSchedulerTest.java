@@ -5,7 +5,7 @@ import static org.mockito.Mockito.verify;
 import com.serenmeet.auth.mapper.AdminSessionMapper;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +24,6 @@ class AdminSessionCleanupSchedulerTest {
 
     new AdminSessionCleanupScheduler(adminSessionMapper, clock).cleanupExpiredSessions();
 
-    verify(adminSessionMapper).deleteExpiredSessions(LocalDateTime.of(2026, 6, 7, 18, 0));
+    verify(adminSessionMapper).deleteExpiredSessions(OffsetDateTime.parse("2026-06-07T18:00:00+08:00"));
   }
 }

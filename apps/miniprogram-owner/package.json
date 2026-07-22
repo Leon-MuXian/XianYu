@@ -1,0 +1,33 @@
+{
+  "name": "@serenmeet/miniprogram-owner",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "build:weapp": "taro build --type weapp",
+    "build:weapp:device": "../../scripts/build-owner-device.sh",
+    "build:weapp:preview": "node ../../scripts/check-miniprogram-preview-config.mjs && taro build --type weapp",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run src/login-diagnostics.test.ts"
+  },
+  "dependencies": {
+    "@serenmeet/api-client": "0.0.0",
+    "@serenmeet/business-components": "0.0.0",
+    "@serenmeet/design-tokens": "0.0.0",
+    "@serenmeet/shared-types": "0.0.0",
+    "@tarojs/components": "4.2.1",
+    "@tarojs/plugin-framework-vue3": "4.2.1",
+    "@tarojs/plugin-platform-weapp": "4.2.1",
+    "@tarojs/runtime": "4.2.1",
+    "@tarojs/taro": "4.2.1",
+    "vue": "3.5.16"
+  },
+  "devDependencies": {
+    "@tarojs/cli": "4.2.1",
+    "@tarojs/webpack5-runner": "4.2.1",
+    "@vue/compiler-sfc": "3.5.16",
+    "babel-preset-taro": "4.2.1",
+    "typescript": "5.8.3",
+    "vue-tsc": "2.2.10"
+  }
+}

@@ -18,7 +18,8 @@ import com.serenmeet.common.PageResponse;
 import com.serenmeet.common.PageQuery;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.LocalTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,7 +79,7 @@ public class TenantAdminApplicationService {
   @Transactional
   public int freezeExpiredTenants() {
     int frozenCount = 0;
-    LocalDateTime now = LocalDateTime.now(clock);
+    OffsetDateTime now = OffsetDateTime.now(clock);
     for (TenantEntity tenant : tenantMapper.selectExpiredActiveTenants()) {
       String oldStatus = tenant.getStatus();
       int affectedRows = tenantMapper.freezeExpiredTenant(tenant.getId(), AUTO_EXPIRE_REASON, now);
@@ -110,8 +111,9 @@ public class TenantAdminApplicationService {
     }
     String oldStatus = tenant.getStatus();
     tenant.setStatus(TenantStatus.FROZEN.code());
-    tenant.setFrozenReason(request.reason());
-    tenant.setUpdatedAt(LocalDateTime.now(clock));
+    tenant.setFreezeReason(request.reason());
+    tenant.setFrozenAt(OffsetDateTime.now(clock));
+    tenant.setUpdatedAt(OffsetDateTime.now(clock));
     tenantMapper.updateById(tenant);
     auditService.record(tenantId, actor.username(), AuditAction.FREEZE_TENANT.code(), tenant.getName(), oldStatus, TenantStatus.FROZEN.code(), request.reason());
     return getTenant(tenantId);
@@ -129,11 +131,12 @@ public class TenantAdminApplicationService {
     if (!TenantStatus.FROZEN.code().equals(tenant.getStatus())) {
       throw new ApiException(HttpStatus.CONFLICT, "TENANT_NOT_FROZEN", "租户未冻结，不能延期并解冻");
     }
-    String oldValue = tenant.getTrialEndAt().toString();
+    String oldValue = tenant.getTrialEndAt().toLocalDate().toString();
     tenant.setStatus(TenantStatus.EXTENDED.code());
-    tenant.setTrialEndAt(request.newTrialEndAt());
-    tenant.setFrozenReason(null);
-    tenant.setUpdatedAt(LocalDateTime.now(clock));
+    tenant.setTrialEndAt(request.newTrialEndAt().atTime(LocalTime.MAX).atZone(clock.getZone()).toOffsetDateTime());
+    tenant.setFreezeReason(null);
+    tenant.setFrozenAt(null);
+    tenant.setUpdatedAt(OffsetDateTime.now(clock));
     tenantMapper.updateById(tenant);
     String reason = request.internalNote() == null || request.internalNote().isBlank()
       ? request.reason()

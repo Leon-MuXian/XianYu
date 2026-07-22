@@ -1,0 +1,971 @@
+package com.serenmeet.owner.application;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.serenmeet.auth.support.PasswordHasher;
+import com.serenmeet.auth.support.SessionPrincipal;
+import com.serenmeet.auth.support.TokenHasher;
+import com.serenmeet.common.ApiException;
+import com.serenmeet.owner.mapper.OwnerPilotMapper;
+import java.math.BigDecimal;
+import java.security.SecureRandom;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/** 店长端阶段一试点链路的业务编排与事务服务。 */
+@Service
+public class OwnerPilotApplicationService {
+
+  private static final char[] INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
+  private static final int INVITE_CODE_LENGTH = 8;
+  private static final String INVITE_VALID_DAYS_CONFIG = "member.invite.default_valid_days";
+  private static final String CANCELLATION_DEADLINE_CONFIG = "booking.cancel.default_deadline_min";
+
+  private final OwnerPilotMapper ownerMapper;
+  private final ObjectMapper objectMapper;
+  private final PasswordHasher passwordHasher;
+  private final TokenHasher tokenHasher;
+  private final Clock clock;
+  private final SecureRandom secureRandom = new SecureRandom();
+
+  public OwnerPilotApplicationService(
+      OwnerPilotMapper ownerMapper,
+      ObjectMapper objectMapper,
+      PasswordHasher passwordHasher,
+      TokenHasher tokenHasher,
+      Clock clock) {
+    this.ownerMapper = ownerMapper;
+    this.objectMapper = objectMapper;
+    this.passwordHasher = passwordHasher;
+    this.tokenHasher = tokenHasher;
+    this.clock = clock;
+  }
+
+  public Map<String, Object> me(SessionPrincipal principal) {
+    return requireOne(ownerMapper.selectOwnerProfile(principal.tenantId()));
+  }
+
+  public Map<String, Object> store(SessionPrincipal principal) {
+    Map<String, Object> row =
+        new LinkedHashMap<>(requireOne(ownerMapper.selectStoreDetail(principal.tenantId())));
+    JsonNode businessHours = json(row.get("businessHours"));
+    row.put("businessCategories", jsonValue(row.get("businessCategories")));
+    row.put("serviceTags", jsonValue(row.get("serviceTags")));
+    row.put("businessHours", jsonValue(row.get("businessHours")));
+    row.put("businessHoursSummary", summarizeBusinessHours(businessHours));
+    return row;
+  }
+
+  @Transactional
+  public Map<String, Object> updateStoreProfile(
+      SessionPrincipal principal,
+      String name,
+      String city,
+      List<String> businessCategories,
+      List<String> serviceTags,
+      String address,
+      String contactPhone) {
+    validateStoreProfile(name, businessCategories, serviceTags, address, contactPhone);
+    Long tenantId = principal.tenantId();
+    requireStoreId(tenantId);
+    try {
+      ownerMapper.updateStoreProfile(
+          tenantId,
+          name,
+          writeJson(businessCategories),
+          writeJson(serviceTags),
+          address,
+          contactPhone);
+      ownerMapper.updateTenantProfile(tenantId, name, city == null ? "" : city);
+      audit(tenantId, principal, "update_store_profile", name, null, "updated", null);
+      return store(principal);
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "门店资料与现有数据冲突");
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> updateStoreBusinessHours(SessionPrincipal principal, Object request) {
+    Long tenantId = principal.tenantId();
+    requireStoreId(tenantId);
+    ownerMapper.updateStoreBusinessHours(tenantId, writeJson(request));
+    audit(tenantId, principal, "update_store_business_hours", "营业时间", null, "updated", null);
+    return store(principal);
+  }
+
+  public Map<String, Object> dashboard(SessionPrincipal principal) {
+    return requireOne(ownerMapper.selectDashboard(principal.tenantId()));
+  }
+
+  public Map<String, Object> onboardingDraft(SessionPrincipal principal) {
+    Map<String, Object> row =
+        new LinkedHashMap<>(requireOne(ownerMapper.selectOnboardingDraft(principal.tenantId())));
+    row.put("storeProfile", jsonValue(row.get("storeProfile")));
+    row.put("businessHours", jsonValue(row.get("businessHours")));
+    row.put("resources", jsonValue(row.get("resources")));
+    row.put("completion", jsonValue(row.get("completion")));
+    return row;
+  }
+
+  @Transactional
+  public Map<String, Object> saveStoreProfile(SessionPrincipal principal, Object request) {
+    updateDraft(principal.tenantId(), DraftSection.STORE_PROFILE, request);
+    return onboardingDraft(principal);
+  }
+
+  @Transactional
+  public Map<String, Object> saveBusinessHours(SessionPrincipal principal, Object request) {
+    updateDraft(principal.tenantId(), DraftSection.BUSINESS_HOURS, request);
+    return onboardingDraft(principal);
+  }
+
+  @Transactional
+  public Map<String, Object> saveResourcesDraft(SessionPrincipal principal, Object request) {
+    updateDraft(principal.tenantId(), DraftSection.RESOURCES, request);
+    return onboardingDraft(principal);
+  }
+
+  @Transactional
+  public Map<String, Object> completeOnboarding(SessionPrincipal principal) {
+    Long tenantId = principal.tenantId();
+    List<Map<String, Object>> existing = ownerMapper.selectStores(tenantId);
+    if (!existing.isEmpty()) {
+      return existing.getFirst();
+    }
+    Map<String, Object> draft = requireOne(ownerMapper.selectOnboardingDraftForUpdate(tenantId));
+    JsonNode completion = json(draft.get("completion_status"));
+    boolean incomplete =
+        !completion.path("storeProfileDone").asBoolean()
+            || !completion.path("businessHoursDone").asBoolean()
+            || !completion.path("resourceDone").asBoolean();
+    if (incomplete) {
+      throw new ApiException(HttpStatus.CONFLICT, "FORM_ERROR", "请先完成门店资料、营业时间和履约资源");
+    }
+
+    JsonNode profile = json(draft.get("store_profile_draft"));
+    JsonNode hours = json(draft.get("business_hours_draft"));
+    JsonNode resources = json(draft.get("resources_draft"));
+    String name = requiredText(profile, "name", "门店名称不能为空");
+    String address = requiredText(profile, "address", "门店地址不能为空");
+    String contactPhone = requiredText(profile, "contactPhone", "联系电话不能为空");
+    validateOnboardingCollections(profile, resources);
+
+    Long storeId =
+        ownerMapper.insertStore(
+            tenantId,
+            name,
+            profile.path("businessCategories").toString(),
+            profile.path("serviceTags").toString(),
+            address,
+            contactPhone,
+            hours.toString());
+    int sortOrder = 0;
+    for (JsonNode resource : resources) {
+      insertResource(tenantId, storeId, resource, sortOrder);
+      sortOrder++;
+    }
+    ownerMapper.updateTenantProfile(tenantId, name, profile.path("city").asText(""));
+    ownerMapper.markOnboardingConverted(tenantId);
+    audit(tenantId, principal, "complete_onboarding", name, null, "created", null);
+    return Map.of("id", storeId, "name", name);
+  }
+
+  public List<Map<String, Object>> resources(SessionPrincipal principal) {
+    return ownerMapper.selectResources(principal.tenantId());
+  }
+
+  @Transactional
+  public Map<String, Object> createResource(
+      SessionPrincipal principal, String name, String type, int capacity) {
+    Long storeId = requireStoreId(principal.tenantId());
+    try {
+      Long id = ownerMapper.insertResource(principal.tenantId(), storeId, name, type, capacity, 0);
+      return Map.of(
+          "id", id,
+          "name", name,
+          "resourceType", type,
+          "capacity", capacity,
+          "enabled", true);
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "资源名称已存在");
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> updateResource(
+      SessionPrincipal principal,
+      Long resourceId,
+      String name,
+      String type,
+      int capacity,
+      boolean enabled,
+      int sortOrder) {
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedResource(tenantId, resourceId));
+    if (!enabled && ownerMapper.countEnabledResourcesExcluding(tenantId, resourceId) == 0) {
+      throw new ApiException(HttpStatus.CONFLICT, "RESOURCE_REQUIRED", "至少保留 1 个启用资源");
+    }
+    try {
+      requireOwned(
+          ownerMapper.updateResource(
+              tenantId, resourceId, name, type, capacity, enabled, Math.max(0, sortOrder)));
+      audit(tenantId, principal, "update_resource", name, null, "updated", null);
+      return Map.of(
+          "id", resourceId,
+          "name", name,
+          "resourceType", type,
+          "capacity", capacity,
+          "enabled", enabled,
+          "sortOrder", Math.max(0, sortOrder));
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "资源名称已存在");
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> deleteResource(SessionPrincipal principal, Long resourceId) {
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedResource(tenantId, resourceId));
+    boolean blocked =
+        ownerMapper.countEnabledResourcesExcluding(tenantId, resourceId) == 0
+            || ownerMapper.countResourceServiceBindings(tenantId, resourceId) > 0
+            || ownerMapper.countResourceFutureSlots(tenantId, resourceId) > 0;
+    if (blocked) {
+      throw new ApiException(HttpStatus.CONFLICT, "RESOURCE_IN_USE", "资源仍被服务项目或排期使用，或删除后将没有启用资源");
+    }
+    requireOwned(ownerMapper.deleteResource(tenantId, resourceId));
+    audit(tenantId, principal, "delete_resource", resourceId.toString(), null, "deleted", null);
+    return Map.of("id", resourceId, "deleted", true);
+  }
+
+  public List<Map<String, Object>> staff(SessionPrincipal principal) {
+    return ownerMapper.selectStaff(principal.tenantId());
+  }
+
+  @Transactional
+  public Map<String, Object> createStaff(
+      SessionPrincipal principal,
+      String loginName,
+      String password,
+      String staffName,
+      String roleLabel) {
+    if (password.length() < 8) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "员工密码至少 8 位");
+    }
+    Long tenantId = principal.tenantId();
+    try {
+      Long id =
+          ownerMapper.insertStaffAccount(
+              tenantId,
+              requireStoreId(tenantId),
+              loginName,
+              passwordHasher.encode(password),
+              staffName,
+              roleLabel);
+      ownerMapper.insertStaffProfile(tenantId, id, staffName);
+      return Map.of(
+          "id", id,
+          "loginName", loginName,
+          "staffName", staffName,
+          "roleLabel", roleLabel,
+          "status", "active");
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "登录账号已存在，请更换账号");
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> updateStaff(
+      SessionPrincipal principal,
+      Long staffId,
+      String loginName,
+      String staffName,
+      String roleLabel) {
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedStaff(tenantId, staffId));
+    try {
+      requireOwned(
+          ownerMapper.updateStaffAccount(tenantId, staffId, loginName, staffName, roleLabel));
+      requireOwned(ownerMapper.updateStaffProfileName(tenantId, staffId, staffName));
+      audit(tenantId, principal, "update_staff", staffName, null, "updated", null);
+      return Map.of(
+          "id", staffId,
+          "loginName", loginName,
+          "staffName", staffName,
+          "roleLabel", roleLabel);
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "登录账号已存在，请更换账号");
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> updateStaffPassword(
+      SessionPrincipal principal, Long staffId, String password) {
+    if (password.length() < 8) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "员工密码至少 8 位");
+    }
+    Long tenantId = principal.tenantId();
+    requireOwned(
+        ownerMapper.updateStaffPassword(tenantId, staffId, passwordHasher.encode(password)));
+    audit(tenantId, principal, "update_staff_password", staffId.toString(), null, "reset", null);
+    return Map.of("id", staffId, "passwordReset", true);
+  }
+
+  @Transactional
+  public Map<String, Object> updateStaffStatus(
+      SessionPrincipal principal, Long staffId, String status) {
+    validateStatus(status, List.of("active", "disabled"), "员工状态无效");
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.updateStaffStatus(tenantId, staffId, status));
+    audit(tenantId, principal, "update_staff_status", staffId.toString(), null, status, null);
+    return Map.of("id", staffId, "status", status);
+  }
+
+  @Transactional
+  public Map<String, Object> deleteStaff(SessionPrincipal principal, Long staffId) {
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedStaff(tenantId, staffId));
+    boolean blocked =
+        ownerMapper.countStaffServiceBindings(tenantId, staffId) > 0
+            || ownerMapper.countStaffCardScopes(tenantId, staffId) > 0
+            || ownerMapper.countStaffFutureSlots(tenantId, staffId) > 0;
+    if (blocked) {
+      throw new ApiException(HttpStatus.CONFLICT, "STAFF_IN_USE", "员工仍关联服务项目、会员卡范围或排期，请先解除关联");
+    }
+    requireOwned(ownerMapper.deleteStaff(tenantId, staffId));
+    audit(tenantId, principal, "delete_staff", staffId.toString(), null, "deleted", null);
+    return Map.of("id", staffId, "deleted", true);
+  }
+
+  public List<Map<String, Object>> services(SessionPrincipal principal) {
+    Long tenantId = principal.tenantId();
+    List<Map<String, Object>> result = new ArrayList<>();
+    for (Map<String, Object> source : ownerMapper.selectServices(tenantId)) {
+      Map<String, Object> row = new LinkedHashMap<>(source);
+      Long serviceId = asLong(row.get("id"));
+      row.put("resourceIds", ownerMapper.selectServiceResourceIds(tenantId, serviceId));
+      row.put("staffIds", ownerMapper.selectServiceStaffIds(tenantId, serviceId));
+      result.add(row);
+    }
+    return result;
+  }
+
+  @Transactional
+  public Map<String, Object> createService(
+      SessionPrincipal principal,
+      String name,
+      String type,
+      int durationMin,
+      int capacity,
+      int deductCount,
+      List<Long> resourceIds,
+      List<Long> staffIds,
+      String requestedStatus) {
+    Long tenantId = principal.tenantId();
+    List<Long> selectedStaffIds = staffIds == null ? List.of() : staffIds;
+    validateStatus(requestedStatus, List.of("draft", "active"), "服务状态无效");
+    validateSelectableIds(OwnedEntity.RESOURCE, resourceIds, tenantId);
+    validateSelectableIds(OwnedEntity.STAFF, selectedStaffIds, tenantId);
+    String status =
+        "active".equals(requestedStatus) && !selectedStaffIds.isEmpty() ? "active" : "draft";
+    Long id =
+        ownerMapper.insertService(
+            tenantId,
+            requireStoreId(tenantId),
+            name,
+            type,
+            durationMin,
+            capacity,
+            deductCount,
+            status);
+    for (Long resourceId : resourceIds) {
+      ownerMapper.insertServiceResourceBinding(tenantId, id, resourceId);
+    }
+    for (Long staffId : selectedStaffIds) {
+      ownerMapper.insertStaffServiceBinding(tenantId, staffId, id);
+    }
+    return Map.of("id", id, "name", name, "status", status);
+  }
+
+  @Transactional
+  public Map<String, Object> updateService(
+      SessionPrincipal principal,
+      Long serviceId,
+      String name,
+      String type,
+      int durationMin,
+      int capacity,
+      int deductCount,
+      List<Long> resourceIds,
+      List<Long> staffIds,
+      String requestedStatus) {
+    Long tenantId = principal.tenantId();
+    List<Long> selectedStaffIds = staffIds == null ? List.of() : staffIds;
+    requireOwned(ownerMapper.countOwnedService(tenantId, serviceId));
+    validateStatus(requestedStatus, List.of("draft", "active"), "服务状态无效");
+    validateSelectableIds(OwnedEntity.RESOURCE, resourceIds, tenantId);
+    validateSelectableIds(OwnedEntity.STAFF, selectedStaffIds, tenantId);
+    String status =
+        "active".equals(requestedStatus) && !selectedStaffIds.isEmpty() ? "active" : "draft";
+    requireOwned(
+        ownerMapper.updateService(
+            tenantId, serviceId, name, type, durationMin, capacity, deductCount, status));
+    ownerMapper.deleteServiceResourceBindings(tenantId, serviceId);
+    ownerMapper.deleteStaffServiceBindings(tenantId, serviceId);
+    for (Long resourceId : resourceIds) {
+      ownerMapper.insertServiceResourceBinding(tenantId, serviceId, resourceId);
+    }
+    for (Long staffId : selectedStaffIds) {
+      ownerMapper.insertStaffServiceBinding(tenantId, staffId, serviceId);
+    }
+    audit(tenantId, principal, "update_service", name, null, status, null);
+    return Map.of("id", serviceId, "name", name, "status", status);
+  }
+
+  @Transactional
+  public Map<String, Object> updateServiceStatus(
+      SessionPrincipal principal, Long serviceId, String status) {
+    validateStatus(status, List.of("active", "disabled"), "服务状态无效");
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedService(tenantId, serviceId));
+    boolean missingScope =
+        ownerMapper.selectServiceResourceIds(tenantId, serviceId).isEmpty()
+            || ownerMapper.selectServiceStaffIds(tenantId, serviceId).isEmpty();
+    if ("active".equals(status) && missingScope) {
+      throw new ApiException(HttpStatus.CONFLICT, "FORM_ERROR", "服务缺少适用资源或可履约员工");
+    }
+    requireOwned(ownerMapper.updateServiceStatus(tenantId, serviceId, status));
+    audit(tenantId, principal, "update_service_status", serviceId.toString(), null, status, null);
+    return Map.of("id", serviceId, "status", status);
+  }
+
+  public List<Map<String, Object>> cardTemplates(SessionPrincipal principal) {
+    Long tenantId = principal.tenantId();
+    List<Map<String, Object>> result = new ArrayList<>();
+    for (Map<String, Object> source : ownerMapper.selectCardTemplates(tenantId)) {
+      Map<String, Object> row = new LinkedHashMap<>(source);
+      Long templateId = asLong(row.get("id"));
+      row.put("serviceIds", ownerMapper.selectCardServiceIds(tenantId, templateId));
+      row.put("staffIds", ownerMapper.selectCardStaffIds(tenantId, templateId));
+      result.add(row);
+    }
+    return result;
+  }
+
+  @Transactional
+  public Map<String, Object> createCardTemplate(
+      SessionPrincipal principal,
+      String name,
+      String cardType,
+      BigDecimal salePrice,
+      Integer totalCount,
+      int validDays,
+      Integer lowBalanceThreshold,
+      List<Long> serviceIds,
+      List<Long> staffIds) {
+    Long tenantId = principal.tenantId();
+    validateSelectableIds(OwnedEntity.SERVICE, serviceIds, tenantId);
+    validateSelectableIds(OwnedEntity.STAFF, staffIds, tenantId);
+    validateCardTemplate(cardType, totalCount, lowBalanceThreshold);
+    boolean countCard = "count".equals(cardType);
+    Long id =
+        ownerMapper.insertCardTemplate(
+            tenantId,
+            requireStoreId(tenantId),
+            name,
+            cardType,
+            salePrice,
+            countCard ? totalCount : null,
+            validDays,
+            countCard ? lowBalanceThreshold : null);
+    for (Long serviceId : serviceIds) {
+      ownerMapper.insertCardServiceScope(tenantId, id, serviceId);
+    }
+    for (Long staffId : staffIds) {
+      ownerMapper.insertCardStaffScope(tenantId, id, staffId);
+    }
+    return Map.of("id", id, "name", name, "cardType", cardType, "status", "active");
+  }
+
+  @Transactional
+  public Map<String, Object> updateCardTemplate(
+      SessionPrincipal principal,
+      Long templateId,
+      String name,
+      String cardType,
+      BigDecimal salePrice,
+      Integer totalCount,
+      int validDays,
+      Integer lowBalanceThreshold,
+      List<Long> serviceIds,
+      List<Long> staffIds) {
+    Long tenantId = principal.tenantId();
+    validateSelectableIds(OwnedEntity.SERVICE, serviceIds, tenantId);
+    validateSelectableIds(OwnedEntity.STAFF, staffIds, tenantId);
+    validateCardTemplate(cardType, totalCount, lowBalanceThreshold);
+    boolean countCard = "count".equals(cardType);
+    requireOwned(
+        ownerMapper.updateCardTemplate(
+            tenantId,
+            templateId,
+            name,
+            cardType,
+            salePrice,
+            countCard ? totalCount : null,
+            validDays,
+            countCard ? lowBalanceThreshold : null));
+    ownerMapper.deleteCardServiceScopes(tenantId, templateId);
+    ownerMapper.deleteCardStaffScopes(tenantId, templateId);
+    for (Long serviceId : serviceIds) {
+      ownerMapper.insertCardServiceScope(tenantId, templateId, serviceId);
+    }
+    for (Long staffId : staffIds) {
+      ownerMapper.insertCardStaffScope(tenantId, templateId, staffId);
+    }
+    audit(tenantId, principal, "update_card_template", name, null, "updated", null);
+    return Map.of("id", templateId, "name", name, "cardType", cardType);
+  }
+
+  @Transactional
+  public Map<String, Object> updateCardTemplateStatus(
+      SessionPrincipal principal, Long templateId, String status) {
+    validateStatus(status, List.of("active", "disabled"), "会员卡模板状态无效");
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.updateCardTemplateStatus(tenantId, templateId, status));
+    audit(
+        tenantId,
+        principal,
+        "update_card_template_status",
+        templateId.toString(),
+        null,
+        status,
+        null);
+    return Map.of("id", templateId, "status", status);
+  }
+
+  public List<Map<String, Object>> members(SessionPrincipal principal) {
+    return ownerMapper.selectMembers(principal.tenantId());
+  }
+
+  @Transactional
+  public Map<String, Object> createMember(
+      SessionPrincipal principal, String name, String memberNo, String contactText) {
+    Long tenantId = principal.tenantId();
+    try {
+      Long id =
+          ownerMapper.insertMember(
+              tenantId,
+              requireStoreId(tenantId),
+              name,
+              memberNo,
+              contactText == null ? "" : contactText);
+      return Map.of("id", id, "name", name, "memberNo", memberNo, "bindStatus", "unbound");
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "会员编号已存在");
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> issueCard(
+      SessionPrincipal principal,
+      Long memberId,
+      Long templateId,
+      BigDecimal receivedAmount,
+      LocalDate saleDate,
+      String payMethodLabel) {
+    Long tenantId = principal.tenantId();
+    Map<String, Object> member = requireOne(ownerMapper.selectOwnedMember(tenantId, memberId));
+    Map<String, Object> template =
+        requireOne(ownerMapper.selectActiveCardTemplate(tenantId, templateId));
+    String cardType = template.get("cardType").toString();
+    Integer totalCount = asInteger(template.get("totalCount"));
+    int validDays = asInteger(template.get("validDays"));
+    LocalDate validUntil = saleDate.plusDays(validDays - 1L);
+    Long storeId = asLong(member.get("storeId"));
+    Long cardId =
+        ownerMapper.insertMemberCard(
+            tenantId,
+            storeId,
+            memberId,
+            templateId,
+            cardType,
+            receivedAmount,
+            "count".equals(cardType) ? totalCount : null,
+            saleDate,
+            validUntil);
+    Long saleId =
+        ownerMapper.insertOfflineSale(
+            tenantId,
+            storeId,
+            memberId,
+            cardId,
+            receivedAmount,
+            saleDate,
+            payMethodLabel,
+            principal.subjectId());
+    audit(
+        tenantId,
+        principal,
+        "issue_member_card",
+        member.get("name").toString(),
+        null,
+        cardId.toString(),
+        "线下实收 " + receivedAmount);
+    return Map.of(
+        "memberCardId", cardId,
+        "saleRecordId", saleId,
+        "cardType", cardType,
+        "receivedAmountYuan", receivedAmount,
+        "validFrom", saleDate,
+        "validUntil", validUntil);
+  }
+
+  @Transactional
+  public Map<String, Object> createInvite(SessionPrincipal principal, Long memberId) {
+    Long tenantId = principal.tenantId();
+    Map<String, Object> member = requireOne(ownerMapper.selectOwnedMember(tenantId, memberId));
+    Integer validDays = requireConfig(INVITE_VALID_DAYS_CONFIG);
+    ownerMapper.revokeActiveInvites(tenantId, memberId);
+    String code = generateInviteCode();
+    OffsetDateTime expiresAt = OffsetDateTime.now(clock).plusDays(validDays);
+    ownerMapper.insertInvite(
+        tenantId,
+        asLong(member.get("storeId")),
+        memberId,
+        tokenHasher.hash(code),
+        code.substring(code.length() - 4),
+        expiresAt);
+    return Map.of("code", code, "expiresAt", expiresAt, "status", "active");
+  }
+
+  public List<Map<String, Object>> schedules(SessionPrincipal principal, LocalDate date) {
+    return ownerMapper.selectSchedules(principal.tenantId(), date);
+  }
+
+  @Transactional
+  public Map<String, Object> publishSlot(
+      SessionPrincipal principal,
+      Long serviceId,
+      Long staffId,
+      Long resourceId,
+      OffsetDateTime startAt,
+      OffsetDateTime endAt,
+      int capacity) {
+    return saveSlot(
+        principal, serviceId, staffId, resourceId, startAt, endAt, capacity, "published");
+  }
+
+  @Transactional
+  public Map<String, Object> saveSlot(
+      SessionPrincipal principal,
+      Long serviceId,
+      Long staffId,
+      Long resourceId,
+      OffsetDateTime startAt,
+      OffsetDateTime endAt,
+      int capacity,
+      String status) {
+    validateStatus(status, List.of("draft", "published"), "排期状态无效");
+    Long tenantId = principal.tenantId();
+    Map<String, Object> service = requireOne(ownerMapper.selectActiveService(tenantId, serviceId));
+    requireOwned(ownerMapper.countActiveStaff(tenantId, staffId));
+    requireOwned(ownerMapper.countEnabledResource(tenantId, resourceId));
+    validateSlotTime(startAt, endAt);
+    int staffBound = ownerMapper.countStaffServiceBinding(tenantId, serviceId, staffId);
+    int resourceBound = ownerMapper.countServiceResourceBinding(tenantId, serviceId, resourceId);
+    if (staffBound == 0 || resourceBound == 0) {
+      throw new ApiException(HttpStatus.CONFLICT, "FORM_ERROR", "员工或资源不在该服务的适用范围内");
+    }
+    Long id =
+        ownerMapper.insertBookableSlot(
+            tenantId,
+            asLong(service.get("storeId")),
+            serviceId,
+            staffId,
+            resourceId,
+            startAt,
+            endAt,
+            capacity,
+            status,
+            requireConfig(CANCELLATION_DEADLINE_CONFIG));
+    return Map.of(
+        "id", id,
+        "status", status,
+        "startAt", startAt,
+        "endAt", endAt,
+        "capacity", capacity);
+  }
+
+  public Map<String, Object> reportSummary(SessionPrincipal principal) {
+    return requireOne(ownerMapper.selectReportSummary(principal.tenantId()));
+  }
+
+  public List<Map<String, Object>> cardWarnings(SessionPrincipal principal) {
+    return ownerMapper.selectCardWarnings(principal.tenantId());
+  }
+
+  public List<Map<String, Object>> offlineSales(SessionPrincipal principal) {
+    return ownerMapper.selectOfflineSales(principal.tenantId());
+  }
+
+  public List<Map<String, Object>> bookingReport(SessionPrincipal principal) {
+    return ownerMapper.selectBookingReport(principal.tenantId());
+  }
+
+  public List<Map<String, Object>> deductionReport(SessionPrincipal principal) {
+    return ownerMapper.selectDeductionReport(principal.tenantId());
+  }
+
+  public List<Map<String, Object>> serviceReport(SessionPrincipal principal) {
+    return ownerMapper.selectServiceReport(principal.tenantId());
+  }
+
+  private void validateOnboardingCollections(JsonNode profile, JsonNode resources) {
+    boolean profileListsMissing =
+        !profile.path("businessCategories").isArray()
+            || profile.path("businessCategories").isEmpty()
+            || !profile.path("serviceTags").isArray()
+            || profile.path("serviceTags").isEmpty();
+    if (profileListsMissing) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "经营项目和服务标签不能为空");
+    }
+    if (!resources.isArray() || resources.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "至少需要一个履约资源");
+    }
+  }
+
+  private void validateStoreProfile(
+      String name,
+      List<String> businessCategories,
+      List<String> serviceTags,
+      String address,
+      String contactPhone) {
+    boolean textMissing =
+        name == null
+            || name.isBlank()
+            || address == null
+            || address.isBlank()
+            || contactPhone == null
+            || contactPhone.isBlank();
+    if (textMissing
+        || businessCategories == null
+        || businessCategories.isEmpty()
+        || serviceTags == null
+        || serviceTags.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "请完成门店资料必填项");
+    }
+  }
+
+  private void validateCardTemplate(
+      String cardType, Integer totalCount, Integer lowBalanceThreshold) {
+    if (!List.of("count", "period").contains(cardType)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员卡类型无效");
+    }
+    boolean invalidCountCard =
+        "count".equals(cardType)
+            && (totalCount == null
+                || totalCount <= 0
+                || lowBalanceThreshold == null
+                || lowBalanceThreshold < 0);
+    if (invalidCountCard) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "次数卡需填写有效总次数和低余额阈值");
+    }
+  }
+
+  private void validateSlotTime(OffsetDateTime startAt, OffsetDateTime endAt) {
+    if (endAt == null || startAt == null || !endAt.isAfter(startAt)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "结束时间必须晚于开始时间");
+    }
+    if (startAt.isBefore(OffsetDateTime.now(clock))) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "只能发布未来时段");
+    }
+  }
+
+  private void updateDraft(Long tenantId, DraftSection section, Object request) {
+    try {
+      String payload = objectMapper.writeValueAsString(request);
+      int updated =
+          switch (section) {
+            case STORE_PROFILE -> ownerMapper.updateStoreProfileDraft(tenantId, payload);
+            case BUSINESS_HOURS -> ownerMapper.updateBusinessHoursDraft(tenantId, payload);
+            case RESOURCES -> ownerMapper.updateResourcesDraft(tenantId, payload);
+          };
+      if (updated != 1) {
+        throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "开店草稿已完成或不存在");
+      }
+    } catch (JsonProcessingException exception) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "草稿内容无法处理");
+    }
+  }
+
+  private void insertResource(Long tenantId, Long storeId, JsonNode resource, int sortOrder) {
+    String name = requiredText(resource, "name", "资源名称不能为空");
+    String type = requiredText(resource, "resourceType", "资源类型不能为空");
+    int capacity = resource.path("capacity").asInt(0);
+    if (capacity < 1) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "资源容量至少为 1");
+    }
+    ownerMapper.insertResource(tenantId, storeId, name, type, capacity, sortOrder);
+  }
+
+  private JsonNode json(Object databaseValue) {
+    if (databaseValue == null) {
+      return objectMapper.createObjectNode();
+    }
+    if (databaseValue instanceof JsonNode node) {
+      return node;
+    }
+    if (databaseValue instanceof Map<?, ?> || databaseValue instanceof List<?>) {
+      return objectMapper.valueToTree(databaseValue);
+    }
+    try {
+      return objectMapper.readTree(databaseValue.toString());
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("Database JSON is invalid", exception);
+    }
+  }
+
+  private Object jsonValue(Object databaseValue) {
+    return objectMapper.convertValue(json(databaseValue), Object.class);
+  }
+
+  private String writeJson(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (JsonProcessingException exception) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "提交内容无法处理");
+    }
+  }
+
+  private String summarizeBusinessHours(JsonNode businessHours) {
+    JsonNode days = businessHours.path("days");
+    int openDays = 0;
+    String firstPeriod = "";
+    for (JsonNode day : days) {
+      if (day.path("open").asBoolean()) {
+        openDays++;
+        if (firstPeriod.isEmpty()) {
+          firstPeriod = day.path("start").asText() + "-" + day.path("end").asText();
+        }
+      }
+    }
+    return openDays == 0 ? "未设置营业日" : "每周 " + openDays + " 天 · " + firstPeriod;
+  }
+
+  private void validateStatus(String status, List<String> allowed, String message) {
+    if (!allowed.contains(status)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", message);
+    }
+  }
+
+  private String requiredText(JsonNode node, String field, String message) {
+    String value = node.path(field).asText("").trim();
+    if (value.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", message);
+    }
+    return value;
+  }
+
+  private Long requireStoreId(Long tenantId) {
+    Long storeId = ownerMapper.selectStoreId(tenantId);
+    if (storeId == null) {
+      throw new ApiException(HttpStatus.CONFLICT, "STORE_REQUIRED", "请先完成开店");
+    }
+    return storeId;
+  }
+
+  private Integer requireConfig(String configKey) {
+    Integer value = ownerMapper.selectEnabledIntegerConfig(configKey);
+    if (value == null) {
+      throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "CONFIG_MISSING", "平台配置缺失");
+    }
+    return value;
+  }
+
+  private Map<String, Object> requireOne(Map<String, Object> row) {
+    if (row == null || row.isEmpty()) {
+      throw new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "记录不存在或不属于当前门店");
+    }
+    return row;
+  }
+
+  private void requireOwned(int count) {
+    if (count != 1) {
+      throw new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "记录不存在或不属于当前门店");
+    }
+  }
+
+  private void validateSelectableIds(OwnedEntity entity, List<Long> ids, Long tenantId) {
+    if (ids == null || ids.isEmpty()) {
+      return;
+    }
+    for (Long id : ids) {
+      int count =
+          switch (entity) {
+            case RESOURCE -> ownerMapper.countEnabledResource(tenantId, id);
+            case STAFF -> ownerMapper.countActiveStaff(tenantId, id);
+            case SERVICE -> ownerMapper.selectActiveService(tenantId, id) == null ? 0 : 1;
+          };
+      if (count != 1) {
+        throw new ApiException(HttpStatus.CONFLICT, "FORM_ERROR", "所选服务、员工或资源已停用，请重新选择");
+      }
+    }
+  }
+
+  private String generateInviteCode() {
+    StringBuilder code = new StringBuilder(INVITE_CODE_LENGTH);
+    for (int index = 0; index < INVITE_CODE_LENGTH; index++) {
+      code.append(INVITE_ALPHABET[secureRandom.nextInt(INVITE_ALPHABET.length)]);
+    }
+    return code.toString();
+  }
+
+  private void audit(
+      Long tenantId,
+      SessionPrincipal principal,
+      String action,
+      String target,
+      String oldValue,
+      String newValue,
+      String reason) {
+    ownerMapper.insertAudit(
+        tenantId,
+        principal.actorType(),
+        principal.subjectId(),
+        action,
+        target,
+        oldValue,
+        newValue,
+        reason);
+  }
+
+  private Long asLong(Object value) {
+    return ((Number) value).longValue();
+  }
+
+  private Integer asInteger(Object value) {
+    return value == null ? null : ((Number) value).intValue();
+  }
+
+  private enum DraftSection {
+    STORE_PROFILE,
+    BUSINESS_HOURS,
+    RESOURCES
+  }
+
+  private enum OwnedEntity {
+    RESOURCE,
+    STAFF,
+    SERVICE
+  }
+}

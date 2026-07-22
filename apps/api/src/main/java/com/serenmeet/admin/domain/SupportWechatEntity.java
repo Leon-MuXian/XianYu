@@ -3,7 +3,7 @@ package com.serenmeet.admin.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,5 +35,5 @@ public class SupportWechatEntity {
   private Boolean enabled;
 
   /** 最近更新时间。 */
-  private LocalDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 }
