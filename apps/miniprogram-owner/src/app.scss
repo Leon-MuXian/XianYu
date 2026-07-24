@@ -19,6 +19,7 @@ page {
   --red: #c64a46;
   --red-soft: #fcecec;
   min-height: 100%;
+  overscroll-behavior-y: none;
   color: var(--ink);
   background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -393,14 +394,14 @@ button::after { border: 0; }
 .frozen-hero { border-color: #8b3a2d; background: #5a2a22; box-shadow: 0 18px 42px rgba(90,42,34,.2); }
 .frozen-action { width: 100%; min-height: 50px; margin-top: 18px; font-size: 16px; }
 
-.login-screen { overflow-x: hidden; overflow-y: auto; background: #fbfaf3; }
-.login-scene { position: relative; display: flex; flex-direction: column; min-height: calc(100vh - 20px); padding: 34px 24px 28px; overflow: hidden; background: linear-gradient(180deg,#fbfaf3 0%,#eef6ef 58%,#f7efe7 100%); }
+.login-screen { height: 100vh; overflow: hidden; background: #fbfaf3; }
+.login-scene { position: relative; display: flex; flex-direction: column; height: 100vh; min-height: 0; padding: 0 24px 28px; overflow: hidden; background: linear-gradient(180deg,#fbfaf3 0%,#eef6ef 58%,#f7efe7 100%); }
 .login-scene::before { content: ''; position: absolute; z-index: 0; width: 192px; height: 112px; right: -26px; top: 72px; background: #dbece4; transform: rotate(8deg); }
 .login-scene::after { content: ''; position: absolute; z-index: 0; width: 156px; height: 128px; left: -36px; bottom: 134px; background: #ffe1d2; transform: rotate(-12deg); }
-.login-identity { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding-right: 86px; color: rgba(23,33,27,.7); font-size: 12px; font-weight: 800; }
-.mini-brand { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.login-identity { position: relative; z-index: 10; display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding-right: 86px; color: rgba(23,33,27,.7); font-size: 12px; font-weight: 800; }
+.mini-brand { display: flex; align-items: center; gap: 8px; color: var(--ink); white-space: nowrap; }
 .mini-mark { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 12px; color: #fff; background: #17211b; font-weight: 900; box-shadow: 0 10px 20px rgba(23,33,27,.14); }
-.login-visual { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; height: 356px; margin-top: 26px; }
+.login-visual { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; height: 344px; margin-top: 14px; }
 .art-scene { position: relative; width: 312px; height: 336px; }
 .paper-window { position: absolute; inset: 10px 10px 26px; border: 2px solid rgba(23,33,27,.08); border-radius: 34px 34px 18px 18px; background: rgba(255,255,255,.64); box-shadow: 0 26px 58px rgba(23,33,27,.13); }
 .paper-window::before { content: ''; position: absolute; left: 28px; right: 28px; bottom: 30px; height: 34px; border-radius: 22px 22px 14px 14px; background: rgba(47,125,110,.14); }
@@ -482,12 +483,24 @@ button::after { border: 0; }
   .owner-form-grid { grid-template-columns: 1fr; }
   .owner-form-grid .field.wide { grid-column: auto; }
   .resource-row-actions { justify-content: flex-start; }
-  .login-scene { padding: 24px 20px 22px; }
+  .login-scene { padding-right: 20px; padding-bottom: 22px; padding-left: 20px; }
   .login-identity { padding-right: 78px; }
-  .login-visual { height: 286px; margin-top: 18px; }
+  .login-visual { height: 286px; margin-top: 10px; }
   .login-visual .art-scene { transform: scale(.8); transform-origin: top center; }
   .login-title { font-size: 30px; }
   .login-description { width: 100%; line-height: 1.55; }
   .login-badge-row { margin-top: 14px; }
   .login-action { padding-top: 22px; }
+}
+
+@media (max-height: 740px) {
+  .login-scene { padding-bottom: 16px; }
+  .login-visual { height: 250px; margin-top: 4px; }
+  .login-visual .art-scene { transform: scale(.72); transform-origin: top center; }
+  .login-copy { margin-top: -4px; }
+  .login-title { font-size: 28px; }
+  .login-description { margin-top: 10px; font-size: 13px; line-height: 1.45; }
+  .login-badge-row { margin-top: 10px; }
+  .login-action { padding-top: 12px; }
+  .login-footnote { margin-top: 8px; }
 }

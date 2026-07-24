@@ -8,7 +8,23 @@ import { ownerRoutes } from '../../owner'
 
 const loading = ref(false)
 const message = ref('')
-const statusBarHeight = Taro.getWindowInfo().statusBarHeight || 20
+const windowInfo = Taro.getWindowInfo()
+const statusBarHeight = windowInfo.statusBarHeight || 20
+const menuButtonRect = Taro.getMenuButtonBoundingClientRect()
+const menuButtonGap = menuButtonRect.height > 0
+  ? Math.max(menuButtonRect.top - statusBarHeight, 4)
+  : 4
+const navigationBarHeight = menuButtonRect.height > 0
+  ? menuButtonRect.height + menuButtonGap * 2
+  : 44
+const capsuleReserveWidth = menuButtonRect.width > 0
+  ? Math.max(windowInfo.windowWidth - menuButtonRect.left + 10, 86)
+  : 86
+const loginSceneStyle = { paddingTop: `${statusBarHeight}px` }
+const loginIdentityStyle = {
+  minHeight: `${navigationBarHeight}px`,
+  paddingRight: `${capsuleReserveWidth}px`
+}
 
 async function login() {
   if (loading.value) return
@@ -39,11 +55,9 @@ async function login() {
 
 <template>
   <View class="screen login-screen">
-    <View class="safe-status" :style="{ height: `${statusBarHeight}px` }" />
-    <View class="login-scene art-login owner-art-login">
-      <View class="login-identity">
-        <View class="mini-brand"><Text class="mini-mark">闲</Text><Text>闲遇</Text></View>
-        <Text>店长端</Text>
+    <View class="login-scene art-login owner-art-login" :style="loginSceneStyle">
+      <View class="login-identity" :style="loginIdentityStyle">
+        <View class="mini-brand"><Text class="mini-mark">闲</Text><Text>闲遇-店长端</Text></View>
       </View>
       <View class="login-visual">
         <View class="art-scene">
