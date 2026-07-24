@@ -38,10 +38,18 @@
   </select>
 
   <select id="selectOnboardingDraft" resultType="map">
-    select store_profile_draft as "storeProfile", business_hours_draft as "businessHours",
-      resources_draft as resources, completion_status as completion, status
-    from store_onboarding_draft
-    where tenant_id = #{tenantId}
+    select d.store_profile_draft as "storeProfile", d.business_hours_draft as "businessHours",
+      d.resources_draft as resources, d.completion_status as completion, d.status,
+      oi.trial_notice_acknowledged_at is null as "trialNoticeRequired",
+      greatest(
+        1,
+        ceil(extract(epoch from (t.trial_end_at - t.trial_start_at)) / 86400.0)::integer
+      ) as "trialDays"
+    from store_onboarding_draft d
+    join tenant t on t.id = d.tenant_id
+    join owner_wechat_identity oi
+      on oi.id = #{ownerIdentityId} and oi.tenant_id = d.tenant_id
+    where d.tenant_id = #{tenantId}
   </select>
 
   <select id="selectOnboardingDraftForUpdate" resultType="map">
@@ -107,6 +115,12 @@
     update store_onboarding_draft
     set status = 'converted', updated_at = current_timestamp
     where tenant_id = #{tenantId}
+  </update>
+
+  <update id="acknowledgeTrialNotice">
+    update owner_wechat_identity
+    set trial_notice_acknowledged_at = coalesce(trial_notice_acknowledged_at, current_timestamp)
+    where id = #{ownerIdentityId} and tenant_id = #{tenantId}
   </update>
 
   <update id="updateStoreProfileDraft">

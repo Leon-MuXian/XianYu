@@ -14,7 +14,8 @@ public interface OwnerPilotMapper {
 
   Map<String, Object> selectDashboard(@Param("tenantId") Long tenantId);
 
-  Map<String, Object> selectOnboardingDraft(@Param("tenantId") Long tenantId);
+  Map<String, Object> selectOnboardingDraft(
+      @Param("tenantId") Long tenantId, @Param("ownerIdentityId") Long ownerIdentityId);
 
   Map<String, Object> selectOnboardingDraftForUpdate(@Param("tenantId") Long tenantId);
 
@@ -48,6 +49,9 @@ public interface OwnerPilotMapper {
       @Param("tenantId") Long tenantId, @Param("businessHours") String businessHours);
 
   int markOnboardingConverted(@Param("tenantId") Long tenantId);
+
+  int acknowledgeTrialNotice(
+      @Param("tenantId") Long tenantId, @Param("ownerIdentityId") Long ownerIdentityId);
 
   int updateStoreProfileDraft(@Param("tenantId") Long tenantId, @Param("payload") String payload);
 

@@ -11,6 +11,8 @@ const loading = ref(true)
 const creating = ref(false)
 const message = ref('')
 const showTrial = ref(false)
+const acknowledgingTrial = ref(false)
+const trialNoticeError = ref('')
 
 const completionCount = computed(() => {
   if (!draft.value) return 0
@@ -39,7 +41,8 @@ async function load() {
       return
     }
     draft.value = await api.request<OnboardingDraft>('GET', '/owner/onboarding/draft')
-    showTrial.value = !Taro.getStorageSync('owner_trial_notice_seen')
+    showTrial.value = draft.value.trialNoticeRequired
+    trialNoticeError.value = ''
   } catch (error) {
     message.value = messageOf(error, '开始使用清单加载失败')
   } finally {
@@ -47,9 +50,19 @@ async function load() {
   }
 }
 
-function closeTrial() {
-  Taro.setStorageSync('owner_trial_notice_seen', true)
-  showTrial.value = false
+async function acknowledgeTrialNotice() {
+  if (acknowledgingTrial.value) return
+  acknowledgingTrial.value = true
+  trialNoticeError.value = ''
+  try {
+    await api.request('POST', '/owner/onboarding/trial-notice/acknowledge')
+    if (draft.value) draft.value.trialNoticeRequired = false
+    showTrial.value = false
+  } catch (error) {
+    trialNoticeError.value = messageOf(error, '确认失败，请重试')
+  } finally {
+    acknowledgingTrial.value = false
+  }
 }
 
 async function complete() {
@@ -120,10 +133,11 @@ useDidShow(load)
     </View>
     <View v-if="showTrial" class="trial-backdrop">
       <View class="trial-dialog">
-        <Text class="trial-badge">新用户权益</Text><Text class="dialog-title">欢迎使用闲遇</Text><Text class="dialog-copy">你是新用户，已获得 30 天免费使用权益。</Text>
-        <View class="trial-benefit"><Text>免费试用</Text><Text class="benefit-value">30 天</Text></View>
+        <Text class="trial-badge">新用户权益</Text><Text class="dialog-title">欢迎使用闲遇</Text><Text class="dialog-copy">你是新用户，已获得 {{ draft?.trialDays || 30 }} 天免费使用权益。</Text>
+        <View class="trial-benefit"><Text>免费试用</Text><Text class="benefit-value">{{ draft?.trialDays || 30 }} 天</Text></View>
         <Text class="dialog-copy">免费使用期内开放完整功能，支持体验从门店配置到预约履约的全流程。</Text>
-        <button class="button" @tap="closeTrial">我知道了</button>
+        <View v-if="trialNoticeError" class="error-banner">{{ trialNoticeError }}</View>
+        <button class="button" :loading="acknowledgingTrial" :disabled="acknowledgingTrial" @tap="acknowledgeTrialNotice">我知道了</button>
       </View>
     </View>
   </View>

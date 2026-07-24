@@ -194,6 +194,7 @@ flowchart LR
 | `tenant_id` | bigint | 租户 ID。 |
 | `openid` | varchar(128) unique | 店长 openid。 |
 | `last_login_at` | timestamptz | 最近登录。 |
+| `trial_notice_acknowledged_at` | timestamptz nullable | 新用户权益告示确认时间；为空时首次开店流程必须展示告示。 |
 
 ### 5.2 `member_wechat_identity`
 

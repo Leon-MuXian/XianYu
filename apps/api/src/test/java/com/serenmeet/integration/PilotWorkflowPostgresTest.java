@@ -175,6 +175,17 @@ class PilotWorkflowPostgresTest {
       "select count(*) from auth_session where token_hash = ?", Integer.class, tokenHasher.hash(ownerLogin.token())
     )).isEqualTo(1);
 
+    Map<String, Object> initialDraft = ownerService.onboardingDraft(owner);
+    assertThat(initialDraft)
+      .containsEntry("trialNoticeRequired", true)
+      .containsEntry("trialDays", 30);
+    assertThat(ownerService.acknowledgeTrialNotice(owner))
+      .containsEntry("trialNoticeRequired", false);
+    assertThat(ownerService.acknowledgeTrialNotice(owner))
+      .containsEntry("trialNoticeRequired", false);
+    assertThat(ownerService.onboardingDraft(owner))
+      .containsEntry("trialNoticeRequired", false);
+
     ownerService.saveStoreProfile(owner, Map.of(
       "name", "闲遇集成测试店",
       "city", "杭州",

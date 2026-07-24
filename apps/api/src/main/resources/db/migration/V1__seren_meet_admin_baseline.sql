@@ -40,6 +40,7 @@ create table owner_wechat_identity (
   tenant_id bigint not null references tenant(id),
   openid varchar(128) not null unique,
   last_login_at timestamptz not null default current_timestamp,
+  trial_notice_acknowledged_at timestamptz,
   created_at timestamptz not null default current_timestamp
 );
 

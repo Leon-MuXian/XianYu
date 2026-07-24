@@ -852,6 +852,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/onboarding/trial-notice/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acknowledgeTrialNotice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/owner/me": {
         parameters: {
             query?: never;
@@ -3165,6 +3181,28 @@ export interface operations {
         };
     };
     onboarding: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMapStringObject"];
+                };
+            };
+        };
+    };
+    acknowledgeTrialNotice: {
         parameters: {
             query: {
                 principal: components["schemas"]["SessionPrincipal"];

@@ -103,7 +103,8 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| `GET` | `/owner/onboarding/draft` | 获取开店草稿、完成状态和门店预览。 |
+| `GET` | `/owner/onboarding/draft` | 获取开店草稿、完成状态、门店预览、新用户权益告示待确认状态和实际试用天数。 |
+| `POST` | `/owner/onboarding/trial-notice/acknowledge` | 当前店长确认新用户权益告示；确认状态持久化到服务端且可重复调用。 |
 | `PUT` | `/owner/onboarding/store-profile` | 保存门店资料草稿。 |
 | `PUT` | `/owner/onboarding/business-hours` | 保存营业时间草稿。 |
 | `PUT` | `/owner/onboarding/resources` | 保存资源草稿。 |

@@ -51,6 +51,8 @@ export interface DayHours {
 }
 
 export interface OnboardingDraft {
+  trialNoticeRequired: boolean
+  trialDays: number
   storeProfile?: StoreProfileDraft
   businessHours?: { days?: Record<string, DayHours> }
   resources?: Resource[]

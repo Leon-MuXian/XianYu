@@ -109,12 +109,23 @@ public class OwnerPilotApplicationService {
 
   public Map<String, Object> onboardingDraft(SessionPrincipal principal) {
     Map<String, Object> row =
-        new LinkedHashMap<>(requireOne(ownerMapper.selectOnboardingDraft(principal.tenantId())));
+        new LinkedHashMap<>(
+            requireOne(
+                ownerMapper.selectOnboardingDraft(
+                    principal.tenantId(), Long.valueOf(principal.subjectId()))));
     row.put("storeProfile", jsonValue(row.get("storeProfile")));
     row.put("businessHours", jsonValue(row.get("businessHours")));
     row.put("resources", jsonValue(row.get("resources")));
     row.put("completion", jsonValue(row.get("completion")));
     return row;
+  }
+
+  @Transactional
+  public Map<String, Object> acknowledgeTrialNotice(SessionPrincipal principal) {
+    requireOwned(
+        ownerMapper.acknowledgeTrialNotice(
+            principal.tenantId(), Long.valueOf(principal.subjectId())));
+    return Map.of("trialNoticeRequired", false);
   }
 
   @Transactional

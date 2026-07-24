@@ -93,6 +93,12 @@ public class OwnerPilotController {
     return ApiResponse.ok(ownerService.onboardingDraft(principal));
   }
 
+  @PostMapping("/onboarding/trial-notice/acknowledge")
+  public ApiResponse<Map<String, Object>> acknowledgeTrialNotice(
+      @CurrentSession SessionPrincipal principal) {
+    return ApiResponse.ok(ownerService.acknowledgeTrialNotice(principal));
+  }
+
   @PutMapping("/onboarding/store-profile")
   public ApiResponse<Map<String, Object>> saveStoreProfile(
       @CurrentSession SessionPrincipal principal, @Valid @RequestBody StoreProfileRequest request) {

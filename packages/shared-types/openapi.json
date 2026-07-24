@@ -2602,6 +2602,36 @@
         }
       }
     },
+    "/owner/onboarding/trial-notice/acknowledge": {
+      "post": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "acknowledgeTrialNotice",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/owner/me": {
       "get": {
         "tags": [

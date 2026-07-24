@@ -77,6 +77,7 @@
 ## 3.5 首次开店草稿
 
 - 首次登录且无门店的店长进入 O-START 后，系统为当前 `tenant_id` 和 `owner_openid` 创建或读取 `StoreOnboardingDraft`。
+- 新用户权益告示的确认状态按店长身份持久化到服务端；不得使用跨账号共享的设备级缓存决定是否展示。
 - `StoreOnboardingDraft.store_profile_draft` 保存门店名称、经营项目、服务标签、地址和联系电话。
 - `StoreOnboardingDraft.business_hours_draft` 保存按星期配置的营业/休息和开始结束时间。
 - `StoreOnboardingDraft.resources_draft` 保存资源名称、类型、容量、启用状态和排序。
