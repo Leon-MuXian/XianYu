@@ -60,23 +60,23 @@ async function login() {
         <View class="mini-brand"><Text class="mini-mark">闲</Text><Text>闲遇-店长端</Text></View>
       </View>
       <View class="login-visual">
-        <View class="art-scene">
-          <View class="paper-window" />
-          <View class="sun-cut" />
-          <View class="paper-calendar"><Text class="calendar-head" /><Text class="calendar-small">今日</Text><Text class="calendar-main">服务</Text></View>
-          <View class="art-ticket blue owner-note-class"><Text class="ticket-title">新时段</Text><Text>发布可约</Text></View>
-          <View class="art-ticket gold owner-note-coach"><Text class="ticket-title">员工表</Text><Text>清楚履约</Text></View>
-          <View class="casual-person"><View class="person-head" /><View class="person-body" /><View class="person-legs" /></View>
-          <View class="paper-phone"><View /></View>
-          <View class="scene-desk"><View class="desk-leg left" /><View class="desk-leg right" /></View>
+        <View class="art-scene owner-studio-scene">
+          <View class="owner-studio-wall" />
+          <View class="owner-studio-window" />
+          <View class="owner-studio-sunbeam" />
+          <View class="owner-studio-arch" />
+          <View class="owner-studio-floor" />
+          <View class="owner-studio-bench" />
+          <View class="owner-studio-ledger" />
+          <View class="owner-studio-vase" />
         </View>
       </View>
       <View class="login-copy">
         <Text class="login-title"><Text>从一个服务时段</Text><Text class="login-title-tail">开始运营门店</Text></Text>
         <Text class="login-description">适合康复、护理、咨询、运动训练等预约制门店，先体验完整流程，再按需要联系顾问续期。</Text>
-        <View class="login-badge-row"><Text class="login-badge">微信快捷登录</Text><Text class="login-badge">多种服务</Text><Text class="login-badge">免费试用</Text></View>
       </View>
       <View class="login-action">
+        <View class="login-badge-row"><Text class="login-badge">微信快捷登录</Text><Text class="login-badge">多种服务</Text><Text class="login-badge">免费试用</Text></View>
         <button class="wechat-button" :loading="loading" :disabled="loading" @tap="login">微信一键登录</button>
         <Text v-if="message" class="login-error">{{ message }}</Text>
         <Text class="login-footnote">首次登录后进入开始使用清单，完成必填项后创建门店</Text>

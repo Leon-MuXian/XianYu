@@ -252,7 +252,7 @@
       font-weight: 700;
     }
     .phone:has(.owner-art-login) .status-bar {
-      background: #fbfaf3;
+      background: #f4efe5;
     }
     .topbar {
       display: flex;
@@ -2256,18 +2256,212 @@
     }
     .owner-art-login {
       padding-top: 10px;
+      background: #f4efe5;
     }
+    .owner-art-login::before,
+    .owner-art-login::after { display: none; }
     .owner-art-login .login-identity {
       justify-content: flex-start;
     }
+    .owner-art-login .mini-mark { background: #24392f; }
     .owner-art-login .login-visual {
-      height: 344px;
+      height: 336px;
       margin-top: 14px;
+    }
+    .art-login.owner-art-login .login-copy {
+      margin-top: 18px;
+    }
+    .art-login.owner-art-login .login-copy h4 {
+      max-width: 306px;
+      font-size: 31px;
+      line-height: 1.10;
+    }
+    .art-login.owner-art-login .login-copy p {
+      width: 100%;
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.60;
+    }
+    .owner-art-login .login-action {
+      left: 24px;
+      right: 24px;
+      bottom: 64px;
+    }
+    .owner-art-login .login-action .login-badge-row {
+      justify-content: flex-start;
+      margin: 0 0 14px;
+    }
+    .owner-art-login .wechat-button {
+      height: 48px;
+      background: #294f40;
+    }
+    .owner-art-login .login-footnote {
+      margin-top: 12px;
     }
     .art-scene {
       position: relative;
       width: 312px;
       height: 336px;
+    }
+    .owner-studio-scene {
+      width: 324px;
+      height: 324px;
+      overflow: hidden;
+      border: 1px solid rgba(75, 68, 51, .12);
+      border-radius: 26px;
+      background: #dfe0d1;
+      box-shadow: 0 24px 52px rgba(75, 68, 51, .17), inset 0 0 0 1px rgba(255, 255, 255, .28);
+    }
+    .owner-studio-wall {
+      position: absolute;
+      inset: 0 0 32%;
+      background: #e9e3d5;
+    }
+    .owner-studio-window {
+      position: absolute;
+      z-index: 2;
+      left: 18px;
+      top: 24px;
+      width: 106px;
+      height: 176px;
+      border: 7px solid #f8f2e6;
+      border-bottom-width: 10px;
+      background: #8eb2ac;
+      box-shadow: 0 12px 25px rgba(54, 67, 62, .18);
+    }
+    .owner-studio-window::before,
+    .owner-studio-window::after {
+      content: "";
+      position: absolute;
+      background: rgba(250, 246, 235, .86);
+    }
+    .owner-studio-window::before {
+      left: 50%;
+      top: 0;
+      width: 5px;
+      height: 100%;
+    }
+    .owner-studio-window::after {
+      left: 0;
+      top: 48%;
+      width: 100%;
+      height: 5px;
+    }
+    .owner-studio-sunbeam {
+      position: absolute;
+      z-index: 3;
+      left: 102px;
+      top: -28px;
+      width: 96px;
+      height: 360px;
+      background: rgba(255, 237, 180, .42);
+      transform: rotate(-18deg);
+      transform-origin: top center;
+    }
+    .owner-studio-arch {
+      position: absolute;
+      z-index: 2;
+      right: 20px;
+      top: 30px;
+      width: 102px;
+      height: 204px;
+      border: 11px solid #b3674b;
+      border-bottom: 0;
+      border-radius: 56px 56px 0 0;
+      background: #476c60;
+      box-shadow: inset 18px 0 28px rgba(12, 38, 31, .20);
+    }
+    .owner-studio-arch::after {
+      content: "";
+      position: absolute;
+      left: 19px;
+      bottom: 0;
+      width: 43px;
+      height: 112px;
+      border-radius: 24px 24px 0 0;
+      background: rgba(244, 189, 102, .72);
+    }
+    .owner-studio-floor {
+      position: absolute;
+      z-index: 1;
+      inset: 68% 0 0;
+      background:
+        linear-gradient(24deg, transparent 48%, rgba(68, 79, 70, .12) 49%, rgba(68, 79, 70, .12) 51%, transparent 52%),
+        linear-gradient(-24deg, transparent 48%, rgba(68, 79, 70, .12) 49%, rgba(68, 79, 70, .12) 51%, transparent 52%),
+        #cfd0bd;
+      background-size: 60px 42px;
+    }
+    .owner-studio-bench {
+      position: absolute;
+      z-index: 6;
+      left: 70px;
+      bottom: 45px;
+      width: 172px;
+      height: 46px;
+      border-radius: 24px 24px 14px 14px;
+      background: #c67a58;
+      box-shadow: 0 16px 0 #7d4c39, 0 28px 26px rgba(57, 54, 44, .20);
+    }
+    .owner-studio-bench::before,
+    .owner-studio-bench::after {
+      content: "";
+      position: absolute;
+      bottom: -48px;
+      width: 9px;
+      height: 52px;
+      border-radius: 8px;
+      background: #4f4437;
+    }
+    .owner-studio-bench::before { left: 28px; }
+    .owner-studio-bench::after { right: 28px; }
+    .owner-studio-ledger {
+      position: absolute;
+      z-index: 8;
+      left: 102px;
+      bottom: 87px;
+      width: 108px;
+      height: 58px;
+      border-radius: 5px 13px 13px 5px;
+      background: #f7f0df;
+      box-shadow: 0 14px 24px rgba(66, 61, 49, .22);
+      transform: rotate(-4deg);
+    }
+    .owner-studio-ledger::before {
+      content: "";
+      position: absolute;
+      left: 15px;
+      right: 14px;
+      top: 15px;
+      height: 5px;
+      background: #294f40;
+      box-shadow: 0 12px 0 #d19a4a, 0 24px 0 #b95f49;
+    }
+    .owner-studio-vase {
+      position: absolute;
+      z-index: 9;
+      left: 44px;
+      bottom: 80px;
+      width: 28px;
+      height: 52px;
+      border-radius: 7px 7px 15px 15px;
+      background: #315d50;
+    }
+    .owner-studio-vase::before,
+    .owner-studio-vase::after {
+      content: "";
+      position: absolute;
+      left: 11px;
+      bottom: 42px;
+      width: 34px;
+      height: 18px;
+      border-radius: 90% 10% 90% 10%;
+      background: #63866c;
+      transform: rotate(-56deg);
+      transform-origin: left bottom;
+    }
+    .owner-studio-vase::after {
+      left: 17px;
+      transform: rotate(-120deg);
     }
     .paper-window {
       position: absolute;
@@ -2564,9 +2758,6 @@
       min-height: 46px;
       border-radius: 16px;
       box-shadow: 0 17px 34px rgba(23, 33, 27, .14);
-    }
-    .owner-art-login .person-body {
-      background: var(--green);
     }
     .coach-art-login {
       background:
@@ -5436,7 +5627,7 @@
     <section class="section owner-redesign">
       <div class="section-title"><h2>店长小程序</h2><p>店长端按注册试用、创建门店前、创建后配置、日常运营、账号设置和冻结异常组织。导航栏保持紧凑，只承担页面定位；状态由原有业务内容表达，列表新增动作进入内容标题行，保存与确认继续跟随表单。</p></div>
       <div class="screens">
-        <div class="phone-wrap"><div class="frame-label">O-LOGIN 店长端 / 微信登录</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="login-scene art-login owner-art-login"><div class="login-identity"><span class="mini-brand"><span class="mini-mark">闲</span>闲遇-店长端</span></div><div class="login-visual"><div class="art-scene"><div class="paper-window"></div><span class="sun-cut"></span><div class="paper-calendar"><small>今日</small><span>服务</span></div><div class="art-ticket blue owner-note-class"><strong>新时段</strong><span>发布可约</span></div><div class="art-ticket gold owner-note-coach"><strong>员工表</strong><span>清楚履约</span></div><div class="casual-person"><span class="person-head"></span><span class="person-body"></span><span class="person-legs"></span></div><div class="paper-phone"></div><div class="scene-desk"></div></div></div><div class="login-copy"><h4><span>从一个服务时段</span><span class="login-title-tail">开始运营门店</span></h4><p>适合康复、护理、咨询、运动训练等预约制门店，先体验完整流程，再按需要联系顾问续期。</p><div class="login-badge-row"><span class="login-badge">微信快捷登录</span><span class="login-badge">多种服务</span><span class="login-badge">免费试用</span></div></div><div class="login-action"><div class="wechat-button">微信一键登录</div><div class="login-footnote">首次登录后进入开始使用清单，完成必填项后创建门店</div></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-LOGIN 店长端 / 微信登录</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="login-scene art-login owner-art-login"><div class="login-identity"><span class="mini-brand"><span class="mini-mark">闲</span>闲遇-店长端</span></div><div class="login-visual"><div class="art-scene owner-studio-scene"><div class="owner-studio-wall"></div><div class="owner-studio-window"></div><div class="owner-studio-sunbeam"></div><div class="owner-studio-arch"></div><div class="owner-studio-floor"></div><div class="owner-studio-bench"></div><div class="owner-studio-ledger"></div><div class="owner-studio-vase"></div></div></div><div class="login-copy"><h4><span>从一个服务时段</span><span class="login-title-tail">开始运营门店</span></h4><p>适合康复、护理、咨询、运动训练等预约制门店，先体验完整流程，再按需要联系顾问续期。</p></div><div class="login-action"><div class="login-badge-row"><span class="login-badge">微信快捷登录</span><span class="login-badge">多种服务</span><span class="login-badge">免费试用</span></div><div class="wechat-button">微信一键登录</div><div class="login-footnote">首次登录后进入开始使用清单，完成必填项后创建门店</div></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 新用户告示</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense"><div class="owner-hero"><h4>完成 3 项后创建门店</h4><p>先在清单里保存门店资料、营业时间和履约资源，创建门店后进入工作台继续补齐后续运营设置。</p><div class="owner-hero-meta"><span>清单引导</span><span>草稿保存</span></div></div><div class="owner-progress"><div class="owner-step required-action pending"><b>1</b><div><strong>门店资料</strong><small>名称、经营项目、服务标签、地址、电话</small></div><span class="tag blue">必填</span></div><div class="owner-step required-action pending"><b>2</b><div><strong>营业时间</strong><small>按星期设置营业/休息和开始结束时间</small></div><span class="tag blue">必填</span></div><div class="owner-step required-action pending"><b>3</b><div><strong>履约资源</strong><small>至少 1 个启用资源，支持房间、场地、床位等</small></div><span class="tag blue">必填</span></div><div class="owner-step later"><b>4</b><div><strong>员工、服务与会员</strong><small>创建门店后在工作台待办中继续补齐</small></div><span class="tag warn">可稍后</span></div></div><div class="owner-start-note"><div><strong>还差 3 项必填</strong>点击上方必填项进入填写，保存后回到本页刷新状态。</div><span class="tag warn">未完成</span></div><div class="button disabled" style="width:100%;height:50px;font-size:16px;margin-top:12px">创建门店</div></div><div class="trial-backdrop"><div class="trial-dialog"><span class="trial-badge">新用户权益</span><h4>欢迎使用闲遇</h4><p>你是新用户，已获得 30 天免费使用权益。</p><div class="trial-benefit"><span>免费试用</span><strong>30 天</strong></div><p>免费使用期内开放完整功能，支持体验从门店配置到预约履约的全流程。</p><span class="button">我知道了</span></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 必填项未完成</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense"><div class="owner-hero"><h4>完成 3 项后创建门店</h4><p>先在清单里保存门店资料、营业时间和履约资源。创建门店按钮会在必填项完成后自动解锁。</p><div class="owner-hero-meta"><span>清单引导</span><span>按钮未解锁</span></div></div><div class="owner-progress"><div class="owner-step required-action pending"><b>1</b><div><strong>门店资料</strong><small>名称、经营项目、服务标签、地址、电话</small></div><span class="tag blue">去填写</span></div><div class="owner-step required-action pending"><b>2</b><div><strong>营业时间</strong><small>按星期设置营业/休息和开始结束时间</small></div><span class="tag blue">去填写</span></div><div class="owner-step required-action pending"><b>3</b><div><strong>履约资源</strong><small>至少 1 个启用资源，支持房间、场地、床位等</small></div><span class="tag blue">去填写</span></div><div class="owner-step later"><b>4</b><div><strong>员工、服务与会员</strong><small>创建门店后在工作台待办中继续补齐</small></div><span class="tag warn">可稍后</span></div></div><div class="owner-start-note"><div><strong>还差 3 项必填</strong>保存任一必填项后回到本页，状态会从去填写变成已完成。</div><span class="tag warn">未完成</span></div><div class="button disabled" style="width:100%;height:50px;font-size:16px;margin-top:12px">创建门店</div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-STORE 店长端 / 门店资料</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店资料</h3><span class="tag blue">填写中</span></div><div class="content ostore-flow"><div class="ostore-guide"><h4>正在填写门店资料</h4><p>店长从开始使用清单进入，边填边保存草稿，保存后回到清单。</p></div><div class="owner-form-grid"><div class="field wide"><span>门店名称 <em class="required-mark">必填</em></span><strong>和序预约中心</strong></div><div class="field wide"><span>门店地址 <em class="required-mark">必填</em></span><strong>上海市徐汇区衡山路 88 号</strong></div><div class="field wide"><span>联系电话 <em class="required-mark">必填</em></span><strong>021-8888 6606</strong></div></div><div class="ostore-card"><h4>经营项目 <small class="required-mark">必填</small></h4><div class="ostore-chip-set"><span>康复理疗 ×</span><span>咨询评估 ×</span><span>运动训练 ×</span><span>+ 添加</span></div><p>使用会员能理解的词描述门店服务方向，不限制后续服务项目名称。</p></div><div class="ostore-card"><h4>服务标签 <small class="required-mark">必填</small></h4><div class="ostore-chip-set"><span>姿态评估 ×</span><span>一对一服务 ×</span><span>小组训练 ×</span><span>护理服务 ×</span><span>+ 添加</span></div><p>标签由门店自行填写，只用于展示和筛选提示。</p></div><div class="ostore-next-preview"><strong>保存后返回清单</strong>营业时间和履约资源完成后，系统会生成创建门店前的完整展示预览。</div><div class="form-footer"><span class="button secondary">返回清单</span><span class="button">保存并返回清单</span></div></div></div></div>
