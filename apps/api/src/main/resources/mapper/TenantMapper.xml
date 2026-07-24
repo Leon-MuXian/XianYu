@@ -153,7 +153,7 @@
         greatest(
           (select max(os.created_at) from offline_sale_record os where os.tenant_id = t.id),
           (select max(ar.confirmed_at) from attendance_confirm ar where ar.tenant_id = t.id),
-          (select max(dr.created_at) from deduction_record dr where dr.tenant_id = t.id)
+          (select max(dr.deducted_at) from deduction_record dr where dr.tenant_id = t.id)
         ) as last_activity_at
     ) f on true
     where t.id = #{tenantId}

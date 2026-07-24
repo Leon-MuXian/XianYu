@@ -21,6 +21,7 @@ import com.serenmeet.common.IdempotencyWorkflow;
 import com.serenmeet.member.application.MemberPilotApplicationService;
 import com.serenmeet.owner.application.OwnerPilotApplicationService;
 import com.serenmeet.staff.application.StaffPilotApplicationService;
+import com.serenmeet.tenant.application.TenantAdminApplicationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -86,6 +87,9 @@ class PilotWorkflowPostgresTest {
 
   @Autowired
   private StaffPilotApplicationService staffService;
+
+  @Autowired
+  private TenantAdminApplicationService tenantAdminService;
 
   @Autowired
   private JdbcTemplate jdbcTemplate;
@@ -233,6 +237,10 @@ class PilotWorkflowPostgresTest {
       "select remain_count from member_card where id = ?", Integer.class, firstMember.cardId()
     )).isEqualTo(4);
     assertThat(ownerService.reportSummary(owner).get("deductions")).isEqualTo(1);
+    assertThat(tenantAdminService.getTenant(owner.tenantId()).snapshot()).satisfies(snapshot -> {
+      assertThat(snapshot.deductions()).isEqualTo(1);
+      assertThat(snapshot.lastActivityAt()).isNotNull();
+    });
 
     MemberLogin secondMember = createAndBindMember(owner, templateId, "M-002", "member-two");
     Long contestedSlotId = id(ownerService.publishSlot(
