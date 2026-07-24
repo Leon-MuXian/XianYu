@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { QuestionFilled } from '@element-plus/icons-vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { adminApi } from '@/services/api'
 import type { PlatformConfig } from '@/types/admin'
@@ -13,7 +12,6 @@ const keyword = ref('')
 const editableFilter = ref('ALL')
 const editing = ref<PlatformConfig | null>(null)
 const drawerOpen = ref(false)
-const rulesOpen = ref(false)
 const editForm = reactive({
   newValue: '',
   reason: ''
@@ -66,9 +64,6 @@ onMounted(load)
         <h1>平台配置</h1>
         <p>配置新租户默认试用天数、到期提醒、邀请码有效期、取消截止和会员卡提醒阈值。修改只影响之后的新业务流程。</p>
       </div>
-      <el-tooltip content="查看配置生效规则" placement="bottom">
-        <el-button class="help-button" circle :icon="QuestionFilled" @click="rulesOpen = true" />
-      </el-tooltip>
     </div>
 
     <div class="filter-bar">
@@ -81,7 +76,7 @@ onMounted(load)
     </div>
 
     <div class="admin-card table-shell">
-      <el-table v-loading="loading" :data="configs" border>
+      <el-table v-loading="loading" :data="configs" border empty-text=" ">
         <el-table-column prop="name" label="配置项" min-width="190" />
         <el-table-column prop="configKey" label="配置键" min-width="250" />
         <el-table-column label="当前值" width="120">
@@ -106,7 +101,13 @@ onMounted(load)
       </div>
     </div>
 
-    <el-drawer v-model="drawerOpen" title="修改配置" size="min(640px, 92vw)" :close-on-click-modal="false">
+    <el-drawer
+      v-model="drawerOpen"
+      title="修改配置"
+      size="min(640px, 92vw)"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+    >
       <template v-if="editing">
         <div class="config-edit-summary">
           <div>
@@ -158,28 +159,10 @@ onMounted(load)
       </template>
     </el-drawer>
 
-    <el-dialog v-model="rulesOpen" title="生效规则" width="560">
-      <div class="rules-list">
-        <div class="step-card"><b>新</b><div><strong>只影响后续流程</strong><small>不会批量改写已有租户到期日或已生成邀请码。</small></div><StatusTag status="extended" text="后续" /></div>
-        <div class="step-card"><b>验</b><div><strong>值校验</strong><small>整数、分钟、天数等配置按后端规则校验。</small></div><StatusTag status="expiring" text="必检" /></div>
-        <div class="step-card"><b>因</b><div><strong>原因必填</strong><small>每次修改必须填写可追溯原因。</small></div><StatusTag status="expiring" text="必填" /></div>
-        <div class="step-card"><b>审</b><div><strong>审计记录</strong><small>记录配置键、旧值、新值、操作人和原因。</small></div><StatusTag status="extended" text="写入" /></div>
-      </div>
-    </el-dialog>
   </section>
 </template>
 
 <style scoped>
-.help-button {
-  justify-self: end;
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
-  color: var(--green-dark);
-  background: var(--green-soft);
-  border-color: #cfe3da;
-}
-
 .config-keyword {
   width: 280px;
 }
@@ -194,28 +177,14 @@ onMounted(load)
 }
 
 .config-edit-summary {
-  position: relative;
-  overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: 16px;
   align-items: start;
-  padding: 18px 18px 18px 20px;
-  border: 1px solid #dcebe4;
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(72, 145, 127, 0.12), transparent 34%),
-    linear-gradient(135deg, #f6fbf8 0%, #ffffff 78%);
-  box-shadow: 0 12px 34px rgba(32, 80, 67, 0.08);
-}
-
-.config-edit-summary::before {
-  position: absolute;
-  inset: 14px auto 14px 0;
-  width: 4px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--green) 0%, #9fd2c4 100%);
-  content: "";
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  background: #fff;
+  padding: 16px;
 }
 
 .summary-label,
@@ -229,35 +198,32 @@ onMounted(load)
 }
 
 .config-edit-summary h3 {
-  margin: 8px 0 8px;
+  margin: 7px 0 6px;
   color: var(--ink);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   line-height: 1.35;
 }
 
 .config-edit-summary p {
   margin: 0;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.65;
 }
 
 .summary-value {
-  min-width: 132px;
-  padding: 12px 14px;
-  border: 1px solid #cfe3da;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.76);
+  min-width: 130px;
+  border-left: 1px solid var(--line-soft);
+  padding: 4px 0 4px 16px;
 }
 
 .summary-value strong {
   display: block;
   margin-top: 8px;
-  color: var(--green-dark);
-  font-size: 20px;
-  font-weight: 680;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 800;
   line-height: 1.2;
   word-break: break-word;
 }
@@ -265,22 +231,23 @@ onMounted(load)
 .config-meta-list {
   display: grid;
   grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr) minmax(0, 0.7fr);
-  gap: 10px;
-  margin-top: 12px;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  background: #fff;
+  margin-top: 14px;
 }
 
 .config-meta-item {
   min-width: 0;
+  border-right: 1px solid var(--line-soft);
+  background: #fff;
   padding: 12px 14px;
-  border: 1px solid var(--line-soft);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 8px 22px rgba(37, 76, 65, 0.05);
 }
 
-.config-meta-item:hover {
-  border-color: #cfe3da;
-  background: #fff;
+.config-meta-item:last-child {
+  border-right: 0;
 }
 
 .config-meta-item code,
@@ -299,11 +266,11 @@ onMounted(load)
 }
 
 .edit-panel {
-  margin-top: 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  background: #fff;
+  margin-top: 14px;
   padding: 16px;
-  border: 1px solid #dcebe4;
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(247, 251, 248, 0.78), rgba(255, 255, 255, 0.94));
 }
 
 .edit-panel-title {
@@ -315,11 +282,10 @@ onMounted(load)
 }
 
 .edit-panel-title span {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
+  width: 3px;
+  height: 18px;
+  border-radius: 0;
   background: var(--green);
-  box-shadow: 0 0 0 5px rgba(72, 145, 127, 0.12);
 }
 
 .edit-panel-title strong {
@@ -333,25 +299,17 @@ onMounted(load)
 
 .edit-form :deep(.el-input__wrapper),
 .edit-form :deep(.el-textarea__inner) {
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px #dbe8e2 inset;
-}
-
-.edit-form :deep(.el-input__wrapper.is-focus),
-.edit-form :deep(.el-textarea__inner:focus) {
-  box-shadow: 0 0 0 1px var(--green) inset, 0 0 0 4px rgba(72, 145, 127, 0.12);
+  border-radius: 4px;
 }
 
 .required-label::before {
-  content: "*";
-  margin-right: 4px;
-  color: var(--coral);
-  font-weight: 950;
+  content: "";
 }
 
-.rules-list {
-  display: grid;
-  gap: 10px;
+.required-label::after {
+  margin-left: 5px;
+  color: var(--coral);
+  content: "必填";
 }
 
 .drawer-actions {
@@ -361,10 +319,6 @@ onMounted(load)
 }
 
 @media (max-width: 760px) {
-  .help-button {
-    justify-self: start;
-  }
-
   .config-keyword,
   .config-filter {
     width: 100%;

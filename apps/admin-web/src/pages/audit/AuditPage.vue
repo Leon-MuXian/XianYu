@@ -73,7 +73,7 @@ onMounted(load)
 
     <div class="admin-card table-card">
       <h2>记录列表</h2>
-      <el-table v-loading="loading" :data="rows" border>
+      <el-table v-loading="loading" :data="rows" border empty-text=" ">
         <el-table-column label="动作" min-width="210">
           <template #default="{ row }"><strong>{{ actionLabels[row.action] || row.action }} · {{ row.targetName }}</strong></template>
         </el-table-column>
@@ -130,12 +130,33 @@ onMounted(load)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16px;
+  padding: 14px 16px;
   color: var(--muted);
+  font-size: 12px;
 }
 
 .table-card {
-  padding: 16px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.table-card > h2 {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  border-bottom: 1px solid var(--line-soft);
+  margin: 0;
+  padding: 0 16px;
+}
+
+.table-card :deep(.el-table) {
+  border: 0;
+  border-radius: 0;
+}
+
+.table-card .empty-state {
+  border: 0;
+  border-radius: 0;
 }
 
 @media (max-width: 760px) {

@@ -1076,6 +1076,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/audit-logs": {
         parameters: {
             query?: never;
@@ -1493,6 +1509,12 @@ export interface components {
             impactScope?: string;
             editable?: boolean;
             enabled?: boolean;
+        };
+        ApiResponseAdminUserView: {
+            requestId?: string;
+            success?: boolean;
+            data?: components["schemas"]["AdminUserView"];
+            error?: components["schemas"]["ApiError"];
         };
         ApiResponsePageResponseAuditLogItem: {
             requestId?: string;
@@ -3474,6 +3496,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListPlatformConfigResponse"];
+                };
+            };
+        };
+    };
+    me_2: {
+        parameters: {
+            query: {
+                user: components["schemas"]["AdminUserView"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminUserView"];
                 };
             };
         };

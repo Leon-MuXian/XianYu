@@ -115,7 +115,7 @@ onMounted(load)
   justify-items: start;
   min-height: 64px;
   border: 1px solid var(--line-soft);
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--gray-soft);
   padding: 12px;
 }

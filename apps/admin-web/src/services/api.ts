@@ -1,4 +1,5 @@
 import type {
+  AdminUser,
   AuditLogItem,
   LoginResponse,
   PageResponse,
@@ -7,10 +8,12 @@ import type {
   TenantDetail,
   TenantListResponse
 } from '@/types/admin'
-import { createApiClient, createIdempotencyKey } from '@serenmeet/api-client'
+import { createApiClient, createIdempotencyKey, type SerenApiError } from '@serenmeet/api-client'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080'
 const TOKEN_KEY = 'serenmeet_admin_token'
+const USER_KEY = 'serenmeet_admin_user'
+const SESSION_EXPIRED_CODES = new Set(['LOGIN_REQUIRED', 'UNAUTHORIZED'])
 
 export function getToken() {
   return window.localStorage.getItem(TOKEN_KEY)
@@ -20,13 +23,40 @@ export function setToken(token: string) {
   window.localStorage.setItem(TOKEN_KEY, token)
 }
 
+export function getStoredAdminUser(): AdminUser | null {
+  const value = window.localStorage.getItem(USER_KEY)
+  if (!value) return null
+  try {
+    const user = JSON.parse(value) as Partial<AdminUser>
+    return typeof user.id === 'number' && typeof user.username === 'string' && typeof user.displayName === 'string'
+      ? user as AdminUser
+      : null
+  } catch {
+    return null
+  }
+}
+
+function setStoredAdminUser(user: AdminUser) {
+  window.localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
 export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY)
+  window.localStorage.removeItem(USER_KEY)
+}
+
+function handleApiError(error: SerenApiError) {
+  if (!SESSION_EXPIRED_CODES.has(error.code)) return
+  clearToken()
+  if (window.location.pathname !== '/login') {
+    window.location.replace('/login')
+  }
 }
 
 const client = createApiClient({
   baseUrl: API_BASE,
   getToken,
+  onError: handleApiError,
   transport: async request => {
     const response = await fetch(request.url, {
       method: request.method,
@@ -61,7 +91,14 @@ export const adminApi = {
   async login(username: string, password: string) {
     const data = await request<LoginResponse>('POST', '/admin/auth/login', { username, password })
     setToken(data.token)
+    setStoredAdminUser(data.user)
     return data
+  },
+
+  async getCurrentUser() {
+    const user = await request<AdminUser>('GET', '/admin/auth/me')
+    setStoredAdminUser(user)
+    return user
   },
 
   listTenants(params: {

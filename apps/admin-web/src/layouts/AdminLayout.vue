@@ -1,17 +1,18 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import {
   ChatDotRound,
   DocumentChecked,
   OfficeBuilding,
   Setting,
-  SwitchButton,
-  User
+  SwitchButton
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
-import { clearToken } from '@/services/api'
+import { adminApi, clearToken, getStoredAdminUser } from '@/services/api'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const currentUsername = ref(getStoredAdminUser()?.username || '账号加载中')
 
 const nav = [
   { path: '/tenants', label: '租户管理', icon: OfficeBuilding },
@@ -19,6 +20,14 @@ const nav = [
   { path: '/config', label: '平台配置', icon: Setting },
   { path: '/audit', label: '操作记录', icon: DocumentChecked }
 ]
+
+onMounted(async () => {
+  try {
+    currentUsername.value = (await adminApi.getCurrentUser()).username
+  } catch {
+    if (!getStoredAdminUser()) currentUsername.value = '账号信息不可用'
+  }
+})
 
 async function confirmLogout() {
   try {
@@ -41,27 +50,38 @@ async function confirmLogout() {
   <div class="admin-layout">
     <aside class="sidebar">
       <div class="brand">
-        <span>闲</span>
-        <strong>闲遇</strong>
+        <span class="brand-mark">闲</span>
+        <div class="brand-copy">
+          <strong>闲遇</strong>
+          <small>PLATFORM OPS</small>
+        </div>
       </div>
-      <nav>
-        <RouterLink v-for="item in nav" :key="item.path" :to="item.path" class="nav-item">
+
+      <nav class="sidebar-nav" aria-label="平台后台导航">
+        <RouterLink
+          v-for="item in nav"
+          :key="item.path"
+          :to="item.path"
+          class="nav-item"
+          :title="item.label"
+        >
           <el-icon><component :is="item.icon" /></el-icon>
           <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
+
       <div class="sidebar-session">
+        <span class="session-avatar">AD</span>
         <div class="session-copy">
-          <el-icon><User /></el-icon>
-          <div>
-            <strong>内部运营</strong>
-          </div>
+          <strong>平台管理员</strong>
+          <small :title="currentUsername">{{ currentUsername }}</small>
         </div>
         <button type="button" class="session-logout" aria-label="退出登录" title="退出登录" @click="confirmLogout">
           <el-icon><SwitchButton /></el-icon>
         </button>
       </div>
     </aside>
+
     <section class="workspace">
       <main class="main">
         <RouterView />
@@ -73,167 +93,198 @@ async function confirmLogout() {
 <style scoped>
 .admin-layout {
   display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "side workspace";
   min-height: 100vh;
-  grid-template-columns: 232px minmax(0, 1fr);
-  background:
-    linear-gradient(180deg, rgba(228, 241, 236, 0.82), rgba(238, 243, 239, 0.42) 220px, transparent),
-    #eef3ef;
+  background: var(--bg);
 }
 
 .sidebar {
+  grid-area: side;
   position: sticky;
   top: 0;
-  isolation: isolate;
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background:
-    radial-gradient(circle at 18% 10%, rgba(47, 125, 110, 0.42), transparent 26%),
-    linear-gradient(145deg, rgba(18, 34, 29, 0.98), rgba(18, 34, 29, 0.94)),
-    #12221d;
-  color: white;
-  overflow: hidden;
-  padding: 26px 20px 18px;
-}
-
-.sidebar::after {
-  content: "";
-  position: absolute;
-  right: -150px;
-  bottom: -170px;
-  z-index: -1;
-  width: 360px;
-  height: 360px;
-  border-radius: 999px;
-  background: rgba(47, 125, 110, 0.22);
+  min-width: 0;
+  border-right: 1px solid #0e1c2b;
+  background: var(--navy);
+  color: #fff;
+  padding: 0 14px 18px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 36px;
-  padding: 0 8px;
-  font-size: 22px;
-  font-weight: 900;
+  gap: 11px;
+  min-height: 72px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 10px;
 }
 
-.brand span {
+.brand-mark {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--green);
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 17px;
   font-weight: 900;
-  box-shadow: 0 10px 24px rgba(47, 125, 110, 0.24);
 }
 
-nav {
+.brand-copy strong,
+.brand-copy small {
+  display: block;
+}
+
+.brand-copy strong {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.brand-copy small {
+  margin-top: 4px;
+  color: #91a1b2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.sidebar-nav {
   display: grid;
-  gap: 6px;
+  gap: 4px;
+  margin-top: 24px;
 }
 
 .nav-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
+  min-height: 46px;
   border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 0 14px;
-  color: rgba(229, 241, 236, 0.72);
-  background: transparent;
-  font-size: 16px;
-  font-weight: 900;
-  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
-}
-
-.nav-item.router-link-active {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.09);
-  color: white;
-  box-shadow: inset 3px 0 0 rgba(82, 166, 149, 0.92);
+  border-radius: 4px;
+  padding: 0 12px 0 9px;
+  color: #aab7c4;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
 .nav-item .el-icon {
+  justify-self: center;
+  color: #7f91a4;
   font-size: 18px;
+  transition: color 0.18s ease;
 }
 
-.workspace {
-  min-width: 0;
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.035);
+  color: #d6e0e9;
+}
+
+.nav-item.router-link-active {
+  border-color: rgba(121, 173, 219, 0.14);
+  background: #21364b;
+  color: #f3f7fa;
+}
+
+.nav-item.router-link-active .el-icon {
+  color: #79addb;
+}
+
+.nav-item:focus {
+  outline: none;
+}
+
+.nav-item:focus-visible {
+  box-shadow: inset 0 0 0 2px #79addb;
 }
 
 .sidebar-session {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 34px;
+  gap: 9px;
   align-items: center;
-  gap: 10px;
   margin-top: auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  padding: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 17px 10px 0;
+}
+
+.session-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: #2b4057;
+  color: #dce7f1;
+  font-size: 10px;
+  font-weight: 900;
 }
 
 .session-copy {
-  display: flex;
-  align-items: center;
   min-width: 0;
-  flex: 1;
-  gap: 9px;
-  color: rgba(229, 241, 236, 0.72);
 }
 
-.session-copy > .el-icon {
-  font-size: 18px;
-}
-
-.session-copy div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
+.session-copy strong,
+.session-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .session-copy strong {
-  overflow: hidden;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 11px;
+}
+
+.session-copy small {
+  margin-top: 3px;
+  color: #8192a4;
+  font-size: 9px;
 }
 
 .session-logout {
   display: grid;
   place-items: center;
-  flex: 0 0 34px;
   width: 34px;
   height: 34px;
   border: 1px solid transparent;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: rgba(229, 241, 236, 0.72);
+  border-radius: 4px;
+  background: transparent;
+  color: #8192a4;
   cursor: pointer;
-  font: inherit;
-  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
 .session-logout:hover {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.workspace {
+  grid-area: workspace;
+  min-width: 0;
 }
 
 .main {
-  width: min(100%, max(1440px, calc(100vw - 320px)));
-  margin: 0 auto;
-  padding: clamp(18px, 1.6vw, 34px);
+  width: 100%;
+  min-width: 0;
+  padding: 24px 28px 30px;
+}
+
+@media (min-width: 1680px) {
+  .main {
+    padding-right: 36px;
+    padding-left: 36px;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -242,87 +293,73 @@ nav {
   }
 
   .sidebar {
-    padding: 16px 10px;
+    padding: 0 10px 16px;
   }
 
   .brand {
     justify-content: center;
-    margin-bottom: 22px;
     padding: 0;
   }
 
-  .brand strong,
+  .brand-copy,
   .nav-item span,
   .session-copy {
     display: none;
   }
 
-  .brand span {
-    width: 38px;
-    height: 38px;
-  }
-
   .nav-item {
-    justify-content: center;
+    grid-template-columns: 1fr;
     padding: 0;
   }
 
   .sidebar-session {
-    justify-content: center;
-    padding: 5px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding-right: 0;
+    padding-left: 0;
   }
 
-  .session-logout {
-    flex-basis: 44px;
-    width: 44px;
-    height: 44px;
+  .session-avatar {
+    display: none;
   }
 }
 
 @media (max-width: 720px) {
   .admin-layout {
     display: block;
-    padding-bottom: 76px;
+    padding-bottom: 72px;
   }
 
   .sidebar {
     position: fixed;
-    inset: auto 12px 12px;
+    inset: auto 10px 10px;
     z-index: 20;
     display: grid;
-    grid-template-columns: 1fr 44px;
-    align-items: center;
-    height: 60px;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    height: 58px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 18px 42px rgba(18, 34, 29, 0.24);
+    border-radius: 5px;
+    padding: 6px;
+    box-shadow: 0 18px 42px rgba(23, 36, 51, 0.24);
   }
 
   .brand {
     display: none;
   }
 
-  nav {
-    display: grid;
+  .sidebar-nav {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    gap: 4px;
+    margin: 0;
   }
 
-  .nav-item,
-  .session-logout {
+  .nav-item {
     min-height: 44px;
   }
 
-  .nav-item span,
-  .session-copy {
-    display: none;
-  }
-
   .sidebar-session {
-    margin-top: 0;
-    border-color: transparent;
-    background: transparent;
+    margin: 0;
+    border: 0;
     padding: 0;
   }
 
@@ -332,8 +369,7 @@ nav {
   }
 
   .main {
-    width: 100%;
-    padding: 16px 12px;
+    padding: 18px 12px 24px;
   }
 }
 </style>

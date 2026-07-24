@@ -4548,6 +4548,831 @@
         animation: none;
       }
     }
+
+    /* Platform admin: Corporate Atlas visual system. Scoped to avoid changing mini-program screens. */
+    .atlas-admin {
+      --atlas-navy: #172433;
+      --atlas-navy-2: #213246;
+      --atlas-blue: #285f98;
+      --atlas-blue-dark: #194978;
+      --atlas-blue-soft: #eaf2fa;
+      --atlas-canvas: #f2f5f8;
+      --atlas-surface: #ffffff;
+      --atlas-surface-2: #f8fafc;
+      --atlas-ink: #172233;
+      --atlas-muted: #637286;
+      --atlas-line: #dce3ea;
+      --atlas-line-strong: #c5d0db;
+      --atlas-positive: #1f745d;
+      --atlas-positive-soft: #e8f4ef;
+      --atlas-warning: #a66a16;
+      --atlas-warning-soft: #fff4df;
+      --atlas-danger: #b84b46;
+      --atlas-danger-soft: #fcedeb;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: var(--atlas-ink);
+      background: var(--atlas-canvas);
+      font-family: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+    .atlas-admin *,
+    .atlas-admin *::before,
+    .atlas-admin *::after {
+      box-sizing: border-box;
+    }
+    .atlas-shell {
+      position: relative;
+      display: grid;
+      grid-template-columns: 224px minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      grid-template-areas: "side main";
+      width: 100%;
+      height: 100%;
+      background: var(--atlas-canvas);
+    }
+    .atlas-side {
+      grid-area: side;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--atlas-navy);
+      color: #fff;
+      border-right: 1px solid #0e1c2b;
+      padding: 0 14px 18px;
+    }
+    .atlas-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 72px;
+      padding: 0 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+    .atlas-mark {
+      display: grid;
+      place-items: center;
+      flex: 0 0 32px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--atlas-navy);
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .atlas-brand strong,
+    .atlas-brand small {
+      display: block;
+    }
+    .atlas-brand strong {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .atlas-brand small {
+      margin-top: 4px;
+      color: #91a1b2;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      line-height: 1;
+    }
+    .atlas-nav {
+      display: grid;
+      gap: 4px;
+    }
+    .atlas-nav.atlas-nav-spaced {
+      margin-top: 24px;
+    }
+    .atlas-nav-item {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 46px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 0 12px 0 9px;
+      color: #aab7c4;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .atlas-nav-icon {
+      width: 18px;
+      height: 18px;
+      justify-self: center;
+      color: #7f91a4;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: color .18s ease;
+    }
+    .atlas-icon-sprite {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .atlas-nav-item i {
+      display: none;
+    }
+    .atlas-nav-item:not(.active):hover {
+      border-color: transparent;
+      background: rgba(255, 255, 255, .035);
+      color: #d6e0e9;
+    }
+    .atlas-nav-item.active {
+      border-color: rgba(121, 173, 219, .14);
+      background: #21364b;
+      color: #f3f7fa;
+      font-weight: 700;
+    }
+    .atlas-nav-item.active .atlas-nav-icon {
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      color: #79addb;
+    }
+    .atlas-side-user {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, .1);
+      padding: 17px 10px 0;
+    }
+    .atlas-side-user > span {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      background: #2b4057;
+      color: #dce7f1;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .atlas-side-user strong,
+    .atlas-side-user small {
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .atlas-side-user strong {
+      font-size: 11px;
+    }
+    .atlas-side-user small {
+      margin-top: 3px;
+      color: #8192a4;
+      font-size: 9px;
+    }
+    .atlas-main {
+      grid-area: main;
+      min-width: 0;
+      overflow: hidden;
+      padding: 24px 28px 26px;
+    }
+    .atlas-page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 68px;
+      border-bottom: 1px solid var(--atlas-line-strong);
+      margin-bottom: 18px;
+      padding-bottom: 15px;
+    }
+    .atlas-login-kicker {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--atlas-blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .atlas-page-head h3 {
+      margin: 0;
+      color: var(--atlas-ink);
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .atlas-page-head p {
+      max-width: 820px;
+      margin: 7px 0 0;
+      color: var(--atlas-muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+    .atlas-page-stamp {
+      flex: 0 0 auto;
+      border-left: 2px solid var(--atlas-blue);
+      padding-left: 12px;
+      color: var(--atlas-muted);
+      font-size: 10px;
+      line-height: 1.5;
+      text-align: right;
+    }
+    .atlas-page-stamp strong {
+      display: block;
+      color: var(--atlas-ink);
+      font-size: 11px;
+    }
+    .atlas-metrics {
+      display: grid;
+      border: 1px solid var(--atlas-line);
+      border-radius: 5px;
+      background: var(--atlas-surface);
+      margin-bottom: 16px;
+    }
+    .atlas-metrics.five { grid-template-columns: repeat(5, 1fr); }
+    .atlas-metrics.four { grid-template-columns: repeat(4, 1fr); }
+    .atlas-metrics.three { grid-template-columns: repeat(3, 1fr); }
+    .atlas-metrics.tenant-overview .atlas-metric { min-height: 78px; box-shadow: none; }
+    .atlas-metric {
+      position: relative;
+      min-width: 0;
+      min-height: 90px;
+      border-right: 1px solid var(--atlas-line);
+      padding: 15px 17px;
+    }
+    .atlas-metric:last-child { border-right: 0; }
+    .atlas-metric span,
+    .atlas-metric strong,
+    .atlas-metric small {
+      display: block;
+    }
+    .atlas-metric span {
+      color: var(--atlas-muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .atlas-metric strong {
+      margin-top: 7px;
+      overflow: hidden;
+      color: var(--atlas-ink);
+      font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+      font-size: 24px;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .atlas-metric small {
+      margin-top: 7px;
+      color: var(--atlas-muted);
+      font-size: 9px;
+    }
+    .atlas-metric.warning { box-shadow: inset 0 3px 0 var(--atlas-warning); }
+    .atlas-metric.danger { box-shadow: inset 0 3px 0 var(--atlas-danger); }
+    .atlas-metric.positive { box-shadow: inset 0 3px 0 var(--atlas-positive); }
+    .atlas-toolbar {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) 150px 150px 82px;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .atlas-toolbar.config { grid-template-columns: minmax(360px, 1fr) 158px 82px; }
+    .atlas-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 0;
+      min-height: 44px;
+      border: 1px solid var(--atlas-line-strong);
+      border-radius: 4px;
+      background: var(--atlas-surface);
+      padding: 0 11px;
+      color: var(--atlas-muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .atlas-control::after {
+      content: "";
+      flex: 0 0 auto;
+      width: 5px;
+      height: 5px;
+      border-right: 1px solid var(--atlas-muted);
+      border-bottom: 1px solid var(--atlas-muted);
+      margin: -3px 2px 0 10px;
+      transform: rotate(45deg);
+    }
+    .atlas-control.search-control::after {
+      width: 9px;
+      height: 9px;
+      border: 1px solid var(--atlas-muted);
+      border-radius: 50%;
+      margin: 0 1px 0 10px;
+      transform: none;
+    }
+    .atlas-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      border: 1px solid var(--atlas-blue);
+      border-radius: 4px;
+      background: var(--atlas-blue);
+      padding: 0 15px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .atlas-btn.secondary {
+      border-color: var(--atlas-line-strong);
+      background: var(--atlas-surface);
+      color: var(--atlas-ink);
+    }
+    .atlas-btn.danger {
+      border-color: var(--atlas-danger);
+      background: var(--atlas-danger);
+    }
+    .atlas-btn:focus-visible,
+    .atlas-control:focus-visible,
+    .atlas-action:focus-visible {
+      outline: 2px solid #7eb0df;
+      outline-offset: 2px;
+    }
+    .atlas-table-wrap {
+      overflow: hidden;
+      border: 1px solid var(--atlas-line);
+      border-radius: 5px;
+      background: var(--atlas-surface);
+    }
+    .atlas-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: var(--atlas-ink);
+      font-size: 10px;
+    }
+    .atlas-table th {
+      height: 39px;
+      border-bottom: 1px solid var(--atlas-line-strong);
+      background: #edf2f6;
+      padding: 0 11px;
+      color: #58687b;
+      font-size: 9px;
+      font-weight: 800;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    .atlas-table td {
+      height: 56px;
+      border-bottom: 1px solid var(--atlas-line);
+      padding: 8px 11px;
+      overflow: hidden;
+      line-height: 1.4;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .atlas-table tr:last-child td { border-bottom: 0; }
+    .atlas-table tbody tr:nth-child(even) { background: #fbfcfd; }
+    .atlas-table th:first-child,
+    .atlas-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: #fff;
+      box-shadow: 1px 0 0 var(--atlas-line);
+    }
+    .atlas-table th:first-child {
+      z-index: 2;
+      background: #edf2f6;
+    }
+    .atlas-table tbody tr:nth-child(even) td:first-child { background: #fbfcfd; }
+    .atlas-table strong {
+      font-size: 11px;
+    }
+    .atlas-table code,
+    .atlas-mono {
+      color: #405469;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+    }
+    .atlas-table .wrap-cell {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+    }
+    .atlas-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 23px;
+      border: 1px solid var(--atlas-line-strong);
+      border-radius: 3px;
+      background: var(--atlas-surface-2);
+      padding: 0 7px;
+      color: var(--atlas-muted);
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .atlas-status::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .atlas-status.warning {
+      border-color: #ead2aa;
+      background: var(--atlas-warning-soft);
+      color: var(--atlas-warning);
+    }
+    .atlas-status.danger {
+      border-color: #e3bab6;
+      background: var(--atlas-danger-soft);
+      color: var(--atlas-danger);
+    }
+    .atlas-status.positive {
+      border-color: #b9dccf;
+      background: var(--atlas-positive-soft);
+      color: var(--atlas-positive);
+    }
+    .atlas-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .atlas-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      min-height: 44px;
+      border: 1px solid var(--atlas-line-strong);
+      border-radius: 3px;
+      background: #fff;
+      padding: 0 8px;
+      color: var(--atlas-ink);
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .atlas-action.primary {
+      border-color: #a9c5de;
+      background: var(--atlas-blue-soft);
+      color: var(--atlas-blue-dark);
+    }
+    .atlas-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      border: 1px solid var(--atlas-line);
+      border-radius: 5px;
+      background: var(--atlas-surface);
+      margin-top: 12px;
+      padding: 0 13px;
+      color: var(--atlas-muted);
+      font-size: 10px;
+    }
+    .atlas-pagination strong { color: var(--atlas-ink); }
+    .atlas-pages {
+      display: flex;
+      gap: 5px;
+    }
+    .atlas-pages span {
+      display: grid;
+      place-items: center;
+      min-width: 27px;
+      height: 44px;
+      border: 1px solid var(--atlas-line);
+      border-radius: 3px;
+      background: #fff;
+      color: var(--atlas-muted);
+      padding: 0 7px;
+    }
+    .atlas-pages .active {
+      border-color: var(--atlas-blue);
+      background: var(--atlas-blue);
+      color: #fff;
+    }
+    .atlas-pages .disabled { color: #aab4c0; background: #f3f5f7; }
+    .atlas-panel {
+      border: 1px solid var(--atlas-line);
+      border-radius: 5px;
+      background: var(--atlas-surface);
+    }
+    .atlas-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      border-bottom: 1px solid var(--atlas-line);
+      padding: 0 16px;
+    }
+    .atlas-panel-head h4 {
+      margin: 0;
+      font-size: 13px;
+    }
+    .atlas-panel-head small {
+      color: var(--atlas-muted);
+      font-size: 9px;
+    }
+    .atlas-panel-body { padding: 16px; }
+    .atlas-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .atlas-form-grid.one { grid-template-columns: minmax(0, 1fr); }
+    .atlas-field {
+      min-width: 0;
+    }
+    .atlas-field.wide { grid-column: 1 / -1; }
+    .atlas-field > span {
+      display: flex;
+      align-items: center;
+      min-height: 18px;
+      margin-bottom: 5px;
+      color: var(--atlas-muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .atlas-required {
+      margin-left: 4px;
+      color: var(--atlas-danger);
+      font-style: normal;
+    }
+    .atlas-input {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      border: 1px solid var(--atlas-line-strong);
+      border-radius: 4px;
+      background: #fff;
+      padding: 7px 10px;
+      overflow-wrap: anywhere;
+      color: var(--atlas-ink);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .atlas-input.multiline {
+      align-items: flex-start;
+      min-height: 58px;
+    }
+    .atlas-note {
+      border-left: 3px solid var(--atlas-warning);
+      background: var(--atlas-warning-soft);
+      padding: 10px 12px;
+      color: #76521f;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .atlas-form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border-top: 1px solid var(--atlas-line);
+      margin-top: 15px;
+      padding-top: 14px;
+      color: var(--atlas-muted);
+      font-size: 9px;
+    }
+    .atlas-form-actions > div {
+      display: flex;
+      gap: 8px;
+    }
+
+    .atlas-drawer-layer {
+      position: absolute;
+      inset: 58px 0 0 224px;
+      z-index: 5;
+      background: rgba(23, 36, 51, .42);
+    }
+    .atlas-drawer {
+      position: absolute;
+      inset: 0 0 0 auto;
+      width: 720px;
+      overflow: hidden;
+      border-left: 1px solid #aebbc8;
+      background: var(--atlas-surface-2);
+      box-shadow: -18px 0 40px rgba(23, 36, 51, .16);
+    }
+    .atlas-drawer.narrow { width: 620px; }
+    .atlas-drawer-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      min-height: 84px;
+      border-bottom: 1px solid var(--atlas-line-strong);
+      background: #fff;
+      padding: 20px 22px 16px;
+    }
+    .atlas-drawer-head h3 {
+      margin: 0;
+      font-size: 19px;
+    }
+    .atlas-drawer-head p {
+      margin: 6px 0 0;
+      color: var(--atlas-muted);
+      font-size: 10px;
+    }
+    .atlas-close {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--atlas-line-strong);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--atlas-muted);
+      font-size: 17px;
+      line-height: 1;
+    }
+    .atlas-drawer-body {
+      height: calc(100% - 84px);
+      overflow: hidden;
+      padding: 18px 22px 22px;
+    }
+    .atlas-tenant-ident {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--atlas-line);
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+    }
+    .atlas-tenant-avatar {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 4px;
+      background: var(--atlas-navy);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .atlas-tenant-ident strong,
+    .atlas-tenant-ident small { display: block; }
+    .atlas-tenant-ident strong { font-size: 14px; }
+    .atlas-tenant-ident small {
+      margin-top: 4px;
+      color: var(--atlas-muted);
+      font-size: 9px;
+    }
+    .atlas-drawer .atlas-metrics { margin-bottom: 14px; }
+    .atlas-drawer .atlas-metric { min-height: 76px; padding: 12px 13px; }
+    .atlas-drawer .atlas-metric strong { font-size: 16px; }
+    .atlas-drawer .atlas-panel + .atlas-panel { margin-top: 13px; }
+    .atlas-signal-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: 1px solid var(--atlas-line);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .atlas-signal {
+      min-width: 0;
+      border-right: 1px solid var(--atlas-line);
+      padding: 12px;
+    }
+    .atlas-signal:last-child { border-right: 0; }
+    .atlas-signal span,
+    .atlas-signal strong { display: block; }
+    .atlas-signal span { color: var(--atlas-muted); font-size: 9px; }
+    .atlas-signal strong { margin-top: 6px; font-size: 16px; }
+    .atlas-drawer-footer {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      min-height: 62px;
+      border-top: 1px solid var(--atlas-line-strong);
+      background: #fff;
+      padding: 0 22px;
+    }
+    .atlas-with-footer .atlas-drawer-body { height: calc(100% - 146px); padding-bottom: 12px; }
+
+    .atlas-support-layout {
+      width: 100%;
+    }
+
+    .atlas-login {
+      display: grid;
+      grid-template-columns: 56% 44%;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+    }
+    .atlas-login-context {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--atlas-navy);
+      color: #fff;
+      padding: 62px 72px;
+    }
+    .atlas-login-brand {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .atlas-login-brand .atlas-mark { width: 36px; height: 36px; }
+    .atlas-login-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 610px;
+      margin-top: 132px;
+    }
+    .atlas-login-kicker { color: #8db4dc; }
+    .atlas-login-copy h3 {
+      margin: 0;
+      max-width: 580px;
+      font-size: 36px;
+      line-height: 1.22;
+    }
+    .atlas-login-copy p {
+      max-width: 560px;
+      margin: 20px 0 0;
+      color: #b3c0ce;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+    .atlas-login-signals {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-width: 610px;
+      border-top: 1px solid rgba(255,255,255,.16);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+      margin-top: 42px;
+    }
+    .atlas-login-signal {
+      min-height: 100px;
+      border-right: 1px solid rgba(255,255,255,.16);
+      padding: 18px 22px 16px 0;
+    }
+    .atlas-login-signal:last-child { border-right: 0; padding-left: 22px; }
+    .atlas-login-signal strong,
+    .atlas-login-signal small { display: block; }
+    .atlas-login-signal strong { font-size: 14px; }
+    .atlas-login-signal small { margin-top: 8px; color: #9eafbf; font-size: 10px; line-height: 1.55; }
+    .atlas-login-form-area {
+      display: grid;
+      place-items: center;
+      background: #fff;
+      padding: 64px;
+    }
+    .atlas-login-form {
+      width: 370px;
+    }
+    .atlas-login-form h4 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .atlas-login-form h4 + .atlas-field { margin-top: 28px; }
+    .atlas-login-form .atlas-field + .atlas-field { margin-top: 14px; }
+    .atlas-login-form .atlas-input {
+      min-height: 46px;
+      color: #8b97a4;
+      font-weight: 500;
+    }
+    .atlas-login-form .atlas-btn {
+      width: 100%;
+      min-height: 46px;
+      margin-top: 20px;
+      background: var(--atlas-blue-dark);
+      border-color: var(--atlas-blue-dark);
+      font-size: 12px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .atlas-admin * { scroll-behavior: auto; transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -4576,7 +5401,7 @@
         <div class="sample-card"><strong>组件状态</strong><span>按钮、标签、表单、列表、抽屉、空态和表格必须覆盖默认、loading、错误、成功、禁用等状态。</span></div>
         <div class="sample-card"><strong>响应式</strong><span>小程序验证 320/375/390/430；后台验证 1280/1440 和宽表格，不以单一画板代替真实适配。</span></div>
         <div class="sample-card"><strong>首屏优先级</strong><span>核心页面首屏只保留 1 个主任务和最多 3 个次任务，其他内容进入下方区域或详情。</span></div>
-        <div class="sample-card"><strong>空态结构</strong><span>空态必须说明为什么为空、下一步主操作、替代路径和完成后的变化，不只写暂无数据。</span></div>
+        <div class="sample-card"><strong>空态结构</strong><span>业务流程空态说明原因、后续操作和完成后的变化；后台租户表格无结果时使用紧凑的“暂无数据”。</span></div>
         <div class="sample-card"><strong>风险确认</strong><span>删除资源、冻结租户等高风险操作必须先确认影响，阻断时禁用主按钮并说明原因。</span></div>
         <div class="sample-card"><strong>成功回流</strong><span>保存草稿、发布排期和配置修改成功后刷新来源页、定位目标项，并高亮本次变化。</span></div>
         <div class="sample-card"><strong>表单反馈</strong><span>保存、发布、发卡、预约、取消、核销、冻结和配置修改必须有 loading、成功、字段错误、表单错误和禁用原因。</span></div>
@@ -4769,23 +5594,299 @@
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-title"><h2>平台后台 WEB 端</h2><p>后台管理端完全按可交付 Web 系统重新组织：独立登录页，登录后进入租户管理，支持搜索筛选、租户详情抽屉、租户调整抽屉、客服微信配置、平台配置右侧抽屉编辑和操作审计。后台只处理试用、运营配置和客服，不处理门店支付。</p></div>
+    <section class="section" id="platform-admin">
+      <svg class="atlas-icon-sprite" aria-hidden="true">
+        <defs>
+          <symbol id="atlas-icon-building" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></symbol>
+          <symbol id="atlas-icon-message" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path><path d="M8 8h8"></path><path d="M8 12h6"></path></symbol>
+          <symbol id="atlas-icon-sliders" viewBox="0 0 24 24"><path d="M21 4h-7"></path><path d="M10 4H3"></path><path d="M21 12h-9"></path><path d="M8 12H3"></path><path d="M21 20h-5"></path><path d="M12 20H3"></path><path d="M14 2v4"></path><path d="M8 10v4"></path><path d="M16 18v4"></path></symbol>
+          <symbol id="atlas-icon-audit" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></symbol>
+        </defs>
+      </svg>
+      <div class="section-title">
+        <h2>平台后台 WEB 端 · 企业经纬</h2>
+        <p>以企业运营工作台为基准重构全部后台页面：深色稳定导航、冷白数据工作区、紧凑表格和清晰抽屉层级。登录、查询、租户状态处理、客服微信、平台配置与审计逻辑均保持不变。</p>
+      </div>
       <div class="desktop-grid">
-        <div class="desktop-wrap"><div class="frame-label">A-LOGIN 平台后台 / 独立登录页</div><div class="desktop"><div class="admin-login"><div class="admin-login-hero"><div class="side-logo" style="margin:0"><span>闲</span>闲遇平台后台</div><h3>租户试用、冻结和客服配置在这里处理</h3><p>平台后台仅供内部人员使用。MVP 不提供注册入口，不处理会员支付、门店收款、退款、发票或文件上传。</p><div class="admin-login-points"><div class="admin-login-point"><strong>租户状态</strong><small>试用中、即将到期、已冻结、已延长，登录后统一进入租户管理。</small></div><div class="admin-login-point"><strong>人工续期</strong><small>填写新到期日和原因，保存后解冻并写入操作记录。</small></div></div></div><div class="admin-login-card"><h4>账号密码登录</h4><p>账号由平台内部创建，忘记密码请联系系统管理员。</p><div class="form-list"><div class="field"><span>账号</span><strong>请输入平台管理员账号</strong></div><div class="field"><span>密码</span><strong>请输入密码</strong></div></div><div class="button" style="width:100%;height:46px;margin-top:18px;background:var(--green-dark)">登录</div><div class="notice"><span>不提供注册入口</span><span class="tag warn">内部</span></div></div></div></div></div>
+        <div class="desktop-wrap" id="admin-a-login">
+          <div class="frame-label">A-LOGIN 平台后台 / 独立登录页</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-login">
+                <section class="atlas-login-context">
+                  <div class="atlas-login-brand"><span class="atlas-mark">闲</span><span>闲遇平台后台</span></div>
+                  <div class="atlas-login-copy">
+                    <span class="atlas-login-kicker">SEREN MEET · PLATFORM OPERATIONS</span>
+                    <h3>租户运营状态与平台规则的统一工作台</h3>
+                    <p>集中查看租户使用状态，处理到期与冻结账户，维护客服信息和平台规则。</p>
+                    <div class="atlas-login-signals">
+                      <div class="atlas-login-signal"><strong>租户状态</strong><small>试用中、即将到期、已冻结、已延长，登录后统一进入租户管理。</small></div>
+                      <div class="atlas-login-signal"><strong>人工续期</strong><small>填写新到期日和原因，保存后解冻并写入操作记录。</small></div>
+                    </div>
+                  </div>
+                </section>
+                <section class="atlas-login-form-area">
+                  <div class="atlas-login-form">
+                    <span class="atlas-login-kicker">ADMIN SIGN IN</span>
+                    <h4>欢迎您管理员，请登录</h4>
+                    <div class="atlas-field">
+                      <span>账号</span>
+                      <div class="atlas-input">请输入平台管理员账号</div>
+                    </div>
+                    <div class="atlas-field">
+                      <span>密码</span>
+                      <div class="atlas-input">请输入密码</div>
+                    </div>
+                    <span class="atlas-btn">登录</span>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="desktop-wrap"><div class="frame-label">A-TENANTS 平台后台 / 租户管理列表（当前 WEB）</div><div class="desktop"><aside class="sidebar"><div class="side-logo"><span>闲</span>闲遇</div><div class="side-item active">租户管理</div><div class="side-item">客服微信</div><div class="side-item">平台配置</div><div class="side-item">操作记录</div></aside><header class="web-topbar"><h3>租户管理</h3><div class="search">内部运营</div></header><div class="web-main"><div class="admin-page-title"><div><h4>租户管理</h4><p>查看租户试用状态、客服微信、线下售卡和到期风险。租户由店长首次微信登录自动开通，后台不提供新建入口。</p></div></div><div class="web-metrics" style="grid-template-columns:repeat(5,1fr)"><div class="metric"><span>全部租户</span><strong>64</strong><em>自动开通</em></div><div class="metric"><span>试用中</span><strong>38</strong><em>正常可用</em></div><div class="metric"><span>即将到期</span><strong>11</strong><em style="color:var(--gold)">7 天内</em></div><div class="metric"><span>已冻结</span><strong>9</strong><em style="color:var(--coral)">业务暂停</em></div><div class="metric"><span>已延长</span><strong>6</strong><em>人工处理</em></div></div><div class="admin-toolbar"><div class="search">搜索租户名称、门店名、联系电话</div><span class="button secondary">状态：全部</span><span class="button secondary">到期：7 天内</span><span class="button blue" style="margin-left:auto">查询</span></div><div class="admin-table" style="grid-template-columns:1.25fr .55fr .8fr .8fr .7fr 1fr .9fr 1fr"><span class="head">租户</span><span class="head">城市</span><span class="head">创建时间</span><span class="head">试用到期</span><span class="head">状态</span><span class="head">客服微信</span><span class="head">本月线下售卡</span><span class="head">操作</span><b>和序预约中心</b><span>上海</span><span>2026-05-06</span><span>2026-06-05</span><span style="color:var(--gold)">即将到期</span><span>SerenMeet-CS-1</span><span><span class="tag warn">¥12,800</span></span><span class="admin-row-actions"><span class="admin-action primary">详情</span><span class="admin-action secondary">调整</span></span><b>鲸喜训练</b><span>银川</span><span>2026-04-28</span><span>2026-05-28</span><span style="color:var(--red)">已冻结</span><span>SerenMeet-CS-1</span><span><span class="tag warn">¥3,600</span></span><span class="admin-row-actions"><span class="admin-action primary">详情</span><span class="admin-action secondary">调整</span></span><b>北岸康养</b><span>南京</span><span>2026-05-01</span><span>2026-06-29</span><span style="color:var(--green)">已延长</span><span>SerenMeet-CS-1</span><span><span class="tag warn">¥9,200</span></span><span class="admin-row-actions"><span class="admin-action primary">详情</span><span class="admin-action secondary">调整</span></span><b>禾木护理</b><span>杭州</span><span>2026-05-20</span><span>2026-06-19</span><span style="color:var(--green)">试用中</span><span>SerenMeet-CS-1</span><span><span class="tag warn">¥0</span></span><span class="admin-row-actions"><span class="admin-action primary">详情</span><span class="admin-action secondary">调整</span></span></div><div class="admin-pagination"><div><strong>共 64 个租户</strong><span>第 1 页</span></div><div class="admin-page-controls"><span class="admin-page-btn disabled">上一页</span><span class="admin-page active">1</span><span class="admin-page">2</span><span class="admin-page">3</span><span class="admin-page-btn">下一页</span></div></div></div></div></div>
+        <div class="desktop-wrap" id="admin-a-tenants">
+          <div class="frame-label">A-TENANTS 平台后台 / 租户管理列表</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-shell">
+                <aside class="atlas-side">
+                  <div class="atlas-brand"><span class="atlas-mark">闲</span><div><strong>闲遇</strong><small>PLATFORM OPS</small></div></div>
+                  <nav class="atlas-nav atlas-nav-spaced">
+                    <div class="atlas-nav-item active"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-building"></use></svg><span>租户管理</span><i></i></div>
+                    <div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-message"></use></svg><span>客服微信</span><i></i></div>
+                    <div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-sliders"></use></svg><span>平台配置</span><i></i></div>
+                    <div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-audit"></use></svg><span>操作记录</span><i></i></div>
+                  </nav>
+                  <div class="atlas-side-user"><span>AD</span><div><strong>平台管理员</strong><small>admin@serenmeet</small></div></div>
+                </aside>
+                <main class="atlas-main">
+                  <div class="atlas-page-head">
+                    <div><h3>租户管理</h3><p>查看租户试用状态、客服微信、线下售卡和到期风险，及时处理即将到期与冻结租户。</p></div>
+                  </div>
+                  <div class="atlas-metrics five tenant-overview">
+                    <div class="atlas-metric"><span>全部租户</span><strong>64</strong><small>当前总量</small></div>
+                    <div class="atlas-metric positive"><span>试用中</span><strong>38</strong><small>正常可用</small></div>
+                    <div class="atlas-metric warning"><span>即将到期</span><strong>11</strong><small>7 天内</small></div>
+                    <div class="atlas-metric danger"><span>已冻结</span><strong>9</strong><small>业务暂停</small></div>
+                    <div class="atlas-metric"><span>已延长</span><strong>6</strong><small>人工处理</small></div>
+                  </div>
+                  <div class="atlas-toolbar">
+                    <div class="atlas-control search-control">搜索租户名称、门店名、联系电话</div>
+                    <div class="atlas-control">状态：全部</div>
+                    <div class="atlas-control">到期：7 天内</div>
+                    <span class="atlas-btn">查询</span>
+                  </div>
+                  <div class="atlas-table-wrap">
+                    <table class="atlas-table">
+                      <colgroup><col style="width:16%"><col style="width:7%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:15%"><col style="width:13%"><col style="width:19%"></colgroup>
+                      <thead><tr><th>租户</th><th>城市</th><th>创建时间</th><th>试用到期</th><th>状态</th><th>客服微信</th><th>本月线下售卡</th><th>操作</th></tr></thead>
+                      <tbody>
+                        <tr><td><strong>和序预约中心</strong></td><td>上海</td><td>2026-05-06</td><td>2026-06-05</td><td><span class="atlas-status warning">即将到期</span></td><td class="atlas-mono">SerenMeet-CS-1</td><td>¥12,800</td><td><div class="atlas-actions"><span class="atlas-action primary">详情</span><span class="atlas-action">调整</span></div></td></tr>
+                        <tr><td><strong>鲸喜训练</strong></td><td>银川</td><td>2026-04-28</td><td>2026-05-28</td><td><span class="atlas-status danger">已冻结</span></td><td class="atlas-mono">SerenMeet-CS-1</td><td>¥3,600</td><td><div class="atlas-actions"><span class="atlas-action primary">详情</span><span class="atlas-action">调整</span></div></td></tr>
+                        <tr><td><strong>北岸康养</strong></td><td>南京</td><td>2026-05-01</td><td>2026-06-29</td><td><span class="atlas-status positive">已延长</span></td><td class="atlas-mono">SerenMeet-CS-1</td><td>¥9,200</td><td><div class="atlas-actions"><span class="atlas-action primary">详情</span><span class="atlas-action">调整</span></div></td></tr>
+                        <tr><td><strong>禾木护理</strong></td><td>杭州</td><td>2026-05-20</td><td>2026-06-19</td><td><span class="atlas-status positive">试用中</span></td><td class="atlas-mono">SerenMeet-CS-1</td><td>¥0</td><td><div class="atlas-actions"><span class="atlas-action primary">详情</span><span class="atlas-action">调整</span></div></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="atlas-pagination"><span><strong>共 64 个租户</strong> · 第 1 页</span><div class="atlas-pages"><span class="disabled">上一页</span><span class="active">1</span><span>2</span><span>3</span><span>下一页</span></div></div>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="desktop-wrap"><div class="frame-label">A-TENANT-DETAIL 平台后台 / 租户详情右侧抽屉（当前 WEB）</div><div class="desktop"><aside class="sidebar"><div class="side-logo"><span>闲</span>闲遇</div><div class="side-item active">租户管理</div><div class="side-item">客服微信</div><div class="side-item">平台配置</div><div class="side-item">操作记录</div></aside><header class="web-topbar"><h3>租户管理</h3><div class="search">右侧抽屉：租户详情</div></header><div class="web-main"><div class="admin-page-title"><div><h4>租户详情抽屉</h4><p>从表格“详情”进入，轻量展示租户状态、门店资料、试点信号和冻结原因；非冻结状态不展示冻结原因。</p></div></div><div class="drawer-mock"><div class="drawer-panel"><div class="drawer-hero"><span class="avatar">和</span><div><h4>和序预约中心</h4><p>上海 · 和序预约中心</p></div></div><div class="web-metrics" style="grid-template-columns:repeat(3,1fr);margin:0 0 16px"><div class="metric"><span>当前状态</span><strong>即将到期</strong><em>运营状态正常追踪</em></div><div class="metric"><span>试用到期</span><strong>2026-06-05</strong><em>7 天内</em></div><div class="metric"><span>客服微信</span><strong>SerenMeet-CS-1</strong><em>长文本截断展示</em></div></div><div class="admin-card"><h4>门店资料</h4><div class="form-list" style="grid-template-columns:repeat(2,1fr);gap:12px"><div class="field"><span>联系电话</span><strong>021-8888 6606</strong></div><div class="field"><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div class="field wide"><span>门店地址</span><strong>上海市徐汇区衡山路 88 号</strong></div><div class="field wide"><span>经营项目 / 服务标签</span><strong>康复理疗、咨询评估 / 姿态评估、一对一服务</strong></div></div></div><div class="admin-card"><h4>试点信号</h4><div class="web-metrics" style="grid-template-columns:repeat(4,1fr);margin:0"><div class="metric"><span>发卡</span><strong>18</strong></div><div class="metric"><span>到店转核销</span><strong>96%</strong></div><div class="metric"><span>预警未处理</span><strong>14</strong></div><div class="metric"><span>线下售卡</span><strong>¥12800</strong></div></div></div></div></div></div></div></div>
+        <div class="desktop-wrap" id="admin-a-tenant-detail">
+          <div class="frame-label">A-TENANT-DETAIL 平台后台 / 租户详情右侧抽屉</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-shell">
+                <aside class="atlas-side">
+                  <div class="atlas-brand"><span class="atlas-mark">闲</span><div><strong>闲遇</strong><small>PLATFORM OPS</small></div></div>
+                  <nav class="atlas-nav atlas-nav-spaced"><div class="atlas-nav-item active"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-building"></use></svg><span>租户管理</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-message"></use></svg><span>客服微信</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-sliders"></use></svg><span>平台配置</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-audit"></use></svg><span>操作记录</span><i></i></div></nav>
+                  <div class="atlas-side-user"><span>AD</span><div><strong>平台管理员</strong><small>admin@serenmeet</small></div></div>
+                </aside>
+                <main class="atlas-main">
+                  <div class="atlas-page-head"><div><h3>租户管理</h3><p>从列表查看租户详情与运营状态。</p></div></div>
+                  <div class="atlas-metrics five tenant-overview"><div class="atlas-metric"><span>全部租户</span><strong>64</strong><small>当前总量</small></div><div class="atlas-metric positive"><span>试用中</span><strong>38</strong><small>正常可用</small></div><div class="atlas-metric warning"><span>即将到期</span><strong>11</strong><small>7 天内</small></div><div class="atlas-metric danger"><span>已冻结</span><strong>9</strong><small>业务暂停</small></div><div class="atlas-metric"><span>已延长</span><strong>6</strong><small>人工处理</small></div></div>
+                  <div class="atlas-toolbar"><div class="atlas-control search-control">搜索租户名称、门店名、联系电话</div><div class="atlas-control">状态：全部</div><div class="atlas-control">到期：7 天内</div><span class="atlas-btn">查询</span></div>
+                  <div class="atlas-table-wrap"><table class="atlas-table"><thead><tr><th>租户</th><th>城市</th><th>创建时间</th><th>试用到期</th><th>状态</th><th>操作</th></tr></thead><tbody><tr><td><strong>和序预约中心</strong></td><td>上海</td><td>2026-05-06</td><td>2026-06-05</td><td><span class="atlas-status warning">即将到期</span></td><td>详情 · 调整</td></tr><tr><td><strong>鲸喜训练</strong></td><td>银川</td><td>2026-04-28</td><td>2026-05-28</td><td><span class="atlas-status danger">已冻结</span></td><td>详情 · 调整</td></tr></tbody></table></div>
+                </main>
+                <div class="atlas-drawer-layer">
+                  <aside class="atlas-drawer">
+                    <div class="atlas-drawer-head"><div><h3>租户详情</h3><p>状态、门店资料与试点信号</p></div><span class="atlas-close" aria-label="关闭">×</span></div>
+                    <div class="atlas-drawer-body">
+                      <div class="atlas-tenant-ident"><span class="atlas-tenant-avatar">和</span><div><strong>和序预约中心</strong><small>上海 · 和序预约中心</small></div><span class="atlas-status warning">即将到期</span></div>
+                      <div class="atlas-metrics three"><div class="atlas-metric warning"><span>当前状态</span><strong>即将到期</strong><small>运营状态正常追踪</small></div><div class="atlas-metric"><span>试用到期</span><strong>2026-06-05</strong><small>7 天内</small></div><div class="atlas-metric"><span>客服微信</span><strong>SerenMeet-CS-1</strong><small>长文本截断展示</small></div></div>
+                      <section class="atlas-panel">
+                        <div class="atlas-panel-head"><h4>门店资料</h4></div>
+                        <div class="atlas-panel-body"><div class="atlas-form-grid"><div class="atlas-field"><span>联系电话</span><div class="atlas-input">021-8888 6606</div></div><div class="atlas-field"><span>营业时间</span><div class="atlas-input">周一至周五 09:00-21:00</div></div><div class="atlas-field wide"><span>门店地址</span><div class="atlas-input">上海市徐汇区衡山路 88 号</div></div><div class="atlas-field wide"><span>经营项目 / 服务标签</span><div class="atlas-input">康复理疗、咨询评估 / 姿态评估、一对一服务</div></div></div></div>
+                      </section>
+                      <section class="atlas-panel">
+                        <div class="atlas-panel-head"><h4>试点信号</h4></div>
+                        <div class="atlas-panel-body"><div class="atlas-signal-grid"><div class="atlas-signal"><span>发卡</span><strong>18</strong></div><div class="atlas-signal"><span>到店转核销</span><strong>96%</strong></div><div class="atlas-signal"><span>预警未处理</span><strong>14</strong></div><div class="atlas-signal"><span>线下售卡</span><strong>¥12,800</strong></div></div></div>
+                      </section>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="desktop-wrap"><div class="frame-label">A-TENANT-ADJUST 平台后台 / 租户调整右侧抽屉（当前 WEB）</div><div class="desktop"><aside class="sidebar"><div class="side-logo"><span>闲</span>闲遇</div><div class="side-item active">租户管理</div><div class="side-item">客服微信</div><div class="side-item">平台配置</div><div class="side-item">操作记录</div></aside><header class="web-topbar"><h3>租户管理</h3><div class="search">右侧抽屉：租户调整</div></header><div class="web-main"><div class="admin-page-title"><div><h4>租户调整抽屉</h4><p>未冻结时展示冻结账户卡片；冻结状态隐藏冻结账户，保留“延期并解冻”卡片。解冻账户独立卡片已移除。</p></div></div><div class="drawer-mock"><div class="drawer-panel"><div class="drawer-hero warn"><span class="avatar">鲸</span><div><h4>鲸喜训练</h4><p>冻结账户、延期并解冻都会写入平台审计记录。</p></div></div><div class="web-metrics" style="grid-template-columns:repeat(3,1fr);margin:0 0 16px"><div class="metric"><span>当前状态</span><strong>已冻结</strong><em>仅可延期并解冻</em></div><div class="metric"><span>当前到期日</span><strong>2026-05-28</strong></div><div class="metric"><span>客服微信</span><strong>SerenMeet-CS-1</strong></div></div><div class="admin-card"><h4>延期并解冻</h4><div class="coach-alert">当前冻结原因：试用到期未续期，客服已通知门店。</div><div class="form-list" style="grid-template-columns:1fr;gap:12px;margin-top:14px"><div class="field"><span>新到期日 <em class="required-mark">必填</em></span><strong>2026-07-05</strong></div><div class="field"><span>操作原因 <em class="required-mark">必填</em></span><strong>客服确认人工续期，延长 30 天</strong></div><div class="field"><span>内部备注</span><strong>已通过客服微信确认，不涉及平台收款记录。</strong></div></div><div style="display:flex;justify-content:space-between;gap:14px;margin-top:18px"><span style="color:var(--muted);font-size:12px">保存后刷新列表并清除冻结原因。</span><span class="button">延期并解冻</span></div></div></div></div></div></div></div>
+        <div class="desktop-wrap" id="admin-a-tenant-adjust">
+          <div class="frame-label">A-TENANT-ADJUST 平台后台 / 租户调整右侧抽屉</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-shell">
+                <aside class="atlas-side">
+                  <div class="atlas-brand"><span class="atlas-mark">闲</span><div><strong>闲遇</strong><small>PLATFORM OPS</small></div></div>
+                  <nav class="atlas-nav atlas-nav-spaced"><div class="atlas-nav-item active"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-building"></use></svg><span>租户管理</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-message"></use></svg><span>客服微信</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-sliders"></use></svg><span>平台配置</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-audit"></use></svg><span>操作记录</span><i></i></div></nav>
+                  <div class="atlas-side-user"><span>AD</span><div><strong>平台管理员</strong><small>admin@serenmeet</small></div></div>
+                </aside>
+                <main class="atlas-main">
+                  <div class="atlas-page-head"><div><h3>租户管理</h3><p>调整租户使用期限与冻结状态。未冻结时展示冻结账户动作；已冻结时隐藏冻结动作，仅保留延期并解冻。</p></div></div>
+                  <div class="atlas-metrics five"><div class="atlas-metric"><span>全部租户</span><strong>64</strong></div><div class="atlas-metric positive"><span>试用中</span><strong>38</strong></div><div class="atlas-metric warning"><span>即将到期</span><strong>11</strong></div><div class="atlas-metric danger"><span>已冻结</span><strong>9</strong></div><div class="atlas-metric"><span>已延长</span><strong>6</strong></div></div>
+                  <div class="atlas-toolbar"><div class="atlas-control search-control">搜索租户名称、门店名、联系电话</div><div class="atlas-control">状态：全部</div><div class="atlas-control">到期：全部</div><span class="atlas-btn">查询</span></div>
+                  <div class="atlas-table-wrap"><table class="atlas-table"><thead><tr><th>租户</th><th>城市</th><th>试用到期</th><th>状态</th><th>客服微信</th><th>操作</th></tr></thead><tbody><tr><td><strong>鲸喜训练</strong></td><td>银川</td><td>2026-05-28</td><td><span class="atlas-status danger">已冻结</span></td><td>SerenMeet-CS-1</td><td>详情 · 调整</td></tr><tr><td><strong>北岸康养</strong></td><td>南京</td><td>2026-06-29</td><td><span class="atlas-status positive">已延长</span></td><td>SerenMeet-CS-1</td><td>详情 · 调整</td></tr></tbody></table></div>
+                </main>
+                <div class="atlas-drawer-layer">
+                  <aside class="atlas-drawer atlas-with-footer">
+                    <div class="atlas-drawer-head"><div><h3>租户调整</h3><p>冻结、延期并解冻操作均写入平台审计记录</p></div><span class="atlas-close" aria-label="关闭">×</span></div>
+                    <div class="atlas-drawer-body">
+                      <div class="atlas-tenant-ident"><span class="atlas-tenant-avatar">鲸</span><div><strong>鲸喜训练</strong><small>银川 · 鲸喜训练</small></div><span class="atlas-status danger">已冻结</span></div>
+                      <div class="atlas-metrics three"><div class="atlas-metric danger"><span>当前状态</span><strong>已冻结</strong><small>仅可延期并解冻</small></div><div class="atlas-metric"><span>当前到期日</span><strong>2026-05-28</strong></div><div class="atlas-metric"><span>客服微信</span><strong>SerenMeet-CS-1</strong></div></div>
+                      <section class="atlas-panel">
+                        <div class="atlas-panel-head"><h4>延期并解冻</h4></div>
+                        <div class="atlas-panel-body">
+                          <div class="atlas-note">当前冻结原因：试用到期未续期，客服已通知门店。保存后刷新列表并清除冻结原因。</div>
+                          <div class="atlas-form-grid one" style="margin-top:13px"><div class="atlas-field"><span>新到期日 <em class="atlas-required">必填</em></span><div class="atlas-input">2026-07-05</div></div><div class="atlas-field"><span>操作原因 <em class="atlas-required">必填</em></span><div class="atlas-input">客服确认人工续期，延长 30 天</div></div><div class="atlas-field"><span>内部备注</span><div class="atlas-input multiline">已通过客服微信确认，不涉及平台收款记录。</div></div></div>
+                        </div>
+                      </section>
+                    </div>
+                    <footer class="atlas-drawer-footer"><span class="atlas-btn secondary">取消</span><span class="atlas-btn">延期并解冻</span></footer>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="desktop-wrap"><div class="frame-label">A-SUPPORT 平台后台 / 客服微信配置（当前 WEB）</div><div class="desktop"><aside class="sidebar"><div class="side-logo"><span>闲</span>闲遇</div><div class="side-item">租户管理</div><div class="side-item active">客服微信</div><div class="side-item">平台配置</div><div class="side-item">操作记录</div></aside><header class="web-topbar"><h3>客服微信配置</h3><div class="search">内部运营</div></header><div class="web-main"><div class="admin-page-title"><div><h4>客服微信配置</h4><p>维护冻结页默认客服微信文本，运营只需确认展示什么、展示给谁、为什么修改。</p></div></div><div class="support-board"><div class="admin-card"><h4>客服微信配置</h4><div class="form-list" style="grid-template-columns:minmax(0,1fr) 220px;gap:14px"><div class="field wide"><span>客服微信 ID <em class="required-mark">必填</em></span><strong>SerenMeet-CS-1</strong></div><div class="field"><span>展示状态</span><strong>启用展示</strong></div><div class="field wide"><span>展示文案 <em class="required-mark">必填</em></span><strong>添加客服后，由平台人工调整使用期限并解冻。</strong></div><div class="field wide"><span>展示范围 <em class="required-mark">必填</em></span><strong>店长冻结页展示客服微信；教练和会员端提示联系门店。</strong></div><div class="field wide"><span>操作原因 <em class="required-mark">必填</em></span><strong>更新冻结页默认客服微信文本</strong></div></div><div style="display:flex;justify-content:flex-end;margin-top:16px"><span class="button">保存客服微信</span></div></div><div class="admin-detail-grid" style="grid-template-columns:1fr 1fr;margin-top:16px"><div class="admin-card"><h4>冻结页预览</h4><div class="phone-mini"><div class="phone-status"><span>9:41</span><span>5G 100%</span></div><div class="frozen-banner"><b>已冻结</b><strong>门店暂不可使用</strong><p>添加客服后，由平台人工调整使用期限并解冻。</p></div><div class="field"><span>客服微信</span><strong>SerenMeet-CS-1</strong></div><div class="coach-alert">店长冻结页展示客服微信；教练和会员端提示联系门店。</div></div></div><div class="admin-card"><h4>三端展示规则</h4><div class="step-list compact"><div class="step-card"><b>店</b><div><strong>店长冻结页</strong><small>展示客服微信和续期说明。</small></div><span class="tag blue">展示</span></div><div class="step-card"><b>员</b><div><strong>员工冻结页</strong><small>提示联系门店，不展示平台续期操作。</small></div><span class="tag warn">提示</span></div><div class="step-card"><b>会</b><div><strong>会员冻结页</strong><small>提示联系门店，卡包保持只读。</small></div><span class="tag warn">提示</span></div></div></div></div></div></div></div></div>
+        <div class="desktop-wrap" id="admin-a-support">
+          <div class="frame-label">A-SUPPORT 平台后台 / 客服微信配置</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-shell">
+                <aside class="atlas-side">
+                  <div class="atlas-brand"><span class="atlas-mark">闲</span><div><strong>闲遇</strong><small>PLATFORM OPS</small></div></div>
+                  <nav class="atlas-nav atlas-nav-spaced"><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-building"></use></svg><span>租户管理</span><i></i></div><div class="atlas-nav-item active"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-message"></use></svg><span>客服微信</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-sliders"></use></svg><span>平台配置</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-audit"></use></svg><span>操作记录</span><i></i></div></nav>
+                  <div class="atlas-side-user"><span>OP</span><div><strong>平台运营</strong><small>ops@serenmeet</small></div></div>
+                </aside>
+                <main class="atlas-main">
+                  <div class="atlas-page-head">
+                    <div><h3>客服微信配置</h3><p>维护冻结页默认客服微信文本，运营只需确认展示什么、展示给谁、为什么修改。</p></div>
+                  </div>
+                  <div class="atlas-support-layout">
+                    <section class="atlas-panel">
+                      <div class="atlas-panel-head"><h4>默认客服微信</h4></div>
+                      <div class="atlas-panel-body">
+                        <div class="atlas-form-grid">
+                          <div class="atlas-field"><span>客服微信 ID <em class="atlas-required">必填</em></span><div class="atlas-input">SerenMeet-CS-1</div></div>
+                          <div class="atlas-field"><span>展示状态</span><div class="atlas-input">启用展示</div></div>
+                          <div class="atlas-field wide"><span>展示文案 <em class="atlas-required">必填</em></span><div class="atlas-input">添加客服后，由平台人工调整使用期限并解冻。</div></div>
+                          <div class="atlas-field wide"><span>展示范围 <em class="atlas-required">必填</em></span><div class="atlas-input">店长冻结页展示客服微信；教练和会员端提示联系门店。</div></div>
+                          <div class="atlas-field wide"><span>操作原因 <em class="atlas-required">必填</em></span><div class="atlas-input">更新冻结页默认客服微信文本</div></div>
+                        </div>
+                        <div class="atlas-form-actions"><span>保存后同步更新冻结页默认文本并写入操作记录。</span><div><span class="atlas-btn">保存客服微信</span></div></div>
+                      </div>
+                    </section>
+                  </div>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="desktop-wrap"><div class="frame-label">A-CONFIG 平台后台 / 平台配置与右侧抽屉编辑（当前 WEB）</div><div class="desktop config-desktop"><aside class="sidebar"><div class="side-logo"><span>闲</span>闲遇</div><div class="side-item">租户管理</div><div class="side-item">客服微信</div><div class="side-item active">平台配置</div><div class="side-item">操作记录</div></aside><header class="web-topbar"><h3>平台配置</h3><div class="search">内部运营</div></header><div class="web-main"><div class="admin-page-title"><div><h4>平台配置</h4><p>配置新租户默认试用天数、到期提醒、邀请码有效期、取消截止和会员卡提醒阈值。修改只影响之后的新业务流程。</p></div><span class="config-help">?</span></div><div class="admin-toolbar"><div class="search">搜索配置键或名称</div><span class="button secondary">可编辑：全部</span><span class="button blue" style="margin-left:auto">查询</span></div><div class="admin-table"><span class="head">配置项</span><span class="head">配置键</span><span class="head">当前值</span><span class="head">影响范围</span><span class="head">状态</span><span class="head">操作</span><b>新租户默认试用天数</b><span>tenant.trial.default_days</span><span>30 天</span><span>之后自动开通租户</span><span style="color:var(--green)">启用</span><span class="admin-row-actions"><span class="admin-action primary">修改</span></span><b>默认取消截止</b><span>booking.cancel.default_deadline_min</span><span>120 分钟</span><span>之后新时段</span><span style="color:var(--green)">启用</span><span class="admin-row-actions"><span class="admin-action primary">修改</span></span><b>会员卡到期提醒</b><span>member_card.expiring_warn_days</span><span>14 天</span><span>之后报表提醒</span><span style="color:var(--green)">启用</span><span class="admin-row-actions"><span class="admin-action primary">修改</span></span></div><div class="drawer-overlay"><div class="side-drawer"><h4>修改配置</h4><div class="edit-summary"><div><span>正在修改</span><strong>默认取消截止</strong><p>之后新时段</p></div><div class="summary-pill"><span>当前值</span><strong>120 分钟</strong></div></div><div class="meta-row"><div><span>配置键</span><code>booking.cancel.default_deadline_min</code></div><div><span>类型</span><strong>INTEGER</strong></div><div><span>单位</span><strong>分钟</strong></div></div><div class="edit-panel"><h4>填写变更内容</h4><div class="form-list" style="grid-template-columns:1fr;gap:12px"><div class="field"><span>新值 <em class="required-mark">必填</em></span><strong>120</strong></div><div class="field"><span>操作原因 <em class="required-mark">必填</em></span><strong>更新默认取消截止规则</strong></div></div></div><div class="drawer-actions"><span class="button secondary">取消</span><span class="button">保存配置</span></div></div></div></div></div></div>
+        <div class="desktop-wrap" id="admin-a-config">
+          <div class="frame-label">A-CONFIG 平台后台 / 平台配置与右侧抽屉编辑</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-shell">
+                <aside class="atlas-side">
+                  <div class="atlas-brand"><span class="atlas-mark">闲</span><div><strong>闲遇</strong><small>PLATFORM OPS</small></div></div>
+                  <nav class="atlas-nav atlas-nav-spaced"><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-building"></use></svg><span>租户管理</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-message"></use></svg><span>客服微信</span><i></i></div><div class="atlas-nav-item active"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-sliders"></use></svg><span>平台配置</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-audit"></use></svg><span>操作记录</span><i></i></div></nav>
+                  <div class="atlas-side-user"><span>AD</span><div><strong>平台管理员</strong><small>admin@serenmeet</small></div></div>
+                </aside>
+                <main class="atlas-main">
+                  <div class="atlas-page-head">
+                    <div><h3>平台配置</h3><p>配置新租户默认试用天数、到期提醒、邀请码有效期、取消截止和会员卡提醒阈值。修改只影响之后的新业务流程。</p></div>
+                  </div>
+                  <div class="atlas-toolbar config"><div class="atlas-control search-control">搜索配置键或名称</div><div class="atlas-control">可编辑：全部</div><span class="atlas-btn">查询</span></div>
+                  <div class="atlas-table-wrap">
+                    <table class="atlas-table">
+                      <colgroup><col style="width:18%"><col style="width:26%"><col style="width:12%"><col style="width:22%"><col style="width:10%"><col style="width:12%"></colgroup>
+                      <thead><tr><th>配置项</th><th>配置键</th><th>当前值</th><th>影响范围</th><th>状态</th><th>操作</th></tr></thead>
+                      <tbody><tr><td><strong>新租户默认试用天数</strong></td><td><code>tenant.trial.default_days</code></td><td>30 天</td><td>之后自动开通租户</td><td><span class="atlas-status positive">启用</span></td><td><span class="atlas-action primary">修改</span></td></tr><tr><td><strong>默认取消截止</strong></td><td><code>booking.cancel.default_deadline_min</code></td><td>120 分钟</td><td>之后新时段</td><td><span class="atlas-status positive">启用</span></td><td><span class="atlas-action primary">修改</span></td></tr><tr><td><strong>会员卡到期提醒</strong></td><td><code>member_card.expiring_warn_days</code></td><td>14 天</td><td>之后报表提醒</td><td><span class="atlas-status positive">启用</span></td><td><span class="atlas-action primary">修改</span></td></tr></tbody>
+                    </table>
+                  </div>
+                </main>
+                <div class="atlas-drawer-layer">
+                  <aside class="atlas-drawer narrow atlas-with-footer">
+                    <div class="atlas-drawer-head"><div><h3>修改配置</h3><p>修改只影响之后的新业务流程</p></div><span class="atlas-close" aria-label="关闭">×</span></div>
+                    <div class="atlas-drawer-body">
+                      <div class="atlas-tenant-ident"><span class="atlas-tenant-avatar">配</span><div><strong>默认取消截止</strong><small>之后新时段</small></div><span class="atlas-status positive">启用</span></div>
+                      <div class="atlas-metrics three"><div class="atlas-metric"><span>当前值</span><strong>120 分钟</strong></div><div class="atlas-metric"><span>类型</span><strong>INTEGER</strong></div><div class="atlas-metric"><span>单位</span><strong>分钟</strong></div></div>
+                      <section class="atlas-panel">
+                        <div class="atlas-panel-head"><h4>配置标识</h4></div>
+                        <div class="atlas-panel-body"><div class="atlas-field"><span>配置键</span><div class="atlas-input atlas-mono">booking.cancel.default_deadline_min</div></div></div>
+                      </section>
+                      <section class="atlas-panel">
+                        <div class="atlas-panel-head"><h4>填写变更内容</h4></div>
+                        <div class="atlas-panel-body"><div class="atlas-form-grid one"><div class="atlas-field"><span>新值 <em class="atlas-required">必填</em></span><div class="atlas-input">120</div></div><div class="atlas-field"><span>操作原因 <em class="atlas-required">必填</em></span><div class="atlas-input multiline">更新默认取消截止规则</div></div></div><div class="atlas-note" style="margin-top:13px">影响范围：保存后仅作用于之后创建的新时段。</div></div>
+                      </section>
+                    </div>
+                    <footer class="atlas-drawer-footer"><span class="atlas-btn secondary">取消</span><span class="atlas-btn">保存配置</span></footer>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="desktop-wrap"><div class="frame-label">A-AUDIT 平台后台 / 操作记录（当前 WEB）</div><div class="desktop"><aside class="sidebar"><div class="side-logo"><span>闲</span>闲遇</div><div class="side-item">租户管理</div><div class="side-item">客服微信</div><div class="side-item">平台配置</div><div class="side-item active">操作记录</div></aside><header class="web-topbar"><h3>操作记录</h3><div class="search">内部运营</div></header><div class="web-main"><div class="admin-page-title"><div><h4>操作记录</h4><p>记录自动试用开通、冻结、延期并解冻、客服微信和平台配置变更。</p></div></div><div class="admin-toolbar"><div class="search">搜索操作人、租户名称</div><span class="button secondary">动作：全部</span><span class="button secondary">本月</span><span class="button blue" style="margin-left:auto">查询</span></div><div class="admin-card"><h4>记录列表</h4><div class="admin-table" style="grid-template-columns:1.3fr .8fr .75fr 1fr 1.2fr"><span class="head">动作</span><span class="head">操作人/来源</span><span class="head">时间</span><span class="head">旧值 → 新值</span><span class="head">原因</span><b>调整期限并解冻 · 鲸喜训练</b><span>admin@serenmeet</span><span>2026-06-08 00:11:01</span><span>2026-05-28 → 2026-06-29</span><span>客服确认人工续期</span><b>修改平台配置 · 默认取消截止</b><span>admin@serenmeet</span><span>2026-06-08 00:09:42</span><span>120 → 180</span><span>更新默认规则</span><b>保存客服微信 · 默认客服</b><span>ops@serenmeet</span><span>2026-06-07 17:06:00</span><span>SerenMeet-CS → SerenMeet-CS-1</span><span>更新冻结页文本</span></div></div><div class="admin-pagination"><div><strong>共 42 条记录</strong><span>第 1 页</span></div><div class="admin-page-controls"><span class="admin-page-btn disabled">上一页</span><span class="admin-page active">1</span><span class="admin-page">2</span><span class="admin-page-btn">下一页</span></div></div></div></div></div>      </div>
+        <div class="desktop-wrap" id="admin-a-audit">
+          <div class="frame-label">A-AUDIT 平台后台 / 操作记录</div>
+          <div class="desktop">
+            <div class="atlas-admin">
+              <div class="atlas-shell">
+                <aside class="atlas-side">
+                  <div class="atlas-brand"><span class="atlas-mark">闲</span><div><strong>闲遇</strong><small>PLATFORM OPS</small></div></div>
+                  <nav class="atlas-nav atlas-nav-spaced"><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-building"></use></svg><span>租户管理</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-message"></use></svg><span>客服微信</span><i></i></div><div class="atlas-nav-item"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-sliders"></use></svg><span>平台配置</span><i></i></div><div class="atlas-nav-item active"><svg class="atlas-nav-icon" width="18" height="18" aria-hidden="true"><use href="#atlas-icon-audit"></use></svg><span>操作记录</span><i></i></div></nav>
+                  <div class="atlas-side-user"><span>AD</span><div><strong>平台管理员</strong><small>admin@serenmeet</small></div></div>
+                </aside>
+                <main class="atlas-main">
+                  <div class="atlas-page-head">
+                    <div><h3>操作记录</h3><p>记录自动试用开通、冻结、延期并解冻、客服微信和平台配置变更。</p></div>
+                  </div>
+                  <div class="atlas-toolbar"><div class="atlas-control search-control">搜索操作人、租户名称</div><div class="atlas-control">动作：全部</div><div class="atlas-control">本月</div><span class="atlas-btn">查询</span></div>
+                  <section class="atlas-panel">
+                    <div class="atlas-panel-head"><h4>记录列表</h4></div>
+                    <div class="atlas-table-wrap" style="border:0;border-radius:0">
+                      <table class="atlas-table">
+                        <colgroup><col style="width:25%"><col style="width:17%"><col style="width:17%"><col style="width:21%"><col style="width:20%"></colgroup>
+                        <thead><tr><th>动作</th><th>操作人 / 来源</th><th>时间</th><th>旧值 → 新值</th><th>原因</th></tr></thead>
+                        <tbody><tr><td class="wrap-cell"><strong>调整期限并解冻 · 鲸喜训练</strong></td><td class="atlas-mono">admin@serenmeet</td><td>2026-06-08 00:11:01</td><td>2026-05-28 → 2026-06-29</td><td>客服确认人工续期</td></tr><tr><td class="wrap-cell"><strong>修改平台配置 · 默认取消截止</strong></td><td class="atlas-mono">admin@serenmeet</td><td>2026-06-08 00:09:42</td><td>120 → 180</td><td>更新默认规则</td></tr><tr><td class="wrap-cell"><strong>保存客服微信 · 默认客服</strong></td><td class="atlas-mono">ops@serenmeet</td><td>2026-06-07 17:06:00</td><td>SerenMeet-CS → SerenMeet-CS-1</td><td>更新冻结页文本</td></tr></tbody>
+                      </table>
+                    </div>
+                  </section>
+                  <div class="atlas-pagination"><span><strong>共 42 条记录</strong> · 第 1 页</span><div class="atlas-pages"><span class="disabled">上一页</span><span class="active">1</span><span>2</span><span>下一页</span></div></div>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
+
   </main>
   <script>
     (() => {

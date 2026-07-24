@@ -5,6 +5,12 @@
     "description": "店长、员工、会员和平台后台统一 API",
     "version": "mvp"
   },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "description": "Generated server url"
+    }
+  ],
   "paths": {
     "/staff/profile": {
       "get": {
@@ -3071,6 +3077,36 @@
         }
       }
     },
+    "/admin/auth/me": {
+      "get": {
+        "tags": [
+          "admin-auth-controller"
+        ],
+        "operationId": "me_2",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminUserView"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseAdminUserView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/audit-logs": {
       "get": {
         "tags": [
@@ -4338,6 +4374,23 @@
           },
           "enabled": {
             "type": "boolean"
+          }
+        }
+      },
+      "ApiResponseAdminUserView": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminUserView"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
           }
         }
       },

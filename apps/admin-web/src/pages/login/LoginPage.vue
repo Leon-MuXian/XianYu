@@ -29,47 +29,51 @@ async function submit() {
 
 <template>
   <main class="login-page">
-    <section class="admin-login">
-      <div class="admin-login-hero" aria-hidden="true">
-        <div class="brand-lockup">
-          <span class="mark">闲</span>
-          <strong>闲遇</strong>
-        </div>
-        <div class="hero-content">
-          <h1>平台试点运营<br>从租户状态开始</h1>
-          <p>用于平台内部观察自动开通租户、试用到期、冻结解冻、人工续期和运营配置变更。所有关键操作都保留原因与审计记录。</p>
-          <div class="admin-login-points">
-            <div class="admin-login-point">
-              <strong>租户试用</strong>
-              <small>查看门店开通、到期窗口、发卡、到店和核销信号。</small>
-            </div>
-            <div class="admin-login-point">
-              <strong>冻结解冻</strong>
-              <small>人工确认后暂停或恢复三端业务入口，历史数据保留。</small>
-            </div>
-            <div class="admin-login-point">
-              <strong>平台配置</strong>
-              <small>维护默认试用天数、提醒阈值和邀请码有效期。</small>
-            </div>
-            <div class="admin-login-point">
-              <strong>审计留痕</strong>
-              <small>记录操作人、旧值、新值和可追溯原因。</small>
-            </div>
+    <section class="login-context">
+      <div class="login-brand">
+        <span>闲</span>
+        <strong>闲遇平台后台</strong>
+      </div>
+
+      <div class="login-message">
+        <small>SEREN MEET · PLATFORM OPERATIONS</small>
+        <h1>租户运营状态与平台规则的统一工作台</h1>
+        <p>集中查看租户使用状态、处理到期与冻结账户、维护客服信息和平台规则。</p>
+
+        <div class="login-capabilities">
+          <div>
+            <strong>租户状态</strong>
+            <span>试用中、即将到期、已冻结、已延长，登录后统一进入租户管理。</span>
+          </div>
+          <div>
+            <strong>人工续期</strong>
+            <span>填写新到期日和原因，保存后解冻并写入操作记录。</span>
           </div>
         </div>
       </div>
-      <form class="admin-login-card" @submit.prevent="submit">
-        <span class="eyebrow">SEREN MEET ADMIN</span>
-        <h2>闲遇平台后台</h2>
-        <p>仅供平台内部运营使用，用于租户试用、冻结解冻、期限调整、客服微信和平台配置维护。</p>
-        <div v-if="error" class="form-error">{{ error }}</div>
+    </section>
+
+    <section class="login-entry">
+      <form class="login-form" @submit.prevent="submit">
+        <small>ADMIN SIGN IN</small>
+        <h2>欢迎您管理员，请登录</h2>
+
+        <div v-if="error" class="form-error" role="alert">{{ error }}</div>
+
         <label>
-          <span>后台账号</span>
-          <el-input v-model="username" autocomplete="username" size="large" />
+          <span>账号</span>
+          <el-input v-model="username" autocomplete="username" size="large" placeholder="请输入平台管理员账号" />
         </label>
         <label>
-          <span>登录密码</span>
-          <el-input v-model="password" autocomplete="current-password" size="large" show-password />
+          <span>密码</span>
+          <el-input
+            v-model="password"
+            autocomplete="current-password"
+            size="large"
+            type="password"
+            show-password
+            placeholder="请输入密码"
+          />
         </label>
         <el-button type="primary" native-type="submit" size="large" :loading="loading">登录</el-button>
       </form>
@@ -79,260 +83,224 @@ async function submit() {
 
 <style scoped>
 .login-page {
-  display: flex;
+  display: grid;
+  grid-template-columns: 56% 44%;
   min-height: 100vh;
   min-height: 100dvh;
-  background: linear-gradient(135deg, #f8fbf7 0%, #edf4ee 100%);
-  overflow: hidden;
+  background: #fff;
 }
 
-.admin-login {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(560px, 1fr) minmax(440px, clamp(440px, 34vw, 620px));
-  width: 100%;
-  min-height: 680px;
-  height: 100vh;
-  height: 100dvh;
+.login-context {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--navy);
+  color: #fff;
+  padding: clamp(48px, 7vh, 78px) clamp(56px, 6vw, 92px);
 }
 
-.admin-login-hero {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  background:
-    linear-gradient(145deg, rgba(18, 34, 29, 0.98), rgba(18, 34, 29, 0.94)),
-    #12221d;
-  color: white;
-  overflow: hidden;
-  padding: clamp(34px, 6vh, 64px) clamp(44px, 5vw, 68px);
-}
-
-.admin-login-hero::after {
-  content: "";
-  position: absolute;
-  right: -120px;
-  bottom: -120px;
-  z-index: -1;
-  width: 460px;
-  height: 460px;
-  border-radius: 999px;
-  background: rgba(47, 125, 110, 0.34);
-}
-
-.brand-lockup {
+.login-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 22px;
-  font-weight: 900;
+  gap: 14px;
+  min-height: 42px;
 }
 
-.mark {
+.login-brand > span {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--green);
-  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 20px;
   font-weight: 900;
 }
 
-.hero-content {
-  align-self: center;
-  transform: translateY(clamp(24px, 4.8vh, 56px));
+.login-brand strong {
+  font-size: 20px;
 }
 
-.admin-login-hero h1 {
-  width: min(580px, 100%);
-  margin: 0 0 20px;
-  font-size: clamp(36px, 3.4vw, 54px);
-  line-height: 1.18;
-}
-
-.admin-login-hero p {
-  width: min(560px, 100%);
-  margin: 0;
-  color: #c9d8d1;
-  font-size: 15px;
-  line-height: 1.8;
-}
-
-.admin-login-points {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+.login-message {
   width: min(720px, 100%);
-  margin-top: clamp(26px, 5vh, 42px);
+  margin: auto 0;
+  padding: 72px 0 54px;
 }
 
-.admin-login-point {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: clamp(14px, 2.2vh, 20px);
-}
-
-.admin-login-point strong {
+.login-message > small,
+.login-form > small {
   display: block;
-  color: #fff;
-  font-size: 18px;
-  line-height: 1.35;
-}
-
-.admin-login-point small {
-  display: block;
-  margin-top: 8px;
-  color: #c9d8d1;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.admin-login > form {
-  align-self: center;
-  min-width: 0;
-  padding: clamp(28px, 5vw, 84px);
-}
-
-.admin-login-card {
-  align-self: center;
-  justify-self: center;
-  display: grid;
-  gap: 16px;
-  width: min(400px, 100%);
-  border: 1px solid var(--line-soft);
-  border-radius: 8px;
-  background: var(--surface);
-  padding: 34px;
-  box-shadow: var(--shadow-soft);
-}
-
-.eyebrow {
-  color: var(--green);
+  color: #79addb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0;
-}
-
-h2 {
-  margin: 0;
-  font-size: 24px;
-}
-
-p {
-  margin: 0 0 10px;
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-label {
-  display: grid;
-  gap: 8px;
   font-weight: 800;
 }
 
+.login-message h1 {
+  max-width: 680px;
+  margin: 18px 0 22px;
+  color: #fff;
+  font-size: clamp(38px, 3.25vw, 54px);
+  font-weight: 800;
+  line-height: 1.24;
+  letter-spacing: 0;
+}
+
+.login-message > p {
+  max-width: 650px;
+  margin: 0;
+  color: #aab8c5;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.login-capabilities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 680px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  margin-top: 42px;
+}
+
+.login-capabilities > div {
+  min-width: 0;
+  padding: 20px 24px 20px 0;
+}
+
+.login-capabilities > div + div {
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  padding-right: 0;
+  padding-left: 24px;
+}
+
+.login-capabilities strong,
+.login-capabilities span {
+  display: block;
+}
+
+.login-capabilities strong {
+  font-size: 16px;
+}
+
+.login-capabilities span {
+  margin-top: 8px;
+  color: #9eadba;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.login-entry {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  background: #fff;
+  padding: clamp(42px, 6vw, 96px);
+}
+
+.login-form {
+  display: grid;
+  gap: 18px;
+  width: min(420px, 100%);
+}
+
+.login-form h2 {
+  margin: 2px 0 20px;
+  color: var(--ink);
+  font-size: 30px;
+  line-height: 1.25;
+}
+
+.login-form label {
+  display: grid;
+  gap: 8px;
+  color: #405065;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-form :deep(.el-input__wrapper) {
+  min-height: 52px;
+}
+
+.login-form > .el-button {
+  min-height: 52px;
+  margin-top: 4px;
+}
+
 .form-error {
-  border-radius: 8px;
-  background: var(--red-soft);
-  color: var(--red);
-  padding: 12px;
+  border-left: 3px solid var(--coral);
+  background: var(--coral-soft);
+  padding: 12px 14px;
+  color: var(--coral);
+  font-size: 13px;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 980px) {
   .login-page {
-    overflow: auto;
-  }
-
-  .admin-login {
     grid-template-columns: 1fr;
-    height: auto;
-    min-height: 100dvh;
   }
 
-  .admin-login-hero {
-    min-height: 500px;
+  .login-context {
+    min-height: 460px;
+    padding: 38px clamp(28px, 8vw, 70px);
   }
 
-  .admin-login-card {
-    margin: 48px 0;
-  }
-}
-
-@media (max-height: 760px) and (min-width: 1121px) {
-  .admin-login-hero {
-    padding-top: 32px;
-    padding-bottom: 32px;
+  .login-message {
+    padding: 64px 0 20px;
   }
 
-  .hero-content {
-    transform: translateY(clamp(12px, 2.5vh, 24px));
-  }
-
-  .admin-login-hero h1 {
+  .login-message h1 {
     font-size: 38px;
-    margin-bottom: 14px;
   }
 
-  .admin-login-hero p {
-    font-size: 14px;
-    line-height: 1.65;
-  }
-
-  .admin-login-points {
-    gap: 12px;
-    margin-top: 24px;
-  }
-
-  .admin-login-point {
-    padding: 14px;
-  }
-
-  .admin-login-point strong {
-    font-size: 16px;
-  }
-
-  .admin-login-point small {
-    font-size: 12px;
-    line-height: 1.55;
-  }
-
-  .admin-login-card {
-    gap: 14px;
-    padding: 30px;
+  .login-entry {
+    padding: 56px 28px 72px;
   }
 }
 
-@media (max-width: 680px) {
-  .admin-login-hero {
-    min-height: auto;
-    padding: 36px 22px;
+@media (max-width: 580px) {
+  .login-context {
+    min-height: 400px;
+    padding: 28px 22px;
   }
 
-  .hero-content {
-    align-self: start;
-    transform: none;
+  .login-message {
+    padding-top: 52px;
   }
 
-  .admin-login-hero h1 {
-    margin-top: 48px;
-    font-size: 31px;
+  .login-message h1 {
+    margin-top: 14px;
+    font-size: 30px;
   }
 
-  .admin-login-points {
+  .login-message > p {
+    font-size: 14px;
+  }
+
+  .login-capabilities {
     grid-template-columns: 1fr;
+    margin-top: 28px;
   }
 
-  .admin-login-point {
-    min-height: 0;
-    padding: 16px;
+  .login-capabilities > div,
+  .login-capabilities > div + div {
+    border-left: 0;
+    padding: 14px 0;
   }
 
-  .admin-login-card {
-    width: 100%;
-    margin: 24px 0 96px;
-    padding: 24px;
+  .login-capabilities > div + div {
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .login-entry {
+    padding: 46px 22px 64px;
+  }
+
+  .login-form h2 {
+    font-size: 25px;
   }
 }
 </style>

@@ -76,11 +76,11 @@
     { "index": 63, "label": "M-MY 会员端 / 我的", "stage": 2, "status": "planned", "implementation": "阶段二会员个人页" },
     { "index": 64, "label": "M-FROZEN 会员端 / 冻结提示", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-member/src/pages/frozen/index.vue" },
     { "index": 65, "label": "A-LOGIN 平台后台 / 独立登录页", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/login/LoginPage.vue" },
-    { "index": 66, "label": "A-TENANTS 平台后台 / 租户管理列表（当前 WEB）", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/tenants/TenantsPage.vue" },
-    { "index": 67, "label": "A-TENANT-DETAIL 平台后台 / 租户详情右侧抽屉（当前 WEB）", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/tenant-detail/TenantDetailPage.vue" },
-    { "index": 68, "label": "A-TENANT-ADJUST 平台后台 / 租户调整右侧抽屉（当前 WEB）", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/freeze/FreezePage.vue" },
-    { "index": 69, "label": "A-SUPPORT 平台后台 / 客服微信配置（当前 WEB）", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/support-wechat/SupportWechatPage.vue" },
-    { "index": 70, "label": "A-CONFIG 平台后台 / 平台配置与右侧抽屉编辑（当前 WEB）", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/config/ConfigPage.vue" },
-    { "index": 71, "label": "A-AUDIT 平台后台 / 操作记录（当前 WEB）", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/audit/AuditPage.vue" }
+    { "index": 66, "label": "A-TENANTS 平台后台 / 租户管理列表", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/tenants/TenantsPage.vue" },
+    { "index": 67, "label": "A-TENANT-DETAIL 平台后台 / 租户详情右侧抽屉", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/tenant-detail/TenantDetailPage.vue" },
+    { "index": 68, "label": "A-TENANT-ADJUST 平台后台 / 租户调整右侧抽屉", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/freeze/FreezePage.vue" },
+    { "index": 69, "label": "A-SUPPORT 平台后台 / 客服微信配置", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/support-wechat/SupportWechatPage.vue" },
+    { "index": 70, "label": "A-CONFIG 平台后台 / 平台配置与右侧抽屉编辑", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/config/ConfigPage.vue" },
+    { "index": 71, "label": "A-AUDIT 平台后台 / 操作记录", "stage": 1, "status": "implemented", "implementation": "apps/admin-web/src/pages/audit/AuditPage.vue" }
   ]
 }
