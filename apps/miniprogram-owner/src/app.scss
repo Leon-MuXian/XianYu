@@ -222,6 +222,44 @@ button::after { border: 0; }
 .owner-start-note strong { display: block; color: var(--ink); font-size: 13px; margin-bottom: 3px; }
 .note-title { display: block; color: var(--ink); font-size: 13px; margin-bottom: 3px; font-weight: 900; }
 
+.onboarding-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+.onboarding-screen > .custom-head { position: relative; flex: 0 0 auto; }
+.content.onboarding-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+}
+.onboarding-content .owner-hero { min-height: 138px; padding: 18px; }
+.onboarding-content .owner-hero-meta { margin-top: 14px; }
+.onboarding-content .owner-progress { gap: 8px; margin: 12px 0; }
+.onboarding-content .owner-step { min-height: 58px; padding: 9px 12px; }
+.onboarding-content .owner-start-note { margin-top: auto; }
+.onboarding-content > .loading-state { margin: auto 0; }
+.onboarding-content .create-store { margin-top: 10px; }
+
+.onboarding-content.onboarding-ready .owner-hero { min-height: 118px; padding: 15px 16px; }
+.onboarding-content.onboarding-ready .hero-title { margin-bottom: 6px; font-size: 21px; }
+.onboarding-content.onboarding-ready .hero-copy { font-size: 11px; line-height: 1.45; }
+.onboarding-content.onboarding-ready .owner-hero-meta { margin-top: 10px; }
+.onboarding-content.onboarding-ready .owner-progress { gap: 6px; margin: 10px 0; }
+.onboarding-content.onboarding-ready .owner-step { min-height: 52px; padding: 7px 10px; }
+.onboarding-content.onboarding-ready .owner-final-preview { margin-top: 0; padding: 10px; }
+.onboarding-content.onboarding-ready .owner-final-preview .store-info-grid { gap: 5px; margin-top: 6px; }
+.onboarding-content.onboarding-ready .owner-final-preview .store-info-grid > view { min-height: 38px; padding: 5px 7px; }
+.onboarding-content.onboarding-ready .owner-final-preview .store-info-tags { gap: 4px; margin-top: 6px; }
+.onboarding-content.onboarding-ready .owner-final-preview .store-info-tags text { padding: 4px 7px; }
+.onboarding-content.onboarding-ready .owner-start-note { padding: 9px 10px; }
+.onboarding-content.onboarding-ready .create-store { min-height: 46px; margin-top: 8px; }
+
 .owner-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 14px; }
 .owner-card-grid .tile { min-height: 88px; border: 1px solid var(--line-soft); border-radius: 8px; background: var(--surface); padding: 13px; box-shadow: 0 10px 22px rgba(23,33,27,.04); }
 .tile > text:first-child { color: var(--muted); font-size: 10px; font-weight: 900; }
@@ -465,6 +503,9 @@ button::after { border: 0; }
   .content.owner-dense { padding-left: 14px; padding-right: 14px; }
   .owner-step { grid-template-columns: 28px minmax(0,1fr); }
   .owner-step > .tag, .owner-step > .resource-row-actions { grid-column: 2; justify-self: start; }
+  .content.onboarding-content { padding-right: 12px; padding-left: 12px; }
+  .onboarding-content .owner-step { grid-template-columns: 28px minmax(0,1fr) auto; }
+  .onboarding-content .owner-step > .tag { grid-column: auto; justify-self: end; }
   .owner-form-grid { grid-template-columns: 1fr; }
   .owner-form-grid .field.wide { grid-column: auto; }
   .resource-row-actions { justify-content: flex-start; }
@@ -480,6 +521,20 @@ button::after { border: 0; }
 }
 
 @media (max-height: 740px) {
+  .content.onboarding-content { padding: 8px 14px calc(8px + env(safe-area-inset-bottom)); }
+  .onboarding-content .owner-hero { min-height: 104px; padding: 12px 14px; }
+  .onboarding-content .hero-title { margin-bottom: 4px; font-size: 20px; }
+  .onboarding-content .hero-copy { font-size: 11px; line-height: 1.4; }
+  .onboarding-content .owner-hero-meta { display: none; }
+  .onboarding-content .owner-progress { gap: 6px; margin: 8px 0; }
+  .onboarding-content .owner-step { min-height: 48px; padding: 6px 10px; }
+  .onboarding-content .step-copy { margin-top: 1px; font-size: 10px; }
+  .onboarding-content .owner-start-note { padding: 8px 10px; font-size: 10px; line-height: 1.35; }
+  .onboarding-content .create-store { min-height: 44px; margin-top: 8px; }
+  .onboarding-content.onboarding-ready .owner-hero { min-height: 82px; padding: 10px 14px; }
+  .onboarding-content.onboarding-ready .owner-final-preview { padding: 8px; }
+  .onboarding-content.onboarding-ready .owner-final-preview .store-info-grid > view { min-height: 32px; padding: 4px 6px; }
+  .onboarding-content.onboarding-ready .owner-final-preview .store-info-tags text { padding: 3px 6px; }
   .login-scene { padding-bottom: 16px; }
   .login-visual { height: 250px; margin-top: 4px; }
   .login-visual .art-scene { transform: scale(.72); transform-origin: top center; }

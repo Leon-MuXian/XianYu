@@ -84,9 +84,9 @@ useDidShow(load)
 </script>
 
 <template>
-  <View class="screen">
+  <View class="screen onboarding-screen">
     <OwnerTopbar title="开始使用" />
-    <View class="content owner-dense">
+    <View class="content owner-dense onboarding-content" :class="{ 'onboarding-ready': ready }">
       <View v-if="loading" class="loading-state">正在加载开店清单...</View>
       <template v-else-if="draft">
         <View class="owner-hero">
@@ -109,9 +109,6 @@ useDidShow(load)
             <Text class="step-glyph">{{ draft.completion.resourceDone ? '✓' : '3' }}</Text>
             <View><Text class="step-title">履约资源</Text><Text class="step-copy">{{ draft.completion.resourceDone ? `${resources.length} 个启用资源，可用于服务项目和排期` : '至少 1 个启用资源，支持房间、场地、床位等' }}</Text></View>
             <Text class="tag" :class="draft.completion.resourceDone ? '' : 'blue'">{{ draft.completion.resourceDone ? '已完成' : '去填写' }}</Text>
-          </View>
-          <View class="owner-step later">
-            <Text class="step-glyph">4</Text><View><Text class="step-title">员工、服务与会员</Text><Text class="step-copy">创建门店后在工作台待办中继续补齐</Text></View><Text class="tag warn">可稍后</Text>
           </View>
         </View>
         <View v-if="ready" class="store-info-card owner-final-preview">

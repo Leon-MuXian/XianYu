@@ -1,1 +1,4 @@
-export default definePageConfig({ navigationBarTitleText: '开始使用' })
+export default definePageConfig({
+  navigationBarTitleText: '开始使用',
+  disableScroll: true
+})
