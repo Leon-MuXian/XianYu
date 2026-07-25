@@ -71,7 +71,6 @@ useLoad((params) => { void load(params) })
           <picker mode="time" :value="days[key].end" @change="setTime(key, 'end', $event)"><View class="time-picker">{{ days[key].end }} ▾</View></picker>
         </View>
       </View>
-      <View class="ostore-next-preview"><Text class="note-title">{{ storeMode ? '保存后立即生效' : '保存后返回清单' }}</Text><Text>营业时间会进入门店展示，会员和员工都能看到。</Text></View>
       <View v-if="message" class="error-banner">{{ message }}</View>
       <View class="form-footer"><button class="button secondary" @tap="Taro.navigateBack()">返回</button><button class="button" :loading="saving" :disabled="saving" @tap="save">{{ storeMode ? '保存修改' : '保存并返回清单' }}</button></View>
     </View>

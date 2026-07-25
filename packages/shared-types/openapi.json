@@ -1088,6 +1088,46 @@
         }
       }
     },
+    "/owner/store/name-availability": {
+      "post": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "storeNameAvailability",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreNameAvailabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/owner/staff": {
       "get": {
         "tags": [
@@ -1405,6 +1445,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/onboarding/trial-notice/acknowledge": {
+      "post": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "acknowledgeTrialNotice",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
                 }
               }
             }
@@ -2572,12 +2642,12 @@
         }
       }
     },
-    "/owner/onboarding/draft": {
+    "/owner/regions/cities": {
       "get": {
         "tags": [
           "owner-pilot-controller"
         ],
-        "operationId": "onboarding",
+        "operationId": "administrativeCities",
         "parameters": [
           {
             "name": "principal",
@@ -2594,7 +2664,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
                 }
               }
             }
@@ -2602,12 +2672,50 @@
         }
       }
     },
-    "/owner/onboarding/trial-notice/acknowledge": {
-      "post": {
+    "/owner/regions/cities/{cityCode}/districts": {
+      "get": {
         "tags": [
           "owner-pilot-controller"
         ],
-        "operationId": "acknowledgeTrialNotice",
+        "operationId": "administrativeDistricts",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          },
+          {
+            "name": "cityCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/onboarding/draft": {
+      "get": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "onboarding",
         "parameters": [
           {
             "name": "principal",
@@ -3306,31 +3414,36 @@
         "type": "object",
         "properties": {
           "name": {
+            "maxLength": 120,
+            "minLength": 0,
             "type": "string"
           },
-          "city": {
+          "cityCode": {
+            "maxLength": 12,
+            "minLength": 0,
             "type": "string"
           },
-          "businessCategories": {
-            "maxItems": 4,
+          "districtCode": {
+            "maxLength": 12,
+            "minLength": 0,
+            "type": "string"
+          },
+          "detailAddress": {
+            "maxLength": 180,
+            "minLength": 0,
+            "type": "string"
+          },
+          "serviceScopes": {
+            "maxItems": 6,
             "minItems": 0,
             "type": "array",
             "items": {
               "type": "string"
             }
-          },
-          "serviceTags": {
-            "maxItems": 10,
-            "minItems": 0,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "address": {
-            "type": "string"
           },
           "contactPhone": {
+            "maxLength": 40,
+            "minLength": 0,
             "type": "string"
           },
           "days": {
@@ -3481,40 +3594,46 @@
       },
       "StoreProfileRequest": {
         "required": [
-          "address",
-          "businessCategories",
+          "cityCode",
           "contactPhone",
+          "detailAddress",
+          "districtCode",
           "name",
-          "serviceTags"
+          "serviceScopes"
         ],
         "type": "object",
         "properties": {
           "name": {
+            "maxLength": 120,
+            "minLength": 0,
             "type": "string"
           },
-          "city": {
+          "cityCode": {
+            "maxLength": 12,
+            "minLength": 0,
             "type": "string"
           },
-          "businessCategories": {
-            "maxItems": 4,
+          "districtCode": {
+            "maxLength": 12,
+            "minLength": 0,
+            "type": "string"
+          },
+          "detailAddress": {
+            "maxLength": 180,
+            "minLength": 0,
+            "type": "string"
+          },
+          "serviceScopes": {
+            "maxItems": 6,
             "minItems": 0,
             "type": "array",
             "items": {
               "type": "string"
             }
-          },
-          "serviceTags": {
-            "maxItems": 10,
-            "minItems": 0,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "address": {
-            "type": "string"
           },
           "contactPhone": {
+            "maxLength": 40,
+            "minLength": 0,
             "type": "string"
           }
         }
@@ -3704,6 +3823,19 @@
           "bookingId": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "StoreNameAvailabilityRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 0,
+            "type": "string"
           }
         }
       },
@@ -4212,6 +4344,17 @@
           }
         }
       },
+      "BusinessHoursView": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DayHoursView"
+            }
+          }
+        }
+      },
       "BusinessSnapshotView": {
         "type": "object",
         "properties": {
@@ -4248,16 +4391,27 @@
           }
         }
       },
+      "DayHoursView": {
+        "type": "object",
+        "properties": {
+          "open": {
+            "type": "boolean"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        }
+      },
       "StoreView": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string"
           },
-          "businessCategories": {
-            "type": "string"
-          },
-          "serviceTags": {
+          "serviceScopes": {
             "type": "string"
           },
           "address": {
@@ -4267,7 +4421,7 @@
             "type": "string"
           },
           "businessHours": {
-            "type": "string"
+            "$ref": "#/components/schemas/BusinessHoursView"
           }
         }
       },

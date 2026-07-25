@@ -16,6 +16,8 @@ public class TenantMybatisConfig {
     "tenant",
     "admin_user",
     "auth_session",
+    "administrative_city",
+    "administrative_district",
     "platform_config",
     "support_wechat",
     "audit_log",

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import BusinessHoursGroups from '@/components/BusinessHoursGroups.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { adminApi } from '@/services/api'
 import type { TenantDetail } from '@/types/admin'
@@ -57,8 +58,8 @@ onMounted(load)
             <div class="field-box"><span>门店名称</span><strong>{{ tenant.store.name }}</strong></div>
             <div class="field-box"><span>联系电话</span><strong>{{ tenant.store.contactPhone }}</strong></div>
             <div class="field-box wide"><span>门店地址</span><strong>{{ tenant.store.address }}</strong></div>
-            <div class="field-box wide"><span>经营项目 / 服务标签</span><strong>{{ tenant.store.businessCategories }} / {{ tenant.store.serviceTags }}</strong></div>
-            <div class="field-box wide"><span>营业时间</span><strong>{{ tenant.store.businessHours }}</strong></div>
+            <div class="field-box wide"><span>服务范围</span><strong>{{ tenant.store.serviceScopes }}</strong></div>
+            <div class="field-box wide business-hours-field"><BusinessHoursGroups :value="tenant.store.businessHours" /></div>
             <div v-if="tenant.status === 'frozen' && tenant.frozenReason" class="field-box wide"><span>冻结原因</span><strong>{{ tenant.frozenReason }}</strong></div>
           </div>
 

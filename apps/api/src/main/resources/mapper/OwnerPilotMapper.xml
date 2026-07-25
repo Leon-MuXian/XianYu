@@ -73,19 +73,53 @@
   </select>
 
   <select id="selectStoreDetail" resultType="map">
-    select s.id, s.name, t.city, s.address, s.contact_phone as "contactPhone",
-      s.business_categories as "businessCategories", s.service_tags as "serviceTags",
+    select s.id, s.name, s.city_code as "cityCode", city.name as city,
+      s.district_code as "districtCode", district.name as district,
+      s.detail_address as "detailAddress", s.address, s.contact_phone as "contactPhone",
+      s.business_categories as "serviceScopes",
       s.business_hours as "businessHours"
     from store s
-    join tenant t on t.id = s.tenant_id
+    join administrative_city city on city.code = s.city_code
+    join administrative_district district on district.code = s.district_code
     where s.tenant_id = #{tenantId}
+  </select>
+
+  <select id="selectAdministrativeCities" resultType="map">
+    select code, name
+    from administrative_city
+    where enabled
+    order by sort_order, code
+  </select>
+
+  <select id="selectAdministrativeDistricts" resultType="map">
+    select code, name
+    from administrative_district
+    where city_code = #{cityCode} and enabled
+    order by sort_order, code
+  </select>
+
+  <select id="selectAdministrativeRegion" resultType="map">
+    select city.code as "cityCode", city.name as city,
+      district.code as "districtCode", district.name as district
+    from administrative_city city
+    join administrative_district district
+      on district.city_code = city.code and district.code = #{districtCode}
+    where city.code = #{cityCode} and city.enabled and district.enabled
+  </select>
+
+  <select id="countStoreNameKeyExcludingTenant" resultType="int">
+    select count(*)
+    from store
+    where name_key = #{nameKey} and tenant_id != #{tenantId}
   </select>
 
   <select id="insertStore" resultType="long" flushCache="true" affectData="true">
     insert into store(
-      tenant_id, name, business_categories, service_tags, address, contact_phone, business_hours
+      tenant_id, name, name_key, business_categories,
+      city_code, district_code, detail_address, address, contact_phone, business_hours
     ) values (
-      #{tenantId}, #{name}, cast(#{businessCategories} as jsonb), cast(#{serviceTags} as jsonb),
+      #{tenantId}, #{name}, #{nameKey}, cast(#{serviceScopes} as jsonb),
+      #{cityCode}, #{districtCode}, #{detailAddress},
       #{address}, #{contactPhone}, cast(#{businessHours} as jsonb)
     )
     returning id
@@ -99,9 +133,10 @@
 
   <update id="updateStoreProfile">
     update store
-    set name = #{name}, business_categories = cast(#{businessCategories} as jsonb),
-      service_tags = cast(#{serviceTags} as jsonb), address = #{address},
-      contact_phone = #{contactPhone}, updated_at = current_timestamp
+    set name = #{name}, name_key = #{nameKey},
+      business_categories = cast(#{serviceScopes} as jsonb), city_code = #{cityCode},
+      district_code = #{districtCode}, detail_address = #{detailAddress},
+      address = #{address}, contact_phone = #{contactPhone}, updated_at = current_timestamp
     where tenant_id = #{tenantId}
   </update>
 

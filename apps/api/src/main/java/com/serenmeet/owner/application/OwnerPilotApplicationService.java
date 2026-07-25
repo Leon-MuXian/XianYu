@@ -10,13 +10,16 @@ import com.serenmeet.common.ApiException;
 import com.serenmeet.owner.mapper.OwnerPilotMapper;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.text.Normalizer;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,8 @@ public class OwnerPilotApplicationService {
   private static final int INVITE_CODE_LENGTH = 8;
   private static final String INVITE_VALID_DAYS_CONFIG = "member.invite.default_valid_days";
   private static final String CANCELLATION_DEADLINE_CONFIG = "booking.cancel.default_deadline_min";
+  private static final int MAX_SERVICE_SCOPE_COUNT = 6;
+  private static final Pattern STORE_NAME_WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
 
   private final OwnerPilotMapper ownerMapper;
   private final ObjectMapper objectMapper;
@@ -59,38 +64,69 @@ public class OwnerPilotApplicationService {
     Map<String, Object> row =
         new LinkedHashMap<>(requireOne(ownerMapper.selectStoreDetail(principal.tenantId())));
     JsonNode businessHours = json(row.get("businessHours"));
-    row.put("businessCategories", jsonValue(row.get("businessCategories")));
-    row.put("serviceTags", jsonValue(row.get("serviceTags")));
+    row.put("serviceScopes", jsonValue(row.get("serviceScopes")));
     row.put("businessHours", jsonValue(row.get("businessHours")));
     row.put("businessHoursSummary", summarizeBusinessHours(businessHours));
     return row;
+  }
+
+  public List<Map<String, Object>> administrativeCities() {
+    return ownerMapper.selectAdministrativeCities();
+  }
+
+  public List<Map<String, Object>> administrativeDistricts(String cityCode) {
+    List<Map<String, Object>> districts = ownerMapper.selectAdministrativeDistricts(cityCode);
+    if (districts.isEmpty()) {
+      throw new ApiException(HttpStatus.NOT_FOUND, "REGION_NOT_FOUND", "城市不存在或暂无可选区县");
+    }
+    return districts;
+  }
+
+  public Map<String, Object> storeNameAvailability(
+      SessionPrincipal principal, String name) {
+    String nameKey = normalizeStoreName(name).toLowerCase(Locale.ROOT);
+    boolean available =
+        ownerMapper.countStoreNameKeyExcludingTenant(nameKey, principal.tenantId()) == 0;
+    return Map.of("available", available);
   }
 
   @Transactional
   public Map<String, Object> updateStoreProfile(
       SessionPrincipal principal,
       String name,
-      String city,
-      List<String> businessCategories,
-      List<String> serviceTags,
-      String address,
+      String cityCode,
+      String districtCode,
+      String detailAddress,
+      List<String> serviceScopes,
       String contactPhone) {
-    validateStoreProfile(name, businessCategories, serviceTags, address, contactPhone);
     Long tenantId = principal.tenantId();
     requireStoreId(tenantId);
+    StoreProfileData profile =
+        buildStoreProfile(
+            tenantId,
+            name,
+            cityCode,
+            districtCode,
+            detailAddress,
+            serviceScopes,
+            contactPhone);
     try {
       ownerMapper.updateStoreProfile(
           tenantId,
-          name,
-          writeJson(businessCategories),
-          writeJson(serviceTags),
-          address,
-          contactPhone);
-      ownerMapper.updateTenantProfile(tenantId, name, city == null ? "" : city);
-      audit(tenantId, principal, "update_store_profile", name, null, "updated", null);
+          profile.name(),
+          profile.nameKey(),
+          writeJson(profile.serviceScopes()),
+          profile.cityCode(),
+          profile.districtCode(),
+          profile.detailAddress(),
+          profile.address(),
+          profile.contactPhone());
+      ownerMapper.updateTenantProfile(tenantId, profile.name(), profile.city());
+      audit(
+          tenantId, principal, "update_store_profile", profile.name(), null, "updated", null);
       return store(principal);
     } catch (DataIntegrityViolationException exception) {
-      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "门店资料与现有数据冲突");
+      throw storeNameTaken(exception);
     }
   }
 
@@ -129,8 +165,25 @@ public class OwnerPilotApplicationService {
   }
 
   @Transactional
-  public Map<String, Object> saveStoreProfile(SessionPrincipal principal, Object request) {
-    updateDraft(principal.tenantId(), DraftSection.STORE_PROFILE, request);
+  public Map<String, Object> saveStoreProfile(
+      SessionPrincipal principal,
+      String name,
+      String cityCode,
+      String districtCode,
+      String detailAddress,
+      List<String> serviceScopes,
+      String contactPhone) {
+    StoreProfileData profile =
+        buildStoreProfile(
+            principal.tenantId(),
+            name,
+            cityCode,
+            districtCode,
+            detailAddress,
+            serviceScopes,
+            contactPhone);
+    updateDraft(
+        principal.tenantId(), DraftSection.STORE_PROFILE, storeProfileDraftPayload(profile));
     return onboardingDraft(principal);
   }
 
@@ -166,29 +219,50 @@ public class OwnerPilotApplicationService {
     JsonNode profile = json(draft.get("store_profile_draft"));
     JsonNode hours = json(draft.get("business_hours_draft"));
     JsonNode resources = json(draft.get("resources_draft"));
-    String name = requiredText(profile, "name", "门店名称不能为空");
-    String address = requiredText(profile, "address", "门店地址不能为空");
-    String contactPhone = requiredText(profile, "contactPhone", "联系电话不能为空");
     validateOnboardingCollections(profile, resources);
-
-    Long storeId =
-        ownerMapper.insertStore(
+    StoreProfileData storeProfile =
+        buildStoreProfile(
             tenantId,
-            name,
-            profile.path("businessCategories").toString(),
-            profile.path("serviceTags").toString(),
-            address,
-            contactPhone,
-            hours.toString());
+            requiredText(profile, "name", "门店名称不能为空"),
+            requiredText(profile, "cityCode", "请选择城市"),
+            requiredText(profile, "districtCode", "请选择区县"),
+            requiredText(profile, "detailAddress", "请填写详细地址"),
+            stringList(profile.path("serviceScopes")),
+            requiredText(profile, "contactPhone", "联系电话不能为空"));
+
+    Long storeId;
+    try {
+      storeId =
+          ownerMapper.insertStore(
+              tenantId,
+              storeProfile.name(),
+              storeProfile.nameKey(),
+              writeJson(storeProfile.serviceScopes()),
+              storeProfile.cityCode(),
+              storeProfile.districtCode(),
+              storeProfile.detailAddress(),
+              storeProfile.address(),
+              storeProfile.contactPhone(),
+              hours.toString());
+    } catch (DataIntegrityViolationException exception) {
+      throw storeNameTaken(exception);
+    }
     int sortOrder = 0;
     for (JsonNode resource : resources) {
       insertResource(tenantId, storeId, resource, sortOrder);
       sortOrder++;
     }
-    ownerMapper.updateTenantProfile(tenantId, name, profile.path("city").asText(""));
+    ownerMapper.updateTenantProfile(tenantId, storeProfile.name(), storeProfile.city());
     ownerMapper.markOnboardingConverted(tenantId);
-    audit(tenantId, principal, "complete_onboarding", name, null, "created", null);
-    return Map.of("id", storeId, "name", name);
+    audit(
+        tenantId,
+        principal,
+        "complete_onboarding",
+        storeProfile.name(),
+        null,
+        "created",
+        null);
+    return Map.of("id", storeId, "name", storeProfile.name());
   }
 
   public List<Map<String, Object>> resources(SessionPrincipal principal) {
@@ -743,38 +817,144 @@ public class OwnerPilotApplicationService {
 
   private void validateOnboardingCollections(JsonNode profile, JsonNode resources) {
     boolean profileListsMissing =
-        !profile.path("businessCategories").isArray()
-            || profile.path("businessCategories").isEmpty()
-            || !profile.path("serviceTags").isArray()
-            || profile.path("serviceTags").isEmpty();
+        !profile.path("serviceScopes").isArray()
+            || profile.path("serviceScopes").isEmpty();
     if (profileListsMissing) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "经营项目和服务标签不能为空");
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "服务范围不能为空");
     }
     if (!resources.isArray() || resources.isEmpty()) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "至少需要一个履约资源");
     }
   }
 
+  private StoreProfileData buildStoreProfile(
+      Long tenantId,
+      String name,
+      String cityCode,
+      String districtCode,
+      String detailAddress,
+      List<String> serviceScopes,
+      String contactPhone) {
+    validateStoreProfile(
+        name,
+        cityCode,
+        districtCode,
+        detailAddress,
+        contactPhone);
+    List<String> normalizedServiceScopes = normalizeServiceScopes(serviceScopes);
+    String normalizedName = normalizeStoreName(name);
+    String nameKey = normalizedName.toLowerCase(Locale.ROOT);
+    if (ownerMapper.countStoreNameKeyExcludingTenant(nameKey, tenantId) > 0) {
+      throw storeNameTaken(null);
+    }
+    Map<String, Object> region = ownerMapper.selectAdministrativeRegion(cityCode, districtCode);
+    if (region == null || region.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "REGION_INVALID", "所选城市与区县不匹配，请重新选择");
+    }
+    String normalizedDetailAddress = detailAddress.trim();
+    String city = region.get("city").toString();
+    String district = region.get("district").toString();
+    String address = city + district + normalizedDetailAddress;
+    if (address.length() > 255) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "门店地址过长，请精简详细地址");
+    }
+    return new StoreProfileData(
+        normalizedName,
+        nameKey,
+        cityCode,
+        city,
+        districtCode,
+        district,
+        normalizedDetailAddress,
+        address,
+        contactPhone.trim(),
+        normalizedServiceScopes);
+  }
+
   private void validateStoreProfile(
       String name,
-      List<String> businessCategories,
-      List<String> serviceTags,
-      String address,
+      String cityCode,
+      String districtCode,
+      String detailAddress,
       String contactPhone) {
     boolean textMissing =
         name == null
             || name.isBlank()
-            || address == null
-            || address.isBlank()
+            || cityCode == null
+            || cityCode.isBlank()
+            || districtCode == null
+            || districtCode.isBlank()
+            || detailAddress == null
+            || detailAddress.isBlank()
             || contactPhone == null
             || contactPhone.isBlank();
-    if (textMissing
-        || businessCategories == null
-        || businessCategories.isEmpty()
-        || serviceTags == null
-        || serviceTags.isEmpty()) {
+    if (textMissing) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "请完成门店资料必填项");
     }
+  }
+
+  private List<String> normalizeServiceScopes(List<String> serviceScopes) {
+    if (serviceScopes == null || serviceScopes.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "服务范围不能为空");
+    }
+    List<String> normalized =
+        serviceScopes.stream()
+            .filter(value -> value != null && !value.isBlank())
+            .map(String::trim)
+            .distinct()
+            .toList();
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "服务范围不能为空");
+    }
+    if (normalized.size() > MAX_SERVICE_SCOPE_COUNT) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "服务范围最多填写 6 项");
+    }
+    return normalized;
+  }
+
+  private String normalizeStoreName(String name) {
+    if (name == null || name.isBlank()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "门店名称不能为空");
+    }
+    String normalized =
+        STORE_NAME_WHITESPACE
+            .matcher(Normalizer.normalize(name, Normalizer.Form.NFKC).trim())
+            .replaceAll(" ");
+    if (normalized.length() > 120) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "门店名称不能超过 120 个字符");
+    }
+    return normalized;
+  }
+
+  private Map<String, Object> storeProfileDraftPayload(StoreProfileData profile) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("name", profile.name());
+    payload.put("nameKey", profile.nameKey());
+    payload.put("cityCode", profile.cityCode());
+    payload.put("city", profile.city());
+    payload.put("districtCode", profile.districtCode());
+    payload.put("district", profile.district());
+    payload.put("detailAddress", profile.detailAddress());
+    payload.put("address", profile.address());
+    payload.put("contactPhone", profile.contactPhone());
+    payload.put("serviceScopes", profile.serviceScopes());
+    return payload;
+  }
+
+  private List<String> stringList(JsonNode node) {
+    List<String> values = new ArrayList<>();
+    if (!node.isArray()) {
+      return values;
+    }
+    for (JsonNode item : node) {
+      values.add(item.asText());
+    }
+    return values;
+  }
+
+  private ApiException storeNameTaken(Throwable cause) {
+    return new ApiException(
+        HttpStatus.CONFLICT, "STORE_NAME_TAKEN", "该门店名称已被使用，请更换名称", cause);
   }
 
   private void validateCardTemplate(
@@ -815,7 +995,7 @@ public class OwnerPilotApplicationService {
         throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "开店草稿已完成或不存在");
       }
     } catch (JsonProcessingException exception) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "草稿内容无法处理");
+      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "草稿内容无法处理", exception);
     }
   }
 
@@ -854,7 +1034,7 @@ public class OwnerPilotApplicationService {
     try {
       return objectMapper.writeValueAsString(value);
     } catch (JsonProcessingException exception) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "提交内容无法处理");
+      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "提交内容无法处理", exception);
     }
   }
 
@@ -979,4 +1159,16 @@ public class OwnerPilotApplicationService {
     STAFF,
     SERVICE
   }
+
+  private record StoreProfileData(
+      String name,
+      String nameKey,
+      String cityCode,
+      String city,
+      String districtCode,
+      String district,
+      String detailAddress,
+      String address,
+      String contactPhone,
+      List<String> serviceScopes) {}
 }

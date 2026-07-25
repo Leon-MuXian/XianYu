@@ -18,8 +18,7 @@
       sa.first_login as "firstLogin", sp.display_name as "displayName",
       sp.specialty_text as "specialtyText", sp.intro_text as "introText",
       s.name as "storeName", s.address, s.contact_phone as "contactPhone",
-      s.business_hours as "businessHours", s.business_categories as "businessCategories",
-      s.service_tags as "serviceTags"
+      s.business_hours as "businessHours", s.business_categories as "serviceScopes"
     from staff_account sa
     join staff_profile sp on sp.staff_account_id = sa.id
     join store s on s.id = sa.store_id

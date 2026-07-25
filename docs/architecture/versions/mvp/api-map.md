@@ -105,12 +105,15 @@
 | --- | --- | --- |
 | `GET` | `/owner/onboarding/draft` | 获取开店草稿、完成状态、门店预览、新用户权益告示待确认状态和实际试用天数。 |
 | `POST` | `/owner/onboarding/trial-notice/acknowledge` | 当前店长确认新用户权益告示；确认状态持久化到服务端且可重复调用。 |
-| `PUT` | `/owner/onboarding/store-profile` | 保存门店资料草稿。 |
+| `GET` | `/owner/regions/cities` | 获取已启用城市字典。 |
+| `GET` | `/owner/regions/cities/{cityCode}/districts` | 获取指定城市下已启用的区/县字典。 |
+| `POST` | `/owner/store/name-availability` | 检查规范化后的门店名称是否已被其他已创建门店使用；草稿不占用名称。 |
+| `PUT` | `/owner/onboarding/store-profile` | 保存门店资料草稿；提交城市代码、区/县代码和详细地址，由后端校验行政区划并合成展示地址。 |
 | `PUT` | `/owner/onboarding/business-hours` | 保存营业时间草稿。 |
 | `PUT` | `/owner/onboarding/resources` | 保存资源草稿。 |
 | `POST` | `/owner/onboarding/complete` | 服务端最终校验并创建门店。 |
 | `GET` | `/owner/store` | 查看门店资料。 |
-| `PUT` | `/owner/store` | 修改门店资料和营业时间。 |
+| `PUT` | `/owner/store` | 修改门店资料和营业时间；门店名称全局唯一，联系电话不做格式或重复校验。 |
 
 ### 4.3 资源
 

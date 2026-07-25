@@ -14,7 +14,7 @@
     { "index": 1, "label": "O-LOGIN 店长端 / 微信登录", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/login/index.vue" },
     { "index": 2, "label": "O-START 店长端 / 开始使用 · 新用户告示", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/onboarding/index.vue" },
     { "index": 3, "label": "O-START 店长端 / 开始使用 · 必填项未完成", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/onboarding/index.vue" },
-    { "index": 4, "label": "O-STORE 店长端 / 门店资料", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/store/index.vue" },
+    { "index": 4, "label": "O-STORE 店长端 / 门店资料 · 地址抽屉", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/store/index.vue" },
     { "index": 5, "label": "O-HOURS 店长端 / 营业时间", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/hours/index.vue" },
     { "index": 6, "label": "O-RESOURCE 店长端 / 资源管理 · 新增资源", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/resources/index.vue" },
     { "index": 7, "label": "O-RESOURCE 店长端 / 资源列表确认", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/resources/index.vue" },

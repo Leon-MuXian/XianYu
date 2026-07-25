@@ -1,5 +1,7 @@
 package com.serenmeet.tenant.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serenmeet.audit.application.AuditApplicationService;
 import com.serenmeet.tenant.domain.TenantEntity;
 import com.serenmeet.auth.dto.AdminUserView;
@@ -16,10 +18,14 @@ import com.serenmeet.tenant.support.TenantStatus;
 import com.serenmeet.common.ApiException;
 import com.serenmeet.common.PageResponse;
 import com.serenmeet.common.PageQuery;
+import com.serenmeet.store.dto.BusinessHoursView;
+import com.serenmeet.store.dto.StoreView;
+import com.serenmeet.tenant.mapper.TenantStoreProjection;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.LocalTime;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +42,17 @@ public class TenantAdminApplicationService {
   private final TenantMapper tenantMapper;
   private final AuditApplicationService auditService;
   private final Clock clock;
+  private final ObjectMapper objectMapper;
 
-  public TenantAdminApplicationService(TenantMapper tenantMapper, AuditApplicationService auditService, Clock clock) {
+  public TenantAdminApplicationService(
+      TenantMapper tenantMapper,
+      AuditApplicationService auditService,
+      Clock clock,
+      ObjectMapper objectMapper) {
     this.tenantMapper = tenantMapper;
     this.auditService = auditService;
     this.clock = clock;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -181,8 +193,32 @@ public class TenantAdminApplicationService {
       projection.getTrialEndAt(),
       projection.getFrozenReason(),
       projection.getSupportWechatId(),
-      projection.getStore(),
+      toStoreView(projection.getStore()),
       projection.getSnapshot()
     );
+  }
+
+  private StoreView toStoreView(TenantStoreProjection projection) {
+    if (projection == null) {
+      return null;
+    }
+    return new StoreView(
+      projection.getName(),
+      projection.getServiceScopes(),
+      projection.getAddress(),
+      projection.getContactPhone(),
+      readBusinessHours(projection.getBusinessHours())
+    );
+  }
+
+  private BusinessHoursView readBusinessHours(String value) {
+    if (value == null || value.isBlank()) {
+      return new BusinessHoursView(Map.of());
+    }
+    try {
+      return objectMapper.readValue(value, BusinessHoursView.class);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("营业时间数据无法解析", exception);
+    }
   }
 }

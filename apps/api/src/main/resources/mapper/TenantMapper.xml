@@ -15,15 +15,12 @@
     <association property="snapshot" resultMap="BusinessSnapshotMap" />
   </resultMap>
 
-  <resultMap id="StoreViewMap" type="com.serenmeet.store.dto.StoreView">
-    <constructor>
-      <arg column="store_name" javaType="string" />
-      <arg column="business_categories" javaType="string" />
-      <arg column="service_tags" javaType="string" />
-      <arg column="address" javaType="string" />
-      <arg column="contact_phone" javaType="string" />
-      <arg column="business_hours" javaType="string" />
-    </constructor>
+  <resultMap id="StoreViewMap" type="com.serenmeet.tenant.mapper.TenantStoreProjection">
+    <result column="store_name" property="name" />
+    <result column="business_categories" property="serviceScopes" />
+    <result column="address" property="address" />
+    <result column="contact_phone" property="contactPhone" />
+    <result column="business_hours" property="businessHours" />
   </resultMap>
 
   <resultMap id="BusinessSnapshotMap" type="com.serenmeet.report.dto.BusinessSnapshotView">
@@ -114,7 +111,6 @@
            coalesce(tenant_wechat.wechat_id, default_wechat.wechat_id) as support_wechat_id,
            st.name as store_name,
            st.business_categories::text as business_categories,
-           st.service_tags::text as service_tags,
            st.address,
            st.contact_phone,
            st.business_hours::text as business_hours,

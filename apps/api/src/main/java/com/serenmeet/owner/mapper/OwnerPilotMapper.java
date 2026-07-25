@@ -1,5 +1,6 @@
 package com.serenmeet.owner.mapper;
 
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -25,11 +26,25 @@ public interface OwnerPilotMapper {
 
   Map<String, Object> selectStoreDetail(@Param("tenantId") Long tenantId);
 
+  List<Map<String, Object>> selectAdministrativeCities();
+
+  List<Map<String, Object>> selectAdministrativeDistricts(@Param("cityCode") String cityCode);
+
+  Map<String, Object> selectAdministrativeRegion(
+      @Param("cityCode") String cityCode, @Param("districtCode") String districtCode);
+
+  @InterceptorIgnore(tenantLine = "true")
+  int countStoreNameKeyExcludingTenant(
+      @Param("nameKey") String nameKey, @Param("tenantId") Long tenantId);
+
   Long insertStore(
       @Param("tenantId") Long tenantId,
       @Param("name") String name,
-      @Param("businessCategories") String businessCategories,
-      @Param("serviceTags") String serviceTags,
+      @Param("nameKey") String nameKey,
+      @Param("serviceScopes") String serviceScopes,
+      @Param("cityCode") String cityCode,
+      @Param("districtCode") String districtCode,
+      @Param("detailAddress") String detailAddress,
       @Param("address") String address,
       @Param("contactPhone") String contactPhone,
       @Param("businessHours") String businessHours);
@@ -40,8 +55,11 @@ public interface OwnerPilotMapper {
   int updateStoreProfile(
       @Param("tenantId") Long tenantId,
       @Param("name") String name,
-      @Param("businessCategories") String businessCategories,
-      @Param("serviceTags") String serviceTags,
+      @Param("nameKey") String nameKey,
+      @Param("serviceScopes") String serviceScopes,
+      @Param("cityCode") String cityCode,
+      @Param("districtCode") String districtCode,
+      @Param("detailAddress") String detailAddress,
       @Param("address") String address,
       @Param("contactPhone") String contactPhone);
 

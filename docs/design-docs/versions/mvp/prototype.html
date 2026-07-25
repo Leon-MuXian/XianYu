@@ -3605,35 +3605,244 @@
       background: var(--blue-soft);
       color: var(--blue);
     }
-    .owner-final-preview {
+    .business-hours {
       margin-top: 10px;
-      padding: 12px;
+      border-top: 1px solid var(--line-soft);
+      padding-top: 10px;
     }
-    .owner-final-preview .store-info-head {
-      grid-template-columns: 30px 1fr auto;
-      gap: 8px;
+    .business-hours-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
     }
-    .owner-final-preview .store-info-icon {
-      width: 30px;
-      height: 30px;
+    .business-hours-head span,
+    .business-hours-head strong {
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .business-hours-head span { color: var(--ink); }
+    .business-hours-head strong { color: var(--muted); }
+    .business-week-hours {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 3px;
+    }
+    .business-day {
+      position: relative;
+      min-width: 0;
+      min-height: 78px;
+      overflow: hidden;
+      border: 1px solid #d9e3de;
+      border-radius: 5px;
+      background: #fff;
+      padding: 9px 2px 6px;
+      text-align: center;
+    }
+    .business-day::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--green);
+    }
+    .business-day.today {
+      border-color: var(--green);
+      background: var(--green-soft);
+    }
+    .business-day.short::before { background: var(--gold); }
+    .business-day.closed {
+      color: #86948d;
+      background: #f0f3f1;
+    }
+    .business-day.closed::before { background: #aeb9b3; }
+    .business-day > strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 10px;
+      line-height: 1;
+    }
+    .business-day-time {
+      display: grid;
+      gap: 3px;
+      justify-items: center;
+      color: var(--ink);
+      font-size: 8px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .business-day-time i {
+      display: block;
+      width: 1px;
+      height: 6px;
+      background: #a7b5ae;
+    }
+    .business-day > small {
+      display: block;
+      margin-top: 8px;
+      color: var(--green-dark);
+      font-size: 8px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .business-day.closed > small {
+      margin-top: 20px;
+      color: #86948d;
+    }
+    .profile-card.detail > .business-hours {
+      margin-top: 12px;
+    }
+    .owner-paper-profile {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #c8d4ce;
+      border-radius: 8px;
+      background: #fffdf8;
+      padding: 18px;
+      box-shadow: 0 16px 34px rgba(23, 33, 27, .07);
+    }
+    .owner-paper-accent {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 94px;
+      height: 17px;
+      background: #cf604b;
+    }
+    .owner-paper-head {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 12px;
+    }
+    .owner-paper-stamp {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      background: #174d3f;
+      color: #fff;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 20px;
+      transform: rotate(-2deg);
+    }
+    .owner-paper-title h4,
+    .owner-paper-title p {
+      margin: 0;
+    }
+    .owner-paper-title h4 {
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 22px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+    .owner-paper-title p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .owner-paper-role {
+      margin-top: 10px;
+      padding: 5px 7px;
+      background: #fff0c9;
+      color: #213b55;
+      font-size: 9px;
+      font-weight: 900;
+      transform: rotate(2deg);
+    }
+    .owner-paper-notes {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 7px;
+      margin-top: 15px;
+    }
+    .owner-paper-note {
+      min-height: 48px;
+      padding: 9px 10px;
+    }
+    .owner-paper-note:first-child {
+      background: #e8f3fa;
+      color: #213b55;
+      transform: rotate(-1deg);
+    }
+    .owner-paper-note:last-child {
+      background: #fbe3dd;
+      color: #6e2d23;
+      transform: rotate(1deg);
+    }
+    .owner-paper-note span,
+    .owner-paper-note strong {
+      display: block;
+    }
+    .owner-paper-note span {
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .owner-paper-note strong {
+      margin-top: 4px;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .owner-paper-profile .business-hours {
+      margin-top: 15px;
+      border-top: 3px solid #174d3f;
+      padding-top: 12px;
+    }
+    .owner-paper-profile .business-hours-head span {
+      font-family: "Songti SC", "STSong", serif;
       font-size: 13px;
+      font-weight: 700;
     }
-    .owner-final-preview .store-info-grid {
-      gap: 6px;
-      margin-top: 8px;
+    .owner-paper-profile .business-hours-head strong {
+      color: #cf604b;
+      font-size: 9px;
     }
-    .owner-final-preview .store-info-grid div {
-      min-height: 46px;
-      padding: 7px 8px;
+    .owner-paper-profile .business-day {
+      border-color: #174d3f;
+      background: #fff;
     }
-    .owner-final-preview .store-info-tags {
-      gap: 6px;
-      margin-top: 8px;
+    .owner-paper-profile .business-day::before {
+      display: none;
     }
-    .owner-final-preview .store-info-tags span {
-      min-height: 22px;
-      padding: 0 8px;
+    .owner-paper-profile .business-day.short {
+      border-color: #c4871d;
     }
+    .owner-paper-profile .business-day.closed {
+      border-color: #c7d0cb;
+      background: #f1f3f1;
+    }
+    .owner-paper-services {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 12px;
+    }
+    .owner-paper-services > b {
+      flex: 0 0 auto;
+      color: #326f9f;
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .owner-paper-service-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .owner-paper-service-list span {
+      padding: 4px 6px;
+      background: #dceee7;
+      color: #17342d;
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .owner-paper-service-list span:nth-child(2) { background: #e8f3fa; }
+    .owner-paper-service-list span:nth-child(3) { background: #fff0c9; }
+    .owner-paper-service-list span:nth-child(4) { background: #fbe3dd; }
     .content.onboarding-fixed {
       display: flex;
       flex-direction: column;
@@ -3655,33 +3864,8 @@
       min-height: 56px;
       padding: 8px 11px;
     }
-    .onboarding-fixed .owner-start-note {
-      margin-top: auto;
-      padding: 10px 12px;
-    }
-    .onboarding-fixed .owner-final-preview {
-      margin-top: 0;
-      padding: 9px;
-    }
-    .onboarding-fixed .owner-final-preview .store-info-grid {
-      gap: 5px;
-      margin-top: 6px;
-    }
-    .onboarding-fixed .owner-final-preview .store-info-grid div {
-      min-height: 38px;
-      padding: 5px 7px;
-    }
-    .onboarding-fixed .owner-final-preview .store-info-grid strong {
-      margin-top: 2px;
-      font-size: 10px;
-    }
-    .onboarding-fixed .owner-final-preview .store-info-tags {
-      gap: 4px;
-      margin-top: 6px;
-    }
-    .onboarding-fixed .owner-final-preview .store-info-tags span {
-      min-height: 20px;
-      padding: 0 6px;
+    .onboarding-fixed > .button:last-child {
+      margin-top: auto !important;
     }
     .member-pass {
       position: relative;
@@ -4233,7 +4417,197 @@
       font-weight: 700;
     }
     .content.ostore-flow {
-      padding: 12px 18px 20px;
+      padding: 10px 18px 20px;
+    }
+    .ostore-profile-fields {
+      display: grid;
+      gap: 8px;
+    }
+    .ostore-field-card {
+      min-height: 62px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 10px 12px;
+      box-shadow: 0 8px 20px rgba(23, 33, 27, .035);
+    }
+    .ostore-field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .ostore-field-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .ostore-field-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--green-dark);
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .ostore-field-status::before {
+      content: "✓";
+      display: grid;
+      place-items: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--green-soft);
+      font-size: 9px;
+      line-height: 1;
+    }
+    .ostore-field-value {
+      display: block;
+      margin-top: 6px;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    .ostore-address-card {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 46px;
+      gap: 10px;
+      align-items: center;
+      min-height: 76px;
+      border: 1px solid #cfe1d8;
+      border-radius: 8px;
+      background: #fbfdfb;
+      padding: 10px 12px;
+      box-shadow: 0 8px 20px rgba(23, 33, 27, .035);
+    }
+    .ostore-address-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .ostore-address-copy {
+      min-width: 0;
+    }
+    .ostore-address-copy span,
+    .ostore-address-copy strong {
+      display: block;
+    }
+    .ostore-address-copy span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .ostore-address-copy strong {
+      margin-top: 4px;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .ostore-address-edit {
+      display: grid;
+      place-items: center;
+      min-height: 44px;
+      color: var(--green-dark);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .ostore-address-backdrop {
+      background: rgba(23, 33, 27, .4);
+    }
+    .ostore-address-sheet {
+      max-height: 520px;
+      border-radius: 18px 18px 0 0;
+      background: #f7f9f6;
+      padding: 14px 18px 24px;
+    }
+    .ostore-address-sheet .sheet-grip {
+      margin-bottom: 14px;
+    }
+    .ostore-address-sheet .sheet-title {
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .ostore-address-sheet .sheet-title h4 {
+      font-size: 19px;
+    }
+    .ostore-sheet-close {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 500;
+    }
+    .ostore-address-levels {
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .ostore-address-level {
+      display: grid;
+      grid-template-columns: 92px 1fr 18px;
+      gap: 10px;
+      align-items: center;
+      min-height: 54px;
+      border-top: 1px solid var(--line-soft);
+      padding: 0 12px;
+    }
+    .ostore-address-level:first-child {
+      border-top: 0;
+    }
+    .ostore-address-level span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ostore-address-level .required-mark {
+      color: var(--coral);
+      font-size: 9px;
+    }
+    .ostore-address-level strong {
+      font-size: 14px;
+    }
+    .ostore-address-level b {
+      color: #8fa096;
+      font-size: 19px;
+      font-weight: 500;
+      text-align: right;
+    }
+    .ostore-address-detail {
+      margin-top: 12px;
+    }
+    .ostore-address-detail > span {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .ostore-address-textarea {
+      min-height: 88px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 12px;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 800;
+    }
+    .ostore-address-sheet .form-footer {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line-soft);
     }
     .ostore-guide {
       position: relative;
@@ -5385,6 +5759,43 @@
       align-items: flex-start;
       min-height: 58px;
     }
+    .atlas-hours-groups {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .atlas-hour-group {
+      min-width: 0;
+      border-left: 2px solid var(--atlas-blue);
+      background: #f4f8fc;
+      padding: 8px 9px;
+    }
+    .atlas-hour-group.short {
+      border-left-color: var(--atlas-warning);
+      background: var(--atlas-warning-soft);
+    }
+    .atlas-hour-group.closed {
+      border-left-color: #aeb9c2;
+      background: #f4f6f8;
+    }
+    .atlas-hour-group strong,
+    .atlas-hour-group small {
+      display: block;
+    }
+    .atlas-hour-group strong {
+      overflow: hidden;
+      color: var(--atlas-ink);
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .atlas-hour-group small {
+      margin-top: 4px;
+      color: var(--atlas-muted);
+      font-size: 9px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
     .atlas-note {
       border-left: 3px solid var(--atlas-warning);
       background: var(--atlas-warning-soft);
@@ -5677,10 +6088,50 @@
       <div class="section-title"><h2>店长小程序</h2><p>店长端按注册试用、创建门店前、创建后配置、日常运营、账号设置和冻结异常组织。导航栏保持紧凑，只承担页面定位；状态由原有业务内容表达，列表新增动作进入内容标题行，保存与确认继续跟随表单。</p></div>
       <div class="screens">
         <div class="phone-wrap"><div class="frame-label">O-LOGIN 店长端 / 微信登录</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="login-scene art-login owner-art-login"><div class="login-identity"><span class="mini-brand"><span class="mini-mark">闲</span>闲遇-店长端</span></div><div class="login-visual"><div class="art-scene owner-studio-scene"><div class="owner-studio-wall"></div><div class="owner-studio-window"></div><div class="owner-studio-sunbeam"></div><div class="owner-studio-arch"></div><div class="owner-studio-floor"></div><div class="owner-studio-bench"></div><div class="owner-studio-ledger"></div><div class="owner-studio-vase"></div></div></div><div class="login-copy"><h4><span>从一个服务时段</span><span class="login-title-tail">开始运营门店</span></h4><p>适合康复、护理、咨询、运动训练等预约制门店，先体验完整流程，再按需要联系顾问续期。</p></div><div class="login-action"><div class="login-badge-row"><span class="login-badge">微信快捷登录</span><span class="login-badge">多种服务</span><span class="login-badge">免费试用</span></div><div class="wechat-button">微信一键登录</div><div class="login-footnote">首次登录后进入开始使用清单，完成必填项后创建门店</div></div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 新用户告示</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed"><div class="owner-hero"><h4>完成 3 项后创建门店</h4><p>先在清单里保存门店资料、营业时间和履约资源，创建门店后进入工作台继续补齐后续运营设置。</p><div class="owner-hero-meta"><span>清单引导</span><span>草稿保存</span></div></div><div class="owner-progress"><div class="owner-step required-action pending"><b>1</b><div><strong>门店资料</strong><small>名称、经营项目、服务标签、地址、电话</small></div><span class="tag blue">必填</span></div><div class="owner-step required-action pending"><b>2</b><div><strong>营业时间</strong><small>按星期设置营业/休息和开始结束时间</small></div><span class="tag blue">必填</span></div><div class="owner-step required-action pending"><b>3</b><div><strong>履约资源</strong><small>至少 1 个启用资源，支持房间、场地、床位等</small></div><span class="tag blue">必填</span></div></div><div class="owner-start-note"><div><strong>还差 3 项必填</strong>点击上方必填项进入填写，保存后回到本页刷新状态。</div><span class="tag warn">未完成</span></div><div class="button disabled" style="width:100%;height:50px;font-size:16px;margin-top:12px">创建门店</div></div><div class="trial-backdrop"><div class="trial-dialog"><span class="trial-badge">新用户权益</span><h4>欢迎使用闲遇</h4><p>你是新用户，已获得 30 天免费使用权益。</p><div class="trial-benefit"><span>免费试用</span><strong>30 天</strong></div><p>免费使用期内开放完整功能，支持体验从门店配置到预约履约的全流程。</p><span class="button">我知道了</span></div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 必填项未完成</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed"><div class="owner-hero"><h4>完成 3 项后创建门店</h4><p>先在清单里保存门店资料、营业时间和履约资源。创建门店按钮会在必填项完成后自动解锁。</p><div class="owner-hero-meta"><span>清单引导</span><span>按钮未解锁</span></div></div><div class="owner-progress"><div class="owner-step required-action pending"><b>1</b><div><strong>门店资料</strong><small>名称、经营项目、服务标签、地址、电话</small></div><span class="tag blue">去填写</span></div><div class="owner-step required-action pending"><b>2</b><div><strong>营业时间</strong><small>按星期设置营业/休息和开始结束时间</small></div><span class="tag blue">去填写</span></div><div class="owner-step required-action pending"><b>3</b><div><strong>履约资源</strong><small>至少 1 个启用资源，支持房间、场地、床位等</small></div><span class="tag blue">去填写</span></div></div><div class="owner-start-note"><div><strong>还差 3 项必填</strong>保存任一必填项后回到本页，状态会从去填写变成已完成。</div><span class="tag warn">未完成</span></div><div class="button disabled" style="width:100%;height:50px;font-size:16px;margin-top:12px">创建门店</div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-STORE 店长端 / 门店资料</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店资料</h3><span class="tag blue">填写中</span></div><div class="content ostore-flow"><div class="ostore-guide"><h4>正在填写门店资料</h4><p>店长从开始使用清单进入，边填边保存草稿，保存后回到清单。</p></div><div class="owner-form-grid"><div class="field wide"><span>门店名称 <em class="required-mark">必填</em></span><strong>和序预约中心</strong></div><div class="field wide"><span>门店地址 <em class="required-mark">必填</em></span><strong>上海市徐汇区衡山路 88 号</strong></div><div class="field wide"><span>联系电话 <em class="required-mark">必填</em></span><strong>021-8888 6606</strong></div></div><div class="ostore-card"><h4>经营项目 <small class="required-mark">必填</small></h4><div class="ostore-chip-set"><span>康复理疗 ×</span><span>咨询评估 ×</span><span>运动训练 ×</span><span>+ 添加</span></div><p>使用会员能理解的词描述门店服务方向，不限制后续服务项目名称。</p></div><div class="ostore-card"><h4>服务标签 <small class="required-mark">必填</small></h4><div class="ostore-chip-set"><span>姿态评估 ×</span><span>一对一服务 ×</span><span>小组训练 ×</span><span>护理服务 ×</span><span>+ 添加</span></div><p>标签由门店自行填写，只用于展示和筛选提示。</p></div><div class="ostore-next-preview"><strong>保存后返回清单</strong>营业时间和履约资源完成后，系统会生成创建门店前的完整展示预览。</div><div class="form-footer"><span class="button secondary">返回清单</span><span class="button">保存并返回清单</span></div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-HOURS 店长端 / 营业时间</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>营业时间</h3><span class="tag blue">填写中</span></div><div class="content ohours-flow"><div class="ohours-guide"><h4>正在设置营业时间</h4><p>店长从周一至周日选择营业日，再逐日填写营业开始和结束时间。</p></div><div class="ohours-card"><h4><span class="title-with-required">选择营业日 <em class="required-mark">必填</em></span><small>已选择 5 天</small></h4><div class="ohours-week-grid"><span class="ohours-day">一<small>营业</small></span><span class="ohours-day">二<small>营业</small></span><span class="ohours-day">三<small>营业</small></span><span class="ohours-day">四<small>营业</small></span><span class="ohours-day">五<small>营业</small></span><span class="ohours-day rest">六<small>休息</small></span><span class="ohours-day rest">日<small>休息</small></span></div><p>周一至周日统一在这里切换；选中后自动加入下方逐日时间设置。</p></div><div class="ohours-card"><h4><span class="title-with-required">营业时间 <em class="required-mark">必填</em></span><small>逐日设置</small></h4><div class="ohours-time-list"><div class="ohours-time-row"><span class="ohours-time-day">周一</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周二</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周三</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周四</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周五</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div></div><p>每个营业日可使用不同时间；周六、周日选中后按相同方式显示。</p></div><div class="ostore-next-preview"><strong>保存后返回清单</strong>营业时间会进入最终门店展示预览，会员和员工都能看到。</div><div class="form-footer"><span class="button secondary">返回清单</span><span class="button">保存并返回清单</span></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 新用户告示</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed"><div class="owner-hero"><h4>完成 3 项后创建门店</h4><p>先在清单里保存门店资料、营业时间和履约资源，创建门店后进入工作台继续补齐后续运营设置。</p><div class="owner-hero-meta"><span>清单引导</span><span>草稿保存</span></div></div><div class="owner-progress"><div class="owner-step required-action pending"><b>1</b><div><strong>门店资料</strong><small>名称、服务范围、地址、电话</small></div><span class="tag blue">必填</span></div><div class="owner-step required-action pending"><b>2</b><div><strong>营业时间</strong><small>按星期设置营业/休息和开始结束时间</small></div><span class="tag blue">必填</span></div><div class="owner-step required-action pending"><b>3</b><div><strong>履约资源</strong><small>至少 1 个启用资源，支持房间、场地、床位等</small></div><span class="tag blue">必填</span></div></div><div class="button disabled" style="width:100%;height:50px;font-size:16px">创建门店</div></div><div class="trial-backdrop"><div class="trial-dialog"><span class="trial-badge">新用户权益</span><h4>欢迎使用闲遇</h4><p>你是新用户，已获得 30 天免费使用权益。</p><div class="trial-benefit"><span>免费试用</span><strong>30 天</strong></div><p>免费使用期内开放完整功能，支持体验从门店配置到预约履约的全流程。</p><span class="button">我知道了</span></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 必填项未完成</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed"><div class="owner-hero"><h4>完成 3 项后创建门店</h4><p>先在清单里保存门店资料、营业时间和履约资源。创建门店按钮会在必填项完成后自动解锁。</p><div class="owner-hero-meta"><span>清单引导</span><span>按钮未解锁</span></div></div><div class="owner-progress"><div class="owner-step required-action pending"><b>1</b><div><strong>门店资料</strong><small>名称、服务范围、地址、电话</small></div><span class="tag blue">去填写</span></div><div class="owner-step required-action pending"><b>2</b><div><strong>营业时间</strong><small>按星期设置营业/休息和开始结束时间</small></div><span class="tag blue">去填写</span></div><div class="owner-step required-action pending"><b>3</b><div><strong>履约资源</strong><small>至少 1 个启用资源，支持房间、场地、床位等</small></div><span class="tag blue">去填写</span></div></div><div class="button disabled" style="width:100%;height:50px;font-size:16px">创建门店</div></div></div></div>
+        <div class="phone-wrap">
+          <div class="frame-label">O-STORE 店长端 / 门店资料 · 地址抽屉</div>
+          <div class="phone">
+            <div class="status-bar"><span>9:41</span><span>5G 100%</span></div>
+            <div class="topbar"><h3>门店资料</h3></div>
+            <div class="content ostore-flow">
+              <div class="ostore-profile-fields">
+                <div class="ostore-field-card">
+                  <div class="ostore-field-head"><span class="ostore-field-label">门店名称 <em class="required-mark">必填</em></span><span class="ostore-field-status">名称可用</span></div>
+                  <strong class="ostore-field-value">和序预约中心</strong>
+                </div>
+                <div class="ostore-address-card">
+                  <span class="ostore-address-mark">⌖</span>
+                  <div class="ostore-address-copy"><span>门店地址 <em class="required-mark">必填</em></span><strong>上海市徐汇区衡山路 88 号 2 层 201 室</strong></div>
+                  <span class="ostore-address-edit">修改</span>
+                </div>
+                <div class="ostore-field-card">
+                  <div class="ostore-field-head"><span class="ostore-field-label">联系电话 <em class="required-mark">必填</em></span></div>
+                  <strong class="ostore-field-value">021-8888 6606</strong>
+                </div>
+              </div>
+              <div class="ostore-card"><h4>服务范围 <small class="required-mark">必填</small></h4><div class="ostore-chip-set"><span>康复理疗 ×</span><span>咨询评估 ×</span><span>运动训练 ×</span><span>姿态评估 ×</span><span>+ 添加服务范围</span></div></div>
+              <div class="form-footer"><span class="button secondary">返回清单</span><span class="button">保存并返回清单</span></div>
+            </div>
+            <div class="modal-backdrop ostore-address-backdrop">
+              <div class="sheet ostore-address-sheet">
+                <div class="sheet-grip"></div>
+                <div class="sheet-title"><h4>填写门店地址</h4><span class="ostore-sheet-close" aria-label="关闭">×</span></div>
+                <div class="ostore-address-levels">
+                  <div class="ostore-address-level"><span>城市 <em class="required-mark">必填</em></span><strong>上海市</strong><b>›</b></div>
+                  <div class="ostore-address-level"><span>区 / 县 <em class="required-mark">必填</em></span><strong>徐汇区</strong><b>›</b></div>
+                </div>
+                <div class="ostore-address-detail">
+                  <span>详细地址 <em class="required-mark">必填</em></span>
+                  <div class="ostore-address-textarea">衡山路 88 号 2 层 201 室</div>
+                </div>
+                <div class="form-footer"><span class="button secondary">取消</span><span class="button">确认地址</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-wrap"><div class="frame-label">O-HOURS 店长端 / 营业时间</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>营业时间</h3><span class="tag blue">填写中</span></div><div class="content ohours-flow"><div class="ohours-guide"><h4>正在设置营业时间</h4><p>店长从周一至周日选择营业日，再逐日填写营业开始和结束时间。</p></div><div class="ohours-card"><h4><span class="title-with-required">选择营业日 <em class="required-mark">必填</em></span><small>已选择 5 天</small></h4><div class="ohours-week-grid"><span class="ohours-day">一<small>营业</small></span><span class="ohours-day">二<small>营业</small></span><span class="ohours-day">三<small>营业</small></span><span class="ohours-day">四<small>营业</small></span><span class="ohours-day">五<small>营业</small></span><span class="ohours-day rest">六<small>休息</small></span><span class="ohours-day rest">日<small>休息</small></span></div><p>周一至周日统一在这里切换；选中后自动加入下方逐日时间设置。</p></div><div class="ohours-card"><h4><span class="title-with-required">营业时间 <em class="required-mark">必填</em></span><small>逐日设置</small></h4><div class="ohours-time-list"><div class="ohours-time-row"><span class="ohours-time-day">周一</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周二</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周三</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周四</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div><div class="ohours-time-row"><span class="ohours-time-day">周五</span><strong class="ohours-time-box">09:00 ▾</strong><span class="ohours-time-mid">至</span><strong class="ohours-time-box">21:00 ▾</strong></div></div><p>每个营业日可使用不同时间；周六、周日选中后按相同方式显示。</p></div><div class="form-footer"><span class="button secondary">返回清单</span><span class="button">保存并返回清单</span></div></div></div></div>
         <div class="phone-wrap">
           <div class="frame-label">O-RESOURCE 店长端 / 资源管理 · 新增资源</div>
           <div class="phone">
@@ -5730,7 +6181,7 @@
         <div class="phone-wrap"><div class="frame-label">O-RESOURCE 店长端 / 资源列表确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>资源管理</h3><span class="button">新增资源</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>履约资源</h4><p>资源可以是房间、场地、床位、设备或工位。</p></div><span class="tag">3 个</span></div><div class="owner-progress"><div class="owner-step"><b>A</b><div><strong class="resource-name-line">评估室 A <span class="resource-status">启用</span></strong><small>房间 · 容量 2 · 排序 1</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div><div class="owner-step"><b>B</b><div><strong class="resource-name-line">护理间 B <span class="resource-status">启用</span></strong><small>床位 · 容量 1 · 排序 2</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div><div class="owner-step"><b>C</b><div><strong class="resource-name-line">活动区 C <span class="resource-status off">停用</span></strong><small>场地 · 容量 8 · 排序 3</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div></div><div class="owner-card-grid"><div class="tile"><span>启用资源</span><strong>2 个</strong></div><div class="tile"><span>可预约资源</span><strong>2 个</strong></div></div><div class="owner-start-note"><div><strong>已满足开店资源要求</strong>至少 1 个启用资源即可创建门店，停用资源不会进入新排期选择。</div><span class="tag">可完成</span></div><div class="form-footer single"><span class="button">完成并返回清单</span></div></div></div></div>
 
         <div class="phone-wrap"><div class="frame-label">O-RESOURCE-DELETE 店长端 / 资源删除确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>删除资源</h3><span class="tag red">确认</span></div><div class="content owner-dense"><div class="detail-hero" style="background:#5a2a22"><h4>确认删除护理间 B？</h4><p>床位 · 容量 1 · 当前启用</p><span>删除后不会影响历史记录，但不能再用于新排期。</span></div><h4 class="screen-heading">删除前校验</h4><div class="owner-progress"><div class="owner-step"><b>排</b><div><strong>未来排期</strong><small>未来 7 天无已发布时段占用。</small></div><span class="tag">通过</span></div><div class="owner-step"><b>服</b><div><strong>服务项目</strong><small>无启用服务仅绑定该资源。</small></div><span class="tag">通过</span></div><div class="owner-step"><b>启</b><div><strong>启用资源</strong><small>删除后仍保留 1 个以上启用资源。</small></div><span class="tag blue">通过</span></div></div><div class="owner-list-card"><h4>阻断示例</h4><p>若有关联未来排期，或删除后启用资源少于 1 个，确认删除按钮禁用并提示先处理。</p><span class="tag warn">禁用原因</span></div><div class="form-footer"><span class="button secondary">取消</span><span class="button coral">确认删除</span></div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 必填项完成</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed"><div class="owner-hero"><h4>可以创建门店了</h4><p>门店资料、营业时间和履约资源已保存。创建后进入工作台，继续完成后续运营设置。</p><div class="owner-hero-meta"><span>必填完成</span><span>进入工作台</span></div></div><div class="owner-progress"><div class="owner-step required-action done"><b>✓</b><div><strong>门店资料</strong><small>和序预约中心 · 康复理疗、咨询评估</small></div><span class="tag">已完成</span></div><div class="owner-step required-action done"><b>✓</b><div><strong>营业时间</strong><small>周一至周五 09:00-21:00，周末休息</small></div><span class="tag">已完成</span></div><div class="owner-step required-action done"><b>✓</b><div><strong>履约资源</strong><small>2 个启用资源，可用于服务项目和排期</small></div><span class="tag">已完成</span></div></div><div class="store-info-card owner-final-preview"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>门店展示预览</h4></div></div><div class="store-info-grid"><div><span>门店名称</span><strong>和序预约中心</strong></div><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>门店地址</span><strong>上海市徐汇区衡山路 88 号</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>周末</span><strong>周六、周日休息</strong></div><div><span>经营项目</span><strong>康复理疗、咨询评估</strong></div></div><div class="store-info-tags"><span>康复理疗</span><span>咨询评估</span><span>运动训练</span><span>姿态评估</span><span>一对一服务</span></div></div><div class="owner-start-note"><div><strong>必填项已完成</strong>确认预览无误后创建门店，系统会校验草稿并进入工作台。</div><span class="tag">可创建</span></div><div class="button" style="width:100%;height:50px;background:var(--green-dark);font-size:16px;margin-top:12px">创建门店</div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 必填项完成</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed ready"><div class="owner-hero"><h4>可以创建门店了</h4><p>门店资料、营业时间和履约资源已保存。创建后进入工作台，继续完成后续运营设置。</p><div class="owner-hero-meta"><span>必填完成</span><span>进入工作台</span></div></div><div class="owner-progress"><div class="owner-step required-action done"><b>✓</b><div><strong>门店资料</strong><small>和序预约中心 · 康复理疗、咨询评估</small></div><span class="tag">已完成</span></div><div class="owner-step required-action done"><b>✓</b><div><strong>营业时间</strong><small>每周营业 6 天 · 3 个营业时段</small></div><span class="tag">已完成</span></div><div class="owner-step required-action done"><b>✓</b><div><strong>履约资源</strong><small>2 个启用资源，可用于服务项目和排期</small></div><span class="tag">已完成</span></div></div><div class="button" style="width:100%;height:50px;background:var(--green-dark);font-size:16px">创建门店</div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-DASHBOARD 店长端 / 工作台 · 创建后待办</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店工作台</h3><span class="tag warn">试用剩6天</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>开放预约前还差 5 项</h4><p>和序预约中心已创建。先补齐员工、服务、会员卡、会员和首个时段。</p></div><span class="tag warn">待配置</span></div><div class="owner-card-grid"><div class="tile"><span>已完成必填</span><strong>3 项</strong></div><div class="tile"><span>待配置</span><strong>5 项</strong></div></div><h4 class="screen-heading">下一步待办</h4><div class="owner-progress"><div class="owner-step pending"><b>1</b><div><strong>创建员工账号</strong><small>为可履约人员分配登录账号，后续服务才能绑定员工。</small></div><span class="tag blue">去创建</span></div><div class="owner-step pending"><b>2</b><div><strong>创建服务项目</strong><small>设置名称、时长、容量和适用员工，会员才能看到服务。</small></div><span class="tag blue">去设置</span></div><div class="owner-step pending"><b>3</b><div><strong>创建会员卡模板</strong><small>录入售价、次数、有效期和适用服务，用于发卡和预约校验。</small></div><span class="tag blue">去创建</span></div><div class="owner-step pending"><b>4</b><div><strong>添加会员并发卡</strong><small>生成邀请码交给会员绑定，会员才能使用卡预约。</small></div><span class="tag blue">去添加</span></div><div class="owner-step pending"><b>5</b><div><strong>发布预约时段</strong><small>选择服务、员工、资源、日期和时间，开放会员预约。</small></div><span class="tag blue">去发布</span></div></div></div><nav class="bottom-nav"><div class="active"><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
 
         <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工 - 新增员工抽屉</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>当前仍停留在员工列表，底部抽屉用于创建新员工账号。</p></div><span class="tag blue">抽屉：新增</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="owner-tabs"><span class="active">全部</span><span>启用</span><span>停用</span></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action danger">修改</span></span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav><div class="modal-backdrop"><div class="sheet resource-sheet"><div class="sheet-grip"></div><div class="sheet-title"><div><h4>新增员工账号</h4><p>创建后员工出现在列表，可继续在列表中打开修改抽屉。</p></div><span class="tag blue">从员工页打开</span></div><div class="owner-form-grid"><div class="field wide"><span>员工姓名 <em class="required-mark">必填</em></span><strong>Nora</strong></div><div class="field"><span>角色标签 <em class="required-mark">必填</em></span><strong>康复师</strong></div><div class="field wide"><span>登录账号 <em class="required-mark">必填</em></span><strong>staff_nora</strong></div><div class="field"><span>初始密码 <em class="required-mark">必填</em></span><strong>8K42Q9A</strong></div><div class="field"><span>确认密码 <em class="required-mark">必填</em></span><strong>8K42Q9A</strong></div></div><div class="resource-sheet-note">账号创建后默认为启用；取消或创建成功后回到员工列表。</div><div class="form-footer"><span class="button secondary">取消</span><span class="button">创建账号</span></div></div></div></div></div>
@@ -5753,7 +6204,7 @@
         <div class="phone-wrap"><div class="frame-label">O-MEMBER-HOME 店长端 / 会员首页</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>会员</h3><span class="button">发卡</span></div><div class="content owner-dense"><div class="owner-status-strip"><div class="owner-status"><span>本月发卡</span><strong>18</strong><em>线下录入</em></div><div class="owner-status"><span>待绑定</span><strong>12</strong><em style="color:var(--gold)">邀请码</em></div><div class="owner-status"><span>低余额</span><strong>9</strong><em style="color:var(--coral)">需跟进</em></div></div><div class="owner-tabs"><span class="active">会员</span><span>会员卡</span><span>邀请码</span></div><div class="member-pass"><h4>陈雨 · 评估训练 20 次卡</h4><strong>12 次</strong><p>邀请码 XY-8K42 · 2026-12-31 到期</p></div><div class="owner-list-card"><h4>周琳 · 月度期限卡</h4><p>会员已绑定 · 今日已到店 · 待服务后核销</p><span class="tag">待核销</span></div><div class="owner-list-card"><h4>李梦 · 咨询评估卡</h4><p>8 天后到期，优先提醒会员安排后续服务。</p><span class="tag warn">到期预警</span></div><div class="owner-list-card"><h4>添加会员并发卡</h4><p>录入会员档案、选择会员卡并生成邀请码；会员绑定前，门店仍可看到卡权益台账。</p><span class="tag blue">发卡</span></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div class="active"><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
         <div class="phone-wrap"><div class="frame-label">O-REPORT 店长端 / 报表</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店报表</h3><span class="tag blue">本月</span></div><div class="content owner-dense report-dense"><div class="owner-page-head"><div><h4>本月经营概览</h4><p>先看四个结果，再进入明细处理到店、核销和会员卡提醒。</p></div><span class="button secondary">换月份</span></div><div class="owner-tabs"><span class="active">本月</span><span>上月</span><span>选月份</span><span>全部</span></div><div class="member-pass"><h4>销售额</h4><strong>¥36,800</strong><p>18 笔售卡 · 全部为门店实收 · 进入售卡明细</p></div><div class="owner-card-grid"><div class="tile"><span>预约</span><strong>386 次</strong><small style="display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800">候补 3 · 取消 21</small></div><div class="tile"><span>到店</span><strong>312 人</strong><small style="display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800">今日 18 人待确认</small></div><div class="tile"><span>核销</span><strong>301 次</strong><small style="display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800">服务后扣卡记录</small></div><div class="tile"><span>会员卡提醒</span><strong>14 条</strong><small style="display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800">低余额 9 · 到期 5</small></div></div><h4 class="screen-heading">点哪里看明细</h4><div class="owner-progress"><div class="owner-step"><b>售</b><div><strong>售卡明细</strong><small>看会员、卡名、实收金额和售卡日期；销售额来自店长线下录入。</small></div><span class="tag">去看</span></div><div class="owner-step"><b>约</b><div><strong>预约到店</strong><small>把预约、候补、取消、到店放在一起，方便判断今天履约情况。</small></div><span class="tag blue">去看</span></div><div class="owner-step"><b>服</b><div><strong>服务表现</strong><small>看哪些服务预约多、到店多、核销多，不用理解复杂排行口径。</small></div><span class="tag">去看</span></div><div class="owner-step"><b>卡</b><div><strong>会员卡提醒</strong><small>低余额、14 天内到期集中在这里处理。</small></div><span class="tag warn">处理</span></div></div><div class="chart-card"><strong>近 5 天预约 / 核销</strong><div class="bars" style="height:76px;margin-top:16px;gap:6px"><i style="height:54%;background:#c9dded"></i><i style="height:46%;background:#2f7d6e"></i><i style="height:72%;background:#c9dded"></i><i style="height:58%;background:#2f7d6e"></i><i style="height:64%;background:#c9dded"></i><i style="height:51%;background:#2f7d6e"></i><i style="height:86%;background:#c9dded"></i><i style="height:73%;background:#2f7d6e"></i><i style="height:78%;background:#c9dded"></i><i style="height:66%;background:#2f7d6e"></i></div><p style="margin:10px 0 0;color:var(--muted);font-size:11px;font-weight:800">蓝色是预约，绿色是核销；用于判断预约有没有转成实际服务。</p></div><h4 class="screen-heading">今天先处理</h4><div class="owner-list-card"><h4>18 人待到店确认</h4><p>提醒员工在名单里确认到店，确认后才能核销。</p><span class="tag blue">去名单</span></div><div class="owner-list-card"><h4>14 条会员卡提醒</h4><p>优先联系低余额和 14 天内到期会员，减少服务中断。</p><span class="tag">去处理</span></div><div class="owner-list-card"><h4>2 个时段待完善</h4><p>补齐服务、员工或会员卡范围后再发布。</p><span class="tag blue">去补齐</span></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div class="active"><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
         <div class="phone-wrap"><div class="frame-label">O-REPORT-DETAIL 店长端 / 报表明细</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>报表明细</h3><span class="tag warn">明细</span></div><div class="content owner-dense report-dense"><div class="owner-tabs"><span class="active">售卡</span><span>预约</span><span>到店</span><span>核销</span><span>服务</span><span>提醒</span></div><div class="member-pass"><h4>陈雨 · 评估训练 20 次卡</h4><strong>¥2600</strong><p>门店实收 · 2026-05-30 · 剩余 12 次</p></div><div class="owner-list-card"><h4>周琳 · 月度期限卡</h4><p>¥1200 · 门店实收 · 售卡日期 2026-05-28</p><span class="tag">已收</span></div><div class="owner-list-card"><h4>王可 · 小组训练 20 次卡</h4><p>剩余 1 次，低于模板预警阈值 2 次。</p><span class="tag red">低余额</span></div><div class="owner-list-card"><h4>李梦 · 咨询评估卡</h4><p>8 天后到期，可进入会员卡明细继续跟进。</p><span class="tag warn">到期</span></div><div class="owner-list-card"><h4>服务表现 · 姿态评估服务</h4><p>预约 126 · 到店 112 · 核销 108，可继续看服务和员工维度。</p><span class="tag blue">服务</span></div><div class="owner-list-card"><h4>明细说明</h4><p>售卡、预约、到店、核销、服务表现和会员卡提醒均可按会员、会员卡、服务或员工继续下钻。</p><span class="tag blue">说明</span></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div class="active"><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-MY 店长端 / 我的</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>我的</h3><span class="tag warn">试用中</span></div><div class="content owner-dense"><div class="profile-card detail"><div class="profile-head"><span class="avatar">店</span><h4>和序预约中心</h4><p>店长账号 · 微信已登录</p><span class="tag" style="position:absolute;right:0;top:6px">店长</span></div><div class="profile-detail-grid"><div><span>门店地址</span><strong>上海市徐汇区衡山路 88 号</strong></div><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>履约资源</span><strong>2 个启用资源</strong></div></div><div class="profile-detail-tags"><span>康复理疗</span><span>咨询评估</span><span>姿态评估</span><span>一对一服务</span></div></div><h4 class="screen-heading">使用状态</h4><div class="owner-status-strip two-col"><div class="owner-status"><span>剩余天数</span><strong>6</strong><em style="color:var(--gold)">天</em></div><div class="owner-status"><span>到期日</span><strong>06/05</strong><em style="color:var(--blue)">2026</em></div></div><h4 class="screen-heading">门店设置</h4><div class="owner-progress"><div class="owner-step"><b>店</b><div><strong>门店资料</strong><small>经营项目、服务标签、地址、电话</small></div><span class="tag blue">管理</span></div><div class="owner-step"><b>时</b><div><strong>营业时间</strong><small>工作日营业，周末休息</small></div><span class="tag blue">设置</span></div><div class="owner-step"><b>资</b><div><strong>履约资源</strong><small>房间、床位、设备或工位</small></div><span class="tag blue">管理</span></div></div><h4 class="screen-heading">运营配置</h4><div class="owner-progress"><div class="owner-step"><b>员</b><div><strong>员工账号</strong><small>新增、修改账号/密码、启停和删除校验</small></div><span class="tag blue">管理</span></div><div class="owner-step"><b>服</b><div><strong>服务项目</strong><small>时长、容量、适用资源和员工</small></div><span class="tag blue">管理</span></div><div class="owner-step"><b>卡</b><div><strong>会员卡模板</strong><small>售价、次数、有效期和适用范围</small></div><span class="tag blue">管理</span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div class="active"><b>我</b>我的</div></nav></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-MY 店长端 / 我的</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>我的</h3><span class="tag warn">试用中</span></div><div class="content owner-dense"><div class="profile-card detail"><div class="profile-head"><span class="avatar">店</span><h4>和序预约中心</h4><p>店长账号 · 微信已登录</p><span class="tag" style="position:absolute;right:0;top:6px">店长</span></div><div class="profile-detail-grid"><div><span>门店地址</span><strong>上海市徐汇区衡山路 88 号</strong></div><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>履约资源</span><strong>2 个启用资源</strong></div></div><div class="profile-detail-tags"><span>康复理疗</span><span>咨询评估</span><span>姿态评估</span><span>一对一服务</span></div></div><h4 class="screen-heading">使用状态</h4><div class="owner-status-strip two-col"><div class="owner-status"><span>剩余天数</span><strong>6</strong><em style="color:var(--gold)">天</em></div><div class="owner-status"><span>到期日</span><strong>06/05</strong><em style="color:var(--blue)">2026</em></div></div><h4 class="screen-heading">门店设置</h4><div class="owner-progress"><div class="owner-step"><b>店</b><div><strong>门店资料</strong><small>服务范围、地址、电话</small></div><span class="tag blue">管理</span></div><div class="owner-step"><b>时</b><div><strong>营业时间</strong><small>工作日营业，周末休息</small></div><span class="tag blue">设置</span></div><div class="owner-step"><b>资</b><div><strong>履约资源</strong><small>房间、床位、设备或工位</small></div><span class="tag blue">管理</span></div></div><h4 class="screen-heading">运营配置</h4><div class="owner-progress"><div class="owner-step"><b>员</b><div><strong>员工账号</strong><small>新增、修改账号/密码、启停和删除校验</small></div><span class="tag blue">管理</span></div><div class="owner-step"><b>服</b><div><strong>服务项目</strong><small>时长、容量、适用资源和员工</small></div><span class="tag blue">管理</span></div><div class="owner-step"><b>卡</b><div><strong>会员卡模板</strong><small>售价、次数、有效期和适用范围</small></div><span class="tag blue">管理</span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div class="active"><b>我</b>我的</div></nav></div></div>
         <div class="phone-wrap"><div class="frame-label">O-FROZEN 店长端 / 服务冻结</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>服务已冻结</h3><span class="tag hot">暂停</span></div><div class="content owner-dense"><div class="owner-hero" style="background:linear-gradient(135deg,#5a2a22 0%,#8b3a2d 72%)"><h4>试用已结束</h4><p>当前服务暂时暂停，历史会员、会员卡、预约、核销和报表数据都会保留，恢复后可继续使用。</p><div class="owner-hero-meta"><span>服务暂停</span><span>数据保留</span></div></div><div class="owner-status-strip"><div class="owner-status"><span>门店管理</span><strong>停</strong><em style="color:var(--coral)">暂停编辑</em></div><div class="owner-status"><span>员工服务</span><strong>停</strong><em style="color:var(--coral)">暂停核销</em></div><div class="owner-status"><span>会员预约</span><strong>停</strong><em style="color:var(--coral)">暂停预约</em></div></div><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag hot">只读</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>周末</span><strong>周六、周日休息</strong></div><div><span>服务方向</span><strong>康复理疗、咨询评估</strong></div></div><div class="store-info-tags"><span>康复理疗</span><span>咨询评估</span><span>姿态评估</span></div></div><div class="owner-list-card"><h4>客服微信 SerenMeet-CS</h4><p>添加客服后，我们会协助确认使用期限并恢复服务。</p><span class="tag blue">客服协助</span></div><div class="button coral" style="width:100%;height:50px;margin-top:18px;font-size:16px">添加客服微信</div></div></div></div>
 <div class="phone-wrap"><div class="frame-label">O-FEEDBACK 四端 / 操作反馈规范</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>操作反馈</h3><span class="tag blue">规范</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>保存、发布、确认和阻断必须有反馈</h4><p>适用于店长、教练、会员和平台后台的保存、发布、预约、取消、到店、核销、冻结、解冻和配置修改。</p></div><span class="tag blue">四端</span></div><div class="owner-progress"><div class="owner-step"><b>载</b><div><strong>提交中</strong><small>按钮进入 loading，避免重复提交。</small></div><span class="tag blue">loading</span></div><div class="owner-step"><b>成</b><div><strong>操作成功</strong><small>刷新来源页、列表或进入结果态。</small></div><span class="tag">成功</span></div><div class="owner-step"><b>错</b><div><strong>操作失败</strong><small>字段旁展示错误；顶部保留失败摘要。</small></div><span class="tag red">失败</span></div></div><div class="owner-list-card"><h4>示例错误</h4><p>售价不可为负数、结束时间必须晚于开始时间、至少保留 1 个启用资源、超过取消截止不能自助取消。</p><span class="tag warn">字段/阻断</span></div><div class="form-footer"><span class="button secondary">取消</span><span class="button disabled">提交中...</span></div></div></div></div>
               </div>
@@ -5790,7 +6241,7 @@
 
         <div class="phone-wrap"><div class="frame-label">S-NOTE 教练端 / 服务记录</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>服务记录</h3><span class="tag">已核销</span></div><div class="content"><div class="profile-card"><span class="avatar">陈</span><h4>陈雨</h4><p>姿态评估服务 · 已核销 1 次</p><span class="tag" style="position:absolute;right:18px;top:30px">可提交</span></div><h4 class="screen-heading">会员反馈</h4><div class="select-card" style="min-height:90px;color:var(--blue);background:var(--blue-soft);border-color:#c9dded"><h4 style="font-size:15px;margin-bottom:7px">肩颈放松，动作偏难</h4><p style="margin:0;color:var(--muted);font-size:12px">反馈会同步到会员的服务记录。</p></div><h4 class="screen-heading">服务建议</h4><div class="row flow-row"><span>建议</span><strong>下次保持中低强度</strong><span class="tag blue">建议</span></div><div class="row flow-row"><span>重点</span><strong>关注骨盆稳定与日常拉伸</strong><span class="tag">记录</span></div><div class="coach-alert">未核销的预约不能提交服务记录；提交失败时保留文本。</div><div class="button" style="width:100%;height:50px;margin-top:18px;background:var(--green-dark);font-size:16px">提交记录</div></div><nav class="bottom-nav"><div><b>今</b>今日</div><div><b>名</b>名单</div><div><b>核</b>核销</div><div class="active"><b>记</b>记录</div><div><b>我</b>我的</div></nav></div></div>
 
-        <div class="phone-wrap"><div class="frame-label">S-MY 教练端 / 我的</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>我的</h3><span class="tag">启用</span></div><div class="content"><div class="profile-card"><span class="avatar">Lu</span><h4>Luna</h4><p>staff_luna · 康复师 · 账号启用</p><span class="tag" style="position:absolute;right:18px;top:30px">可服务</span></div><h4 class="screen-heading">我的门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">归属</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>经营项目</span><strong>康复理疗、咨询评估</strong></div><div><span>服务标签</span><strong>姿态评估、一对一服务</strong></div></div></div><h4 class="screen-heading">账号与资料</h4><div class="step-list"><div class="step-card"><b>资</b><div><strong>编辑文字资料</strong><small>显示名、角色、擅长和简介。</small></div><span class="tag blue">可编辑</span></div><div class="step-card"><b>密</b><div><strong>密码由门店处理</strong><small>如需重置密码，请联系店长。</small></div><span class="tag warn">联系</span></div><div class="step-card"><b>退</b><div><strong>退出登录</strong><small>退出后回到账号密码登录页。</small></div><span class="tag">退出</span></div></div></div><nav class="bottom-nav"><div><b>今</b>今日</div><div><b>名</b>名单</div><div><b>核</b>核销</div><div><b>记</b>记录</div><div class="active"><b>我</b>我的</div></nav></div></div>
+        <div class="phone-wrap"><div class="frame-label">S-MY 教练端 / 我的</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>我的</h3><span class="tag">启用</span></div><div class="content"><div class="profile-card"><span class="avatar">Lu</span><h4>Luna</h4><p>staff_luna · 康复师 · 账号启用</p><span class="tag" style="position:absolute;right:18px;top:30px">可服务</span></div><h4 class="screen-heading">我的门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">归属</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>服务范围</span><strong>康复理疗、咨询评估、姿态评估、一对一服务</strong></div></div></div><h4 class="screen-heading">账号与资料</h4><div class="step-list"><div class="step-card"><b>资</b><div><strong>编辑文字资料</strong><small>显示名、角色、擅长和简介。</small></div><span class="tag blue">可编辑</span></div><div class="step-card"><b>密</b><div><strong>密码由门店处理</strong><small>如需重置密码，请联系店长。</small></div><span class="tag warn">联系</span></div><div class="step-card"><b>退</b><div><strong>退出登录</strong><small>退出后回到账号密码登录页。</small></div><span class="tag">退出</span></div></div></div><nav class="bottom-nav"><div><b>今</b>今日</div><div><b>名</b>名单</div><div><b>核</b>核销</div><div><b>记</b>记录</div><div class="active"><b>我</b>我的</div></nav></div></div>
 
         <div class="phone-wrap"><div class="frame-label">S-FROZEN 教练端 / 冻结提示</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店服务暂停</h3><span class="tag hot">冻结</span></div><div class="content"><div class="detail-hero" style="background:#5a2a22"><h4>暂时无法履约</h4><p>门店试用已结束，服务暂停期间，暂时无法查看名单、确认到店或核销。</p><span>请联系门店处理</span></div><h4 class="screen-heading">归属门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">联系</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>周末</span><strong>周六、周日休息</strong></div><div><span>状态</span><strong>服务暂停</strong></div></div><div class="store-info-tags"><span>康复理疗</span><span>咨询评估</span><span>姿态评估</span></div></div><h4 class="screen-heading">暂停内容</h4><div class="row avatar-row"><span class="avatar" style="color:var(--coral);background:var(--coral-soft)">名</span><div><strong>名单暂不可查看</strong><small>门店恢复后即可继续查看</small></div><span class="tag hot">暂停</span></div><div class="row avatar-row"><span class="avatar" style="color:var(--coral);background:var(--coral-soft)">核</span><div><strong>到店与核销暂停</strong><small>不能扣减会员权益</small></div><span class="tag hot">暂停</span></div></div></div></div>
       </div>
@@ -5813,7 +6264,7 @@
 
         <div class="phone-wrap"><div class="frame-label">M-BIND 会员端 / 填写邀请码</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>绑定会员</h3><span class="tag blue">输入邀请码</span></div><div class="content"><div class="detail-hero"><h4>先填写门店邀请码</h4><p>邀请码由门店在发卡后提供，用来找到你的会员档案和可绑定会员卡。</p><span>未绑定前不能预约服务</span></div><div class="invite-steps"><div class="invite-step active">第 1 步<strong>填写邀请码</strong></div><div class="invite-step">第 2 步<strong>核对门店</strong></div><div class="invite-step">第 3 步<strong>确认绑定</strong></div></div><h4 class="screen-heading">会员邀请码</h4><div class="invite-code-card"><h4>输入 6 位邀请码</h4><div class="invite-code-input"><span>X</span><span>Y</span><span>8</span><span>K</span><span>4</span><span>2</span></div><p class="invite-help">邀请码通常由店长复制后通过微信发给你。填写后先查询门店，不会直接完成绑定。</p></div><div class="notice"><span>找不到邀请码？请联系门店重新发送</span><span class="tag warn">门店提供</span></div><div class="form-footer"><span class="button secondary">重新输入</span><span class="button" style="background:var(--green-dark)">查询门店信息</span></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">M-BIND-LOADING 会员端 / 加载门店信息</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>绑定会员</h3><span class="tag warn">查询中</span></div><div class="content"><div class="detail-hero"><h4>正在核验邀请码</h4><p>系统会先检查邀请码是否有效，再加载对应门店、会员姓名和可绑定会员卡。</p><span>请勿关闭页面</span></div><div class="invite-steps"><div class="invite-step done">第 1 步<strong>已填写</strong></div><div class="invite-step active">第 2 步<strong>加载门店</strong></div><div class="invite-step">第 3 步<strong>确认绑定</strong></div></div><h4 class="screen-heading">查询状态</h4><div class="bind-loading-card"><span class="bind-spinner"></span><strong>正在加载和序预约中心的信息</strong><small>如果邀请码无效、过期或已使用，会进入绑定失败页并提示联系门店。</small></div><div class="form-list"><div class="field"><span>已输入邀请码</span><strong>XY-8K42</strong></div><div class="field"><span>当前处理</span><strong>校验邀请码有效期、绑定状态和会员卡权益</strong></div></div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">M-BIND-CHECK 会员端 / 核对门店并确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>确认绑定</h3><span class="tag blue">待确认</span></div><div class="content bind-check-flow"><div class="detail-hero"><h4>请核对目标门店</h4><p>确认是你办理会员卡的门店后，再把会员身份和会员卡加入当前微信账号。</p><span>确认后进入卡包</span></div><div class="invite-steps"><div class="invite-step done">第 1 步<strong>已填写</strong></div><div class="invite-step done">第 2 步<strong>已加载</strong></div><div class="invite-step active">第 3 步<strong>确认绑定</strong></div></div><h4 class="screen-heading">目标门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">请核对</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>经营项目</span><strong>康复理疗、咨询评估</strong></div><div><span>服务标签</span><strong>姿态评估、一对一服务</strong></div></div><div class="store-info-tags"><span>周六、周日休息</span><span>可绑定 1 张卡</span><span>康复理疗</span><span>姿态评估</span></div></div><h4 class="screen-heading">绑定信息</h4><div class="member-pass"><h4>陈雨 · 会员身份</h4><strong>评估训练 20 次卡</strong><p>剩余 12 次 · 有效期至 2026-12-31 · 适用姿态评估、小组训练</p></div><div class="bind-confirm-note">如果门店、姓名或会员卡不一致，请不要确认绑定，返回重新输入或联系门店处理。</div><div class="form-footer"><span class="button secondary">返回修改</span><span class="button" style="background:var(--green-dark)">确认绑定</span></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">M-BIND-CHECK 会员端 / 核对门店并确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>确认绑定</h3><span class="tag blue">待确认</span></div><div class="content bind-check-flow"><div class="detail-hero"><h4>请核对目标门店</h4><p>确认是你办理会员卡的门店后，再把会员身份和会员卡加入当前微信账号。</p><span>确认后进入卡包</span></div><div class="invite-steps"><div class="invite-step done">第 1 步<strong>已填写</strong></div><div class="invite-step done">第 2 步<strong>已加载</strong></div><div class="invite-step active">第 3 步<strong>确认绑定</strong></div></div><h4 class="screen-heading">目标门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">请核对</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>服务范围</span><strong>康复理疗、咨询评估、姿态评估、一对一服务</strong></div></div><div class="store-info-tags"><span>周六、周日休息</span><span>可绑定 1 张卡</span><span>康复理疗</span><span>姿态评估</span></div></div><h4 class="screen-heading">绑定信息</h4><div class="member-pass"><h4>陈雨 · 会员身份</h4><strong>评估训练 20 次卡</strong><p>剩余 12 次 · 有效期至 2026-12-31 · 适用姿态评估、小组训练</p></div><div class="bind-confirm-note">如果门店、姓名或会员卡不一致，请不要确认绑定，返回重新输入或联系门店处理。</div><div class="form-footer"><span class="button secondary">返回修改</span><span class="button" style="background:var(--green-dark)">确认绑定</span></div></div></div></div>
 
         <div class="phone-wrap"><div class="frame-label">M-BIND-FAIL 会员端 / 绑定失败</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>绑定失败</h3><span class="tag hot">无效</span></div><div class="content"><div class="detail-hero" style="background:#5a2a22"><h4>邀请码无法使用</h4><p>当前邀请码不存在、已过期或已被使用。</p><span>请联系门店重新生成</span></div><div class="form-list"><div class="field"><span>输入邀请码</span><strong>XY-8K42</strong></div><div class="field"><span>失败原因</span><strong>已过期</strong></div><div class="field"><span>门店联系</span><strong>和序预约中心 · 021-8888 6606</strong></div></div><div class="form-footer"><span class="button coral">联系门店</span><span class="button secondary">重新输入</span></div></div></div></div>
 
@@ -5841,7 +6292,7 @@
 
         <div class="phone-wrap"><div class="frame-label">M-RECORD 会员端 / 服务记录</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>服务记录</h3><span class="tag">已完成</span></div><div class="content"><div class="member-card"><h4>姿态评估服务</h4><div class="large">已核销</div><p>5月30日 · Luna · 评估训练卡 -1</p></div><h4 class="screen-heading">员工建议</h4><div class="select-card" style="min-height:90px;color:var(--green-dark);background:var(--green-soft);border-color:#cae2d8"><h4 style="font-size:15px;margin-bottom:7px">下次保持中低强度</h4><p style="margin:0;color:var(--muted);font-size:12px">关注骨盆稳定，服务后做肩颈拉伸。</p></div><h4 class="screen-heading">我的反馈</h4><div class="row flow-row"><span>感受</span><strong>肩颈放松，核心动作偏难</strong><span class="tag blue">已填</span></div><div class="row flow-row"><span>卡包</span><strong>剩余 11 次 · 到期 2026-12-31</strong><span class="tag">正常</span></div></div><nav class="bottom-nav"><div><b>首</b>首页</div><div><b>约</b>预约</div><div><b>卡</b>卡包</div><div class="active"><b>记</b>记录</div><div><b>我</b>我的</div></nav></div></div>
 
-        <div class="phone-wrap"><div class="frame-label">M-MY 会员端 / 我的</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>我的</h3><span class="tag">已绑定</span></div><div class="content"><div class="profile-card"><span class="avatar">陈</span><h4>陈雨</h4><p>会员编号 SM-0268 · 已绑定微信</p><span class="tag" style="position:absolute;right:18px;top:30px">正常</span></div><h4 class="screen-heading">我的门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">联系</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>经营项目</span><strong>康复理疗、咨询评估</strong></div><div><span>服务标签</span><strong>姿态评估、小组训练</strong></div></div></div><h4 class="screen-heading">常用入口</h4><div class="step-list"><div class="step-card"><b>卡</b><div><strong>我的卡包</strong><small>查看余额、有效期和适用服务。</small></div><span class="tag">查看</span></div><div class="step-card"><b>约</b><div><strong>我的预约</strong><small>查看待服务、候补、已完成和已取消。</small></div><span class="tag blue">查看</span></div><div class="step-card"><b>退</b><div><strong>退出登录</strong><small>退出后回到微信登录页。</small></div><span class="tag warn">退出</span></div></div></div><nav class="bottom-nav"><div><b>首</b>首页</div><div><b>约</b>预约</div><div><b>卡</b>卡包</div><div><b>记</b>记录</div><div class="active"><b>我</b>我的</div></nav></div></div>
+        <div class="phone-wrap"><div class="frame-label">M-MY 会员端 / 我的</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>我的</h3><span class="tag">已绑定</span></div><div class="content"><div class="profile-card"><span class="avatar">陈</span><h4>陈雨</h4><p>会员编号 SM-0268 · 已绑定微信</p><span class="tag" style="position:absolute;right:18px;top:30px">正常</span></div><h4 class="screen-heading">我的门店</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">联系</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>服务范围</span><strong>康复理疗、咨询评估、姿态评估、小组训练</strong></div></div></div><h4 class="screen-heading">常用入口</h4><div class="step-list"><div class="step-card"><b>卡</b><div><strong>我的卡包</strong><small>查看余额、有效期和适用服务。</small></div><span class="tag">查看</span></div><div class="step-card"><b>约</b><div><strong>我的预约</strong><small>查看待服务、候补、已完成和已取消。</small></div><span class="tag blue">查看</span></div><div class="step-card"><b>退</b><div><strong>退出登录</strong><small>退出后回到微信登录页。</small></div><span class="tag warn">退出</span></div></div></div><nav class="bottom-nav"><div><b>首</b>首页</div><div><b>约</b>预约</div><div><b>卡</b>卡包</div><div><b>记</b>记录</div><div class="active"><b>我</b>我的</div></nav></div></div>
 
         <div class="phone-wrap"><div class="frame-label">M-FROZEN 会员端 / 冻结提示</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店服务暂停</h3><span class="tag hot">冻结</span></div><div class="content"><div class="detail-hero" style="background:#5a2a22"><h4>暂时无法预约</h4><p>门店试用已结束，当前暂时不能预约、取消或候补。</p><span>请联系门店确认恢复时间</span></div><h4 class="screen-heading">门店信息</h4><div class="store-info-card"><div class="store-info-head"><span class="store-info-icon">店</span><div><h4>和序预约中心</h4><p>上海市徐汇区衡山路 88 号</p></div><span class="tag blue">联系</span></div><div class="store-info-grid"><div><span>联系电话</span><strong>021-8888 6606</strong></div><div><span>营业时间</span><strong>周一至周五 09:00-21:00</strong></div><div><span>周末</span><strong>周六、周日休息</strong></div><div><span>状态</span><strong>服务暂停</strong></div></div><div class="store-info-tags"><span>康复理疗</span><span>姿态评估</span><span>小组训练</span></div></div><h4 class="screen-heading">可查看内容</h4><div class="row avatar-row"><span class="avatar">卡</span><div><strong>会员卡摘要</strong><small>仍可查看卡包摘要和门店联系方式</small></div><span class="tag warn">可查看</span></div><div class="button coral" style="width:100%;height:50px;margin-top:34px;font-size:16px">联系门店</div></div></div></div>
       </div>
@@ -5973,7 +6424,7 @@
                       <div class="atlas-metrics three"><div class="atlas-metric warning"><span>当前状态</span><strong>即将到期</strong><small>运营状态正常追踪</small></div><div class="atlas-metric"><span>试用到期</span><strong>2026-06-05</strong><small>7 天内</small></div><div class="atlas-metric"><span>客服微信</span><strong>SerenMeet-CS-1</strong><small>长文本截断展示</small></div></div>
                       <section class="atlas-panel">
                         <div class="atlas-panel-head"><h4>门店资料</h4></div>
-                        <div class="atlas-panel-body"><div class="atlas-form-grid"><div class="atlas-field"><span>联系电话</span><div class="atlas-input">021-8888 6606</div></div><div class="atlas-field"><span>营业时间</span><div class="atlas-input">周一至周五 09:00-21:00</div></div><div class="atlas-field wide"><span>门店地址</span><div class="atlas-input">上海市徐汇区衡山路 88 号</div></div><div class="atlas-field wide"><span>经营项目 / 服务标签</span><div class="atlas-input">康复理疗、咨询评估 / 姿态评估、一对一服务</div></div></div></div>
+                        <div class="atlas-panel-body"><div class="atlas-form-grid"><div class="atlas-field"><span>联系电话</span><div class="atlas-input">021-8888 6606</div></div><div class="atlas-field"><span>营业时间</span><div class="atlas-input">周一至周五 09:00-21:00</div></div><div class="atlas-field wide"><span>门店地址</span><div class="atlas-input">上海市徐汇区衡山路 88 号</div></div><div class="atlas-field wide"><span>服务范围</span><div class="atlas-input">康复理疗、咨询评估、姿态评估、一对一服务</div></div></div></div>
                       </section>
                       <section class="atlas-panel">
                         <div class="atlas-panel-head"><h4>试点信号</h4></div>
@@ -6154,6 +6605,134 @@
         badge.textContent = isDevOnly ? "研发说明" : "效果呈现";
         label.appendChild(badge);
       });
+
+      const findPhoneFrame = (pageId, stateName = "") => Array.from(document.querySelectorAll(".phone-wrap")).find((wrap) => {
+        const title = wrap.querySelector(".frame-label")?.textContent || "";
+        return title.includes(pageId) && (!stateName || title.includes(stateName));
+      });
+      const findDirectField = (container, label) => Array.from(container?.children || []).find((field) => {
+        const fieldLabel = field.querySelector(":scope > span");
+        return fieldLabel?.textContent.trim() === label;
+      });
+      const createBusinessHours = () => {
+        const businessHours = document.createElement("section");
+        businessHours.className = "business-hours";
+        businessHours.setAttribute("aria-label", "本周营业时间");
+        businessHours.innerHTML = `
+          <div class="business-hours-head"><span>本周营业</span><strong>6 天营业</strong></div>
+          <div class="business-week-hours">
+            <div class="business-day"><strong>一</strong><span class="business-day-time"><span>09:00</span><i></i><span>18:00</span></span></div>
+            <div class="business-day"><strong>二</strong><span class="business-day-time"><span>10:00</span><i></i><span>20:00</span></span></div>
+            <div class="business-day"><strong>三</strong><span class="business-day-time"><span>09:00</span><i></i><span>18:00</span></span></div>
+            <div class="business-day"><strong>四</strong><span class="business-day-time"><span>10:00</span><i></i><span>20:00</span></span></div>
+            <div class="business-day"><strong>五</strong><span class="business-day-time"><span>09:00</span><i></i><span>18:00</span></span></div>
+            <div class="business-day short"><strong>六</strong><span class="business-day-time"><span>08:00</span><i></i><span>12:00</span></span></div>
+            <div class="business-day closed"><strong>日</strong><small>休息</small></div>
+          </div>`;
+        return businessHours;
+      };
+      const attachBusinessHours = (card) => {
+        if (!card || card.querySelector(".business-hours")) return;
+        const grid = card.querySelector(".store-info-grid");
+        const hoursField = findDirectField(grid, "营业时间");
+        if (!hoursField) return;
+        findDirectField(grid, "周末")?.remove();
+        hoursField.remove();
+        const tags = card.querySelector(".store-info-tags");
+        card.insertBefore(createBusinessHours(), tags || null);
+      };
+
+      document.querySelectorAll(".store-info-card").forEach(attachBusinessHours);
+
+      const ownerStartComplete = findPhoneFrame("O-START", "必填项完成");
+      if (ownerStartComplete) {
+        const hoursStep = Array.from(ownerStartComplete.querySelectorAll(".owner-step")).find((step) => step.querySelector("strong")?.textContent.trim() === "营业时间");
+        if (hoursStep) hoursStep.querySelector("small").textContent = "每周营业 6 天 · 3 个营业时段";
+      }
+
+      const ownerHours = findPhoneFrame("O-HOURS");
+      if (ownerHours) {
+        const hoursCards = ownerHours.querySelectorAll(".ohours-card");
+        const selectedCount = hoursCards[0]?.querySelector("h4 small");
+        if (selectedCount) selectedCount.textContent = "已选择 6 天";
+        const weekDays = hoursCards[0]?.querySelectorAll(".ohours-day");
+        if (weekDays?.[5]) {
+          weekDays[5].classList.remove("rest");
+          weekDays[5].querySelector("small").textContent = "营业";
+        }
+        const timeList = hoursCards[1]?.querySelector(".ohours-time-list");
+        const timeRows = timeList?.querySelectorAll(".ohours-time-row");
+        const periods = [["09:00 ▾", "18:00 ▾"], ["10:00 ▾", "20:00 ▾"], ["09:00 ▾", "18:00 ▾"], ["10:00 ▾", "20:00 ▾"], ["09:00 ▾", "18:00 ▾"]];
+        timeRows?.forEach((row, index) => {
+          const timeBoxes = row.querySelectorAll(".ohours-time-box");
+          timeBoxes[0].textContent = periods[index][0];
+          timeBoxes[1].textContent = periods[index][1];
+        });
+        if (timeList && timeRows?.[0]) {
+          const saturdayRow = timeRows[0].cloneNode(true);
+          saturdayRow.querySelector(".ohours-time-day").textContent = "周六";
+          const saturdayTimes = saturdayRow.querySelectorAll(".ohours-time-box");
+          saturdayTimes[0].textContent = "08:00 ▾";
+          saturdayTimes[1].textContent = "12:00 ▾";
+          timeList.appendChild(saturdayRow);
+        }
+        const hoursHint = hoursCards[1]?.querySelector("p");
+        if (hoursHint) hoursHint.textContent = "每个营业日可使用不同时间；休息日切换为营业后按相同方式显示。";
+      }
+
+      const ownerMy = findPhoneFrame("O-MY");
+      if (ownerMy) {
+        ownerMy.id = "owner-my-preview";
+        const profile = ownerMy.querySelector(".profile-card.detail");
+        if (profile) {
+          profile.className = "owner-paper-profile";
+          profile.innerHTML = `
+            <i class="owner-paper-accent" aria-hidden="true"></i>
+            <div class="owner-paper-head">
+              <span class="owner-paper-stamp">和</span>
+              <div class="owner-paper-title"><h4>和序预约中心</h4><p>店长账号 · 微信已登录</p></div>
+              <span class="owner-paper-role">店长</span>
+            </div>
+            <div class="owner-paper-notes">
+              <div class="owner-paper-note"><span>门店地址</span><strong>上海市徐汇区衡山路 88 号</strong></div>
+              <div class="owner-paper-note"><span>联系电话</span><strong>021-8888 6606</strong></div>
+            </div>
+            <div class="owner-paper-hours"></div>
+            <div class="owner-paper-services">
+              <b>服务范围</b>
+              <div class="owner-paper-service-list"><span>康复理疗</span><span>咨询评估</span><span>姿态评估</span><span>一对一服务</span></div>
+            </div>`;
+          profile.querySelector(".owner-paper-hours")?.appendChild(createBusinessHours());
+        }
+        const settingsHours = Array.from(ownerMy.querySelectorAll(".owner-step")).find((step) => step.querySelector("strong")?.textContent.trim() === "营业时间");
+        if (settingsHours) settingsHours.querySelector("small").textContent = "每周营业 6 天 · 3 个营业时段";
+      }
+
+      const memberHome = findPhoneFrame("M-HOME");
+      const memberStoreSummary = memberHome?.querySelector(".row.avatar-row small");
+      if (memberStoreSummary) memberStoreSummary.textContent = "上海市徐汇区衡山路 88 号 · 每周营业 6 天";
+
+      const memberServices = findPhoneFrame("M-SERVICES");
+      const servicesCard = memberServices?.querySelector(".store-info-card");
+      if (servicesCard) {
+        const servicesSummary = servicesCard.querySelector(".store-info-head p");
+        if (servicesSummary) servicesSummary.textContent = "上海市徐汇区衡山路 88 号 · 021-8888 6606";
+        const servicesTags = servicesCard.querySelector(".store-info-tags");
+        servicesCard.insertBefore(createBusinessHours(), servicesTags || null);
+      }
+
+      const tenantDetail = document.querySelector("#admin-a-tenant-detail");
+      const tenantHoursLabel = Array.from(tenantDetail?.querySelectorAll(".atlas-field > span") || []).find((label) => label.textContent.trim() === "营业时间");
+      if (tenantHoursLabel) {
+        tenantHoursLabel.textContent = "营业时间 · 每周营业 6 天 · 3 个营业时段";
+        const tenantHoursInput = tenantHoursLabel.parentElement.querySelector(".atlas-input");
+        tenantHoursInput.className = "atlas-hours-groups";
+        tenantHoursInput.innerHTML = `
+          <div class="atlas-hour-group"><strong>周一 · 周三 · 周五</strong><small>09:00-18:00</small></div>
+          <div class="atlas-hour-group"><strong>周二 · 周四</strong><small>10:00-20:00</small></div>
+          <div class="atlas-hour-group short"><strong>周六</strong><small>08:00-12:00</small></div>
+          <div class="atlas-hour-group closed"><strong>周日</strong><small>休息</small></div>`;
+      }
     })();
   </script>
 </body>

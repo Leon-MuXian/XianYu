@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import type { BusinessHoursValue } from '@serenmeet/business-components'
 import { api } from './api'
 
 export const ownerRoutes = {
@@ -37,11 +38,19 @@ export interface OwnerProfile {
 
 export interface StoreProfileDraft {
   name?: string
+  cityCode?: string
   city?: string
+  districtCode?: string
+  district?: string
+  detailAddress?: string
   address?: string
   contactPhone?: string
-  businessCategories?: string[]
-  serviceTags?: string[]
+  serviceScopes?: string[]
+}
+
+export interface RegionOption {
+  code: string
+  name: string
 }
 
 export interface DayHours {
@@ -54,7 +63,7 @@ export interface OnboardingDraft {
   trialNoticeRequired: boolean
   trialDays: number
   storeProfile?: StoreProfileDraft
-  businessHours?: { days?: Record<string, DayHours> }
+  businessHours?: BusinessHoursValue
   resources?: Resource[]
   completion: {
     storeProfileDone: boolean

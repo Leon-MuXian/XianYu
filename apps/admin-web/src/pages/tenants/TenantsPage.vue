@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { EditPen, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import BusinessHoursGroups from '@/components/BusinessHoursGroups.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { adminApi } from '@/services/api'
 import type { TenantDetail, TenantListItem, TenantListResponse } from '@/types/admin'
@@ -255,9 +256,9 @@ onMounted(load)
             <h3>门店资料</h3>
             <div class="field-grid drawer-fields">
               <div class="field-box"><span>联系电话</span><strong>{{ selectedTenant.store.contactPhone }}</strong></div>
-              <div class="field-box"><span>营业时间</span><strong>{{ selectedTenant.store.businessHours }}</strong></div>
+              <div class="field-box wide business-hours-field"><BusinessHoursGroups :value="selectedTenant.store.businessHours" /></div>
               <div class="field-box wide"><span>门店地址</span><strong>{{ selectedTenant.store.address }}</strong></div>
-              <div class="field-box wide"><span>经营项目 / 服务标签</span><strong>{{ selectedTenant.store.businessCategories }} / {{ selectedTenant.store.serviceTags }}</strong></div>
+              <div class="field-box wide"><span>服务范围</span><strong>{{ selectedTenant.store.serviceScopes }}</strong></div>
             </div>
           </section>
 

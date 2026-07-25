@@ -63,6 +63,25 @@ public class OwnerPilotController {
     return ApiResponse.ok(ownerService.store(principal));
   }
 
+  @GetMapping("/regions/cities")
+  public ApiResponse<List<Map<String, Object>>> administrativeCities(
+      @CurrentSession SessionPrincipal principal) {
+    return ApiResponse.ok(ownerService.administrativeCities());
+  }
+
+  @GetMapping("/regions/cities/{cityCode}/districts")
+  public ApiResponse<List<Map<String, Object>>> administrativeDistricts(
+      @CurrentSession SessionPrincipal principal, @PathVariable String cityCode) {
+    return ApiResponse.ok(ownerService.administrativeDistricts(cityCode));
+  }
+
+  @PostMapping("/store/name-availability")
+  public ApiResponse<Map<String, Object>> storeNameAvailability(
+      @CurrentSession SessionPrincipal principal,
+      @Valid @RequestBody StoreNameAvailabilityRequest request) {
+    return ApiResponse.ok(ownerService.storeNameAvailability(principal, request.name()));
+  }
+
   @PutMapping("/store")
   public ApiResponse<Object> updateStore(
       @CurrentSession SessionPrincipal principal,
@@ -79,10 +98,10 @@ public class OwnerPilotController {
                     ? ownerService.updateStoreProfile(
                         principal,
                         request.name(),
-                        request.city(),
-                        request.businessCategories(),
-                        request.serviceTags(),
-                        request.address(),
+                        request.cityCode(),
+                        request.districtCode(),
+                        request.detailAddress(),
+                        request.serviceScopes(),
                         request.contactPhone())
                     : ownerService.updateStoreBusinessHours(
                         principal, Map.of("days", request.days()))));
@@ -102,7 +121,15 @@ public class OwnerPilotController {
   @PutMapping("/onboarding/store-profile")
   public ApiResponse<Map<String, Object>> saveStoreProfile(
       @CurrentSession SessionPrincipal principal, @Valid @RequestBody StoreProfileRequest request) {
-    return ApiResponse.ok(ownerService.saveStoreProfile(principal, request));
+    return ApiResponse.ok(
+        ownerService.saveStoreProfile(
+            principal,
+            request.name(),
+            request.cityCode(),
+            request.districtCode(),
+            request.detailAddress(),
+            request.serviceScopes(),
+            request.contactPhone()));
   }
 
   @PutMapping("/onboarding/business-hours")
@@ -580,21 +607,24 @@ public class OwnerPilotController {
   }
 
   public record StoreProfileRequest(
-      @NotBlank String name,
-      String city,
-      @NotEmpty @Size(max = 4) List<@NotBlank String> businessCategories,
-      @NotEmpty @Size(max = 10) List<@NotBlank String> serviceTags,
-      @NotBlank String address,
-      @NotBlank String contactPhone) {}
+      @NotBlank @Size(max = 120) String name,
+      @NotBlank @Size(max = 12) String cityCode,
+      @NotBlank @Size(max = 12) String districtCode,
+      @NotBlank @Size(max = 180) String detailAddress,
+      @NotEmpty @Size(max = 6) List<@NotBlank String> serviceScopes,
+      @NotBlank @Size(max = 40) String contactPhone) {}
 
   public record UpdateStoreRequest(
-      String name,
-      String city,
-      @Size(max = 4) List<@NotBlank String> businessCategories,
-      @Size(max = 10) List<@NotBlank String> serviceTags,
-      String address,
-      String contactPhone,
+      @Size(max = 120) String name,
+      @Size(max = 12) String cityCode,
+      @Size(max = 12) String districtCode,
+      @Size(max = 180) String detailAddress,
+      @Size(max = 6) List<@NotBlank String> serviceScopes,
+      @Size(max = 40) String contactPhone,
       Map<String, @Valid DayHours> days) {}
+
+  public record StoreNameAvailabilityRequest(
+      @NotBlank @Size(max = 120) String name) {}
 
   public record BusinessHoursRequest(@NotNull Map<String, @Valid DayHours> days) {}
 

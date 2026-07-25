@@ -8,12 +8,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serenmeet.tenant.domain.TenantEntity;
 import com.serenmeet.auth.dto.AdminUserView;
 import com.serenmeet.tenant.dto.ExtendTenantRequest;
 import com.serenmeet.tenant.dto.TenantDetailResponse;
 import com.serenmeet.tenant.mapper.TenantDetailProjection;
 import com.serenmeet.tenant.mapper.TenantMapper;
+import com.serenmeet.tenant.mapper.TenantStoreProjection;
 import com.serenmeet.audit.application.AuditApplicationService;
 import com.serenmeet.audit.domain.AuditAction;
 import com.serenmeet.tenant.support.TenantStatus;
@@ -45,7 +47,25 @@ class TenantAdminApplicationServiceTest {
 
   @BeforeEach
   void setUp() {
-    service = new TenantAdminApplicationService(tenantMapper, auditService, CLOCK);
+    service = new TenantAdminApplicationService(tenantMapper, auditService, CLOCK, new ObjectMapper());
+  }
+
+  @Test
+  void getTenantReturnsStructuredBusinessHours() {
+    TenantDetailProjection detail = new TenantDetailProjection();
+    detail.setId(1L);
+    detail.setName("和序预约中心");
+    detail.setStatus(TenantStatus.TRIALING.code());
+    TenantStoreProjection store = new TenantStoreProjection();
+    store.setName("和序预约中心");
+    store.setBusinessHours("{\"days\":{\"monday\":{\"open\":true,\"start\":\"09:00\",\"end\":\"18:00\"}}}");
+    detail.setStore(store);
+    when(tenantMapper.selectTenantDetail(1L)).thenReturn(detail);
+
+    TenantDetailResponse response = service.getTenant(1L);
+
+    assertThat(response.store().businessHours().days().get("monday").open()).isTrue();
+    assertThat(response.store().businessHours().days().get("monday").start()).isEqualTo("09:00");
   }
 
   @Test

@@ -2,6 +2,7 @@ package com.serenmeet.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -163,10 +164,105 @@ class PilotWorkflowPostgresTest {
   }
 
   @Test
+  void storeProfileUsesBackendRegionsGlobalNamesAndFreeTextPhones() throws Exception {
+    BusinessLoginResponse regionLogin = authService.ownerWechatLogin("owner-region-route");
+    mockMvc.perform(get("/owner/regions/cities")
+        .header("Authorization", "Bearer " + regionLogin.token()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.success").value(true))
+      .andExpect(jsonPath("$.data.length()").value(341))
+      .andExpect(jsonPath("$.data[?(@.code == '3100')].name").value(hasItem("上海市")));
+    mockMvc.perform(get("/owner/regions/cities/3100/districts")
+        .header("Authorization", "Bearer " + regionLogin.token()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.success").value(true))
+      .andExpect(jsonPath("$.data[?(@.code == '310104')].name").value(hasItem("徐汇区")));
+
+    assertThat(ownerService.administrativeCities())
+      .hasSize(341)
+      .anySatisfy(city -> assertThat(city).containsEntry("code", "3100").containsEntry("name", "上海市"));
+    assertThat(ownerService.administrativeDistricts("3100"))
+      .anySatisfy(district ->
+        assertThat(district).containsEntry("code", "310104").containsEntry("name", "徐汇区")
+      );
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from administrative_district", Integer.class
+    )).isEqualTo(2978);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from pg_constraint where conname = 'uq_store_name_key'", Integer.class
+    )).isEqualTo(1);
+
+    SessionPrincipal firstOwner = ownerPrincipal("owner-store-profile-first");
+    TenantContext.set(firstOwner.tenantId());
+    assertThat(ownerService.storeNameAvailability(firstOwner, "闲遇 规则店"))
+      .containsEntry("available", true);
+    saveCompleteStoreDraft(firstOwner, "闲遇 规则店", "客服微信：seren-meet");
+    ownerService.completeOnboarding(firstOwner);
+    assertThat(ownerService.store(firstOwner))
+      .containsEntry("cityCode", "3100")
+      .containsEntry("city", "上海市")
+      .containsEntry("districtCode", "310104")
+      .containsEntry("district", "徐汇区")
+      .containsEntry("detailAddress", "衡山路 88 号 2 层")
+      .containsEntry("address", "上海市徐汇区衡山路 88 号 2 层")
+      .containsEntry("serviceScopes", List.of("瑜伽", "小班课"))
+      .containsEntry("contactPhone", "客服微信：seren-meet");
+    assertThat(ownerService.me(firstOwner)).containsEntry("city", "上海市");
+
+    SessionPrincipal secondOwner = ownerPrincipal("owner-store-profile-second");
+    TenantContext.set(secondOwner.tenantId());
+    assertThat(ownerService.storeNameAvailability(secondOwner, "闲遇　规则店"))
+      .containsEntry("available", false);
+    assertThatThrownBy(() -> ownerService.saveStoreProfile(
+      secondOwner,
+      "闲遇　规则店",
+      "3100",
+      "310104",
+      "衡山路 99 号",
+      List.of("瑜伽", "小班课"),
+      "客服微信：seren-meet"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("STORE_NAME_TAKEN")
+    );
+    assertThatThrownBy(() -> ownerService.saveStoreProfile(
+      secondOwner,
+      "闲遇第二门店",
+      "3301",
+      "310104",
+      "测试路 2 号",
+      List.of("瑜伽", "小班课"),
+      "客服微信：seren-meet"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("REGION_INVALID")
+    );
+    assertThatThrownBy(() -> ownerService.saveStoreProfile(
+      secondOwner,
+      "闲遇第二门店",
+      "3100",
+      "310104",
+      "衡山路 100 号",
+      List.of("瑜伽", "小班课", "康复理疗", "咨询评估", "运动训练", "护理", "体适能"),
+      "客服微信：seren-meet"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("FIELD_ERROR")
+    );
+
+    saveCompleteStoreDraft(secondOwner, "闲遇第二门店", "客服微信：seren-meet");
+    ownerService.completeOnboarding(secondOwner);
+    assertThat(ownerService.store(secondOwner))
+      .containsEntry("contactPhone", "客服微信：seren-meet");
+  }
+
+  @Test
   void fullPilotFlowUsesHashedSessionsFactsAndAtomicCapacity() throws Exception {
     BusinessLoginResponse ownerLogin = authService.ownerWechatLogin("owner-integration");
     SessionPrincipal owner = authService.requirePrincipal("Bearer " + ownerLogin.token());
     TenantContext.set(owner.tenantId());
+
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from information_schema.columns where table_name = 'store' and column_name = 'service_tags'",
+      Integer.class
+    )).isZero();
 
     assertThat(jdbcTemplate.queryForObject(
       "select count(*) from auth_session where token_hash = ?", Integer.class, ownerLogin.token()
@@ -186,14 +282,15 @@ class PilotWorkflowPostgresTest {
     assertThat(ownerService.onboardingDraft(owner))
       .containsEntry("trialNoticeRequired", false);
 
-    ownerService.saveStoreProfile(owner, Map.of(
-      "name", "闲遇集成测试店",
-      "city", "杭州",
-      "businessCategories", List.of("瑜伽"),
-      "serviceTags", List.of("小班课"),
-      "address", "测试路 1 号",
-      "contactPhone", "0571-00000000"
-    ));
+    ownerService.saveStoreProfile(
+      owner,
+      "闲遇集成测试店",
+      "3301",
+      "330106",
+      "测试路 1 号",
+      List.of("瑜伽", "小班课"),
+      "0571-00000000"
+    );
     ownerService.saveBusinessHours(owner, Map.of(
       "days", Map.of("monday", Map.of("open", true, "start", "09:00", "end", "21:00"))
     ));
@@ -248,10 +345,16 @@ class PilotWorkflowPostgresTest {
       "select remain_count from member_card where id = ?", Integer.class, firstMember.cardId()
     )).isEqualTo(4);
     assertThat(ownerService.reportSummary(owner).get("deductions")).isEqualTo(1);
-    assertThat(tenantAdminService.getTenant(owner.tenantId()).snapshot()).satisfies(snapshot -> {
+    var tenantDetail = tenantAdminService.getTenant(owner.tenantId());
+    assertThat(tenantDetail.snapshot()).satisfies(snapshot -> {
       assertThat(snapshot.deductions()).isEqualTo(1);
       assertThat(snapshot.lastActivityAt()).isNotNull();
     });
+    var mondayHours = tenantDetail.store().businessHours().days().get("monday");
+    assertThat(mondayHours).isNotNull();
+    assertThat(mondayHours.open()).isTrue();
+    assertThat(mondayHours.start()).isEqualTo("09:00");
+    assertThat(mondayHours.end()).isEqualTo("21:00");
 
     MemberLogin secondMember = createAndBindMember(owner, templateId, "M-002", "member-two");
     Long contestedSlotId = id(ownerService.publishSlot(
@@ -383,6 +486,33 @@ class PilotWorkflowPostgresTest {
     SessionPrincipal bound = authService.requirePrincipal("Bearer " + login.token());
     assertThat(bound.bound()).isTrue();
     return new MemberLogin(bound, cardId);
+  }
+
+  private SessionPrincipal ownerPrincipal(String loginCode) {
+    BusinessLoginResponse login = authService.ownerWechatLogin(loginCode);
+    return authService.requirePrincipal("Bearer " + login.token());
+  }
+
+  private void saveCompleteStoreDraft(
+    SessionPrincipal owner,
+    String name,
+    String contactPhone
+  ) {
+    ownerService.saveStoreProfile(
+      owner,
+      name,
+      "3100",
+      "310104",
+      "衡山路 88 号 2 层",
+      List.of("瑜伽", "小班课"),
+      contactPhone
+    );
+    ownerService.saveBusinessHours(owner, Map.of(
+      "days", Map.of("monday", Map.of("open", true, "start", "09:00", "end", "21:00"))
+    ));
+    ownerService.saveResourcesDraft(owner, List.of(Map.of(
+      "name", "一号教室", "resourceType", "房间", "capacity", 2
+    )));
   }
 
   private CompletableFuture<Void> bookingAttempt(

@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/store/name-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["storeNameAvailability"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/owner/staff": {
         parameters: {
             query?: never;
@@ -366,6 +382,22 @@ export interface paths {
         get: operations["resources"];
         put?: never;
         post: operations["createResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/onboarding/trial-notice/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acknowledgeTrialNotice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -836,6 +868,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/regions/cities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["administrativeCities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/regions/cities/{cityCode}/districts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["administrativeDistricts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/owner/onboarding/draft": {
         parameters: {
             query?: never;
@@ -846,22 +910,6 @@ export interface paths {
         get: operations["onboarding"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/owner/onboarding/trial-notice/acknowledge": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["acknowledgeTrialNotice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1164,10 +1212,10 @@ export interface components {
         };
         UpdateStoreRequest: {
             name?: string;
-            city?: string;
-            businessCategories?: string[];
-            serviceTags?: string[];
-            address?: string;
+            cityCode?: string;
+            districtCode?: string;
+            detailAddress?: string;
+            serviceScopes?: string[];
             contactPhone?: string;
             days?: {
                 [key: string]: components["schemas"]["DayHours"];
@@ -1214,10 +1262,10 @@ export interface components {
         };
         StoreProfileRequest: {
             name: string;
-            city?: string;
-            businessCategories: string[];
-            serviceTags: string[];
-            address: string;
+            cityCode: string;
+            districtCode: string;
+            detailAddress: string;
+            serviceScopes: string[];
             contactPhone: string;
         };
         ResourceRequest: {
@@ -1273,6 +1321,9 @@ export interface components {
         BookingActionRequest: {
             /** Format: int64 */
             bookingId: number;
+        };
+        StoreNameAvailabilityRequest: {
+            name: string;
         };
         CreateStaffRequest: {
             loginName: string;
@@ -1451,6 +1502,11 @@ export interface components {
             data?: components["schemas"]["TenantDetailResponse"];
             error?: components["schemas"]["ApiError"];
         };
+        BusinessHoursView: {
+            days?: {
+                [key: string]: components["schemas"]["DayHoursView"];
+            };
+        };
         BusinessSnapshotView: {
             /** Format: int32 */
             issuedCards?: number;
@@ -1468,13 +1524,17 @@ export interface components {
             /** Format: date-time */
             lastActivityAt?: string;
         };
+        DayHoursView: {
+            open?: boolean;
+            start?: string;
+            end?: string;
+        };
         StoreView: {
             name?: string;
-            businessCategories?: string;
-            serviceTags?: string;
+            serviceScopes?: string;
             address?: string;
             contactPhone?: string;
-            businessHours?: string;
+            businessHours?: components["schemas"]["BusinessHoursView"];
         };
         TenantDetailResponse: {
             /** Format: int64 */
@@ -2201,6 +2261,32 @@ export interface operations {
             };
         };
     };
+    storeNameAvailability: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreNameAvailabilityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMapStringObject"];
+                };
+            };
+        };
+    };
     staff: {
         parameters: {
             query: {
@@ -2403,6 +2489,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    acknowledgeTrialNotice: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMapStringObject"];
                 };
             };
         };
@@ -3180,7 +3288,7 @@ export interface operations {
             };
         };
     };
-    onboarding: {
+    administrativeCities: {
         parameters: {
             query: {
                 principal: components["schemas"]["SessionPrincipal"];
@@ -3197,12 +3305,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseMapStringObject"];
+                    "*/*": components["schemas"]["ApiResponseListMapStringObject"];
                 };
             };
         };
     };
-    acknowledgeTrialNotice: {
+    administrativeDistricts: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header?: never;
+            path: {
+                cityCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListMapStringObject"];
+                };
+            };
+        };
+    };
+    onboarding: {
         parameters: {
             query: {
                 principal: components["schemas"]["SessionPrincipal"];

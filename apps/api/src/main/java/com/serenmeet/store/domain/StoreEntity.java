@@ -1,6 +1,7 @@
 package com.serenmeet.store.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
@@ -24,11 +25,9 @@ public class StoreEntity {
   /** 门店名称。 */
   private String name;
 
-  /** 店长自填经营项目，逗号分隔展示。 */
-  private String businessCategories;
-
-  /** 店长自填服务标签，逗号分隔展示。 */
-  private String serviceTags;
+  /** 店长自填服务范围，逗号分隔展示。 */
+  @TableField("business_categories")
+  private String serviceScopes;
 
   /** 门店地址。 */
   private String address;

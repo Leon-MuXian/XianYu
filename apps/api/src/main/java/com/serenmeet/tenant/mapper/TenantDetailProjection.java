@@ -1,7 +1,6 @@
 package com.serenmeet.tenant.mapper;
 
 import com.serenmeet.report.dto.BusinessSnapshotView;
-import com.serenmeet.store.dto.StoreView;
 import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +20,6 @@ public class TenantDetailProjection {
   private LocalDate trialEndAt;
   private String frozenReason;
   private String supportWechatId;
-  private StoreView store;
+  private TenantStoreProjection store;
   private BusinessSnapshotView snapshot;
 }

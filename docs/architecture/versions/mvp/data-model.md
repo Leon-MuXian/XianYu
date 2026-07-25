@@ -143,7 +143,11 @@ flowchart LR
 
 ## 4. 门店与开店
 
-### 4.1 `store_onboarding_draft`
+### 4.1 `administrative_city` 与 `administrative_district`
+
+`administrative_city` 保存前端可直接选择的城市，字段包括 `code`、`name`、`sort_order`、`enabled`。`administrative_district` 保存区/县，字段包括 `code`、`city_code`、`name`、`sort_order`、`enabled`，并通过外键关联城市。两张表由 Flyway 基线在项目首次启动时初始化，业务运行时只读。
+
+### 4.2 `store_onboarding_draft`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -156,20 +160,25 @@ flowchart LR
 | `completion_status` | jsonb | `store_profile_done`、`business_hours_done`、`resource_done`。 |
 | `status` | varchar(32) | `draft`、`converted`。 |
 
-### 4.2 `store`
+### 4.3 `store`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `id` | bigint | 门店 ID。 |
 | `tenant_id` | bigint | 租户 ID。 |
 | `name` | varchar(120) | 门店名称。 |
-| `business_categories` | jsonb | 1 到 4 个经营项目标签。 |
-| `service_tags` | jsonb | 1 到 10 个服务标签。 |
-| `address` | varchar(255) | 地址。 |
-| `contact_phone` | varchar(40) | 联系电话文本。 |
+| `name_key` | varchar(120) | NFKC、空白折叠和大小写归一化后的全局唯一键。 |
+| `business_categories` | jsonb | 1 到 6 个服务范围标签；API 字段为 `serviceScopes`。 |
+| `city_code` | varchar(12) | 城市代码，关联 `administrative_city`。 |
+| `district_code` | varchar(12) | 区/县代码，与 `city_code` 共同校验归属关系。 |
+| `detail_address` | varchar(180) | 店长填写的详细地址。 |
+| `address` | varchar(255) | 后端按城市、区/县和详细地址合成的展示地址。 |
+| `contact_phone` | varchar(40) | 必填自由文本，不做格式或唯一性校验。 |
 | `business_hours` | jsonb | 每周营业时间。 |
 
-### 4.3 `resource`
+约束：`name_key` 全局唯一；`city_code` 必须存在，且 `(district_code, city_code)` 必须匹配同一条行政区划关系。
+
+### 4.4 `resource`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -487,6 +496,9 @@ MVP 报表优先实时查询，必要时使用快照。
 
 - `tenant(status, trial_end_at)`
 - `store(tenant_id)`
+- `store(name_key)` 唯一
+- `administrative_city(enabled, sort_order)`
+- `administrative_district(city_code, enabled, sort_order)`
 - `resource(tenant_id, store_id, enabled)`
 - `staff_account(tenant_id, store_id, login_name)`
 - `service_item(tenant_id, store_id, status)`

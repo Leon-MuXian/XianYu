@@ -2,6 +2,7 @@
 import Taro, { useDidShow } from '@tarojs/taro'
 import { computed, ref } from 'vue'
 import { createIdempotencyKey } from '@serenmeet/api-client'
+import { presentBusinessHours } from '@serenmeet/business-components'
 import OwnerTopbar from '../../components/OwnerTopbar.vue'
 import { api } from '../../api'
 import { guardOwner, messageOf, navigate, type OnboardingDraft, ownerRoutes } from '../../owner'
@@ -19,16 +20,9 @@ const completionCount = computed(() => {
   return Object.values(draft.value.completion).filter(Boolean).length
 })
 const ready = computed(() => completionCount.value === 3)
-const remaining = computed(() => 3 - completionCount.value)
 const profile = computed(() => draft.value?.storeProfile || {})
 const resources = computed(() => draft.value?.resources || [])
-const hoursSummary = computed(() => {
-  const days = draft.value?.businessHours?.days || {}
-  const open = Object.values(days).filter((day) => day.open)
-  if (!open.length) return '尚未设置'
-  const first = open[0]
-  return `已设置 ${open.length} 个营业日 · ${first.start}-${first.end}`
-})
+const hoursSummary = computed(() => presentBusinessHours(draft.value?.businessHours).summary)
 
 async function load() {
   loading.value = true
@@ -97,7 +91,7 @@ useDidShow(load)
         <View class="owner-progress">
           <View class="owner-step required-action" :class="draft.completion.storeProfileDone ? 'done' : 'pending'" @tap="navigate(ownerRoutes.store)">
             <Text class="step-glyph">{{ draft.completion.storeProfileDone ? '✓' : '1' }}</Text>
-            <View><Text class="step-title">门店资料</Text><Text class="step-copy">{{ draft.completion.storeProfileDone ? `${profile.name || '已填写'} · ${(profile.businessCategories || []).join('、')}` : '名称、经营项目、服务标签、地址、电话' }}</Text></View>
+            <View><Text class="step-title">门店资料</Text><Text class="step-copy">{{ draft.completion.storeProfileDone ? `${profile.name || '已填写'} · ${(profile.serviceScopes || []).join('、')}` : '名称、服务范围、地址、电话' }}</Text></View>
             <Text class="tag" :class="draft.completion.storeProfileDone ? '' : 'blue'">{{ draft.completion.storeProfileDone ? '已完成' : '去填写' }}</Text>
           </View>
           <View class="owner-step required-action" :class="draft.completion.businessHoursDone ? 'done' : 'pending'" @tap="navigate(ownerRoutes.hours)">
@@ -111,19 +105,6 @@ useDidShow(load)
             <Text class="tag" :class="draft.completion.resourceDone ? '' : 'blue'">{{ draft.completion.resourceDone ? '已完成' : '去填写' }}</Text>
           </View>
         </View>
-        <View v-if="ready" class="store-info-card owner-final-preview">
-          <View class="store-info-head"><Text class="store-info-icon">店</Text><View><Text class="preview-title">门店展示预览</Text></View></View>
-          <View class="store-info-grid">
-            <View><Text>门店名称</Text><Text class="info-value">{{ profile.name }}</Text></View>
-            <View><Text>联系电话</Text><Text class="info-value">{{ profile.contactPhone }}</Text></View>
-            <View><Text>门店地址</Text><Text class="info-value">{{ profile.address }}</Text></View>
-            <View><Text>营业时间</Text><Text class="info-value">{{ hoursSummary }}</Text></View>
-            <View><Text>履约资源</Text><Text class="info-value">{{ resources.length }} 个启用资源</Text></View>
-            <View><Text>经营项目</Text><Text class="info-value">{{ (profile.businessCategories || []).join('、') }}</Text></View>
-          </View>
-          <View class="store-info-tags"><Text v-for="tag in [...(profile.businessCategories || []), ...(profile.serviceTags || [])]" :key="tag">{{ tag }}</Text></View>
-        </View>
-        <View class="owner-start-note"><View><Text class="note-title">{{ ready ? '必填项已完成' : `还差 ${remaining} 项必填` }}</Text><Text>{{ ready ? '确认预览无误后创建门店，系统会校验草稿并进入工作台。' : '保存任一必填项后回到本页，状态会自动刷新。' }}</Text></View><Text class="tag" :class="ready ? '' : 'warn'">{{ ready ? '可创建' : '未完成' }}</Text></View>
         <View v-if="message" class="error-banner">{{ message }}</View>
         <button class="button create-store" :disabled="!ready || creating" :loading="creating" @tap="complete">创建门店</button>
       </template>
