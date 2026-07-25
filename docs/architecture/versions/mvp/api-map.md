@@ -72,6 +72,9 @@
 | `FORM_ERROR` | 表单级错误。 |
 | `NOT_FOUND` | 资源不存在。 |
 | `CONFLICT` | 状态冲突。 |
+| `STAFF_LOGIN_NAME_TAKEN` | 规范化后的员工登录账号已被占用。 |
+| `STAFF_CREDENTIAL_UNAVAILABLE` | 历史员工只有密码哈希，尚无可恢复的加密凭据。 |
+| `STAFF_CREDENTIAL_REVEAL_RATE_LIMITED` | 当前店长读取同一员工凭据过于频繁。 |
 | `REQUEST_DUPLICATED` | 重复提交。 |
 | `INVITE_INVALID` | 邀请码无效。 |
 | `CARD_UNAVAILABLE` | 会员卡不可用。 |
@@ -124,16 +127,21 @@
 | `PUT` | `/owner/resources/{resourceId}` | 修改资源。 |
 | `DELETE` | `/owner/resources/{resourceId}` | 删除资源，先校验阻断原因。 |
 
+`resourceType` 始终传递真实类型文本。前端固定快捷项直接传对应值；选择自定义时传用户输入并去除首尾空格后的值，不传“自定义”占位值。服务项目和排期通过资源 ID 建立关联，不依赖资源类型枚举。
+
 ### 4.4 员工
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `GET` | `/owner/staff` | 员工列表。 |
-| `POST` | `/owner/staff` | 创建员工账号。 |
-| `PUT` | `/owner/staff/{staffId}` | 修改员工账号资料。 |
-| `PUT` | `/owner/staff/{staffId}/password` | 修改或重置密码。 |
-| `PUT` | `/owner/staff/{staffId}/status` | 启用或停用。 |
+| `POST` | `/owner/staff` | 创建员工账号；登录账号规范化后全平台唯一，冲突返回 HTTP 409 / `STAFF_LOGIN_NAME_TAKEN`。 |
+| `POST` | `/owner/staff/{staffId}/credential/reveal` | 所属店长按员工读取姓名、登录账号和当前登录密码；租户校验、限频、审计且响应禁止缓存，不经过幂等响应存储。 |
+| `PUT` | `/owner/staff/{staffId}` | 修改员工账号资料；唯一性校验排除当前员工自身，撞号返回 HTTP 409 / `STAFF_LOGIN_NAME_TAKEN`。 |
+| `PUT` | `/owner/staff/{staffId}/password` | 修改密码；在同一事务同步更新密码哈希与加密凭据并撤销该员工已有会话，响应不返回密码。 |
+| `PUT` | `/owner/staff/{staffId}/status` | 启用或停用；停用时撤销该员工已有会话，重新启用不恢复旧会话。 |
 | `DELETE` | `/owner/staff/{staffId}` | 物理删除，先校验服务、会员卡范围和未来排期。 |
+
+`GET /owner/staff` 只返回 `credentialAvailable`，不得返回全部员工密码。凭据读取响应包含 `Cache-Control: no-store` 与 `Pragma: no-cache`；历史仅哈希账号返回 `STAFF_CREDENTIAL_UNAVAILABLE`，店长完成一次密码设置后即可读取。
 
 ### 4.5 服务项目
 

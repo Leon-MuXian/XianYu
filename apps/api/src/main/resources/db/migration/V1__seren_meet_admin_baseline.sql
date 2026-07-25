@@ -123,7 +123,23 @@ create table staff_account (
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,
   constraint uq_staff_login unique (login_name),
+  constraint uq_staff_account_tenant unique (id, tenant_id),
   constraint chk_staff_status check (status in ('active', 'disabled'))
+);
+
+create table staff_credential_secret (
+  tenant_id bigint not null references tenant(id),
+  staff_account_id bigint primary key,
+  key_id varchar(32) not null,
+  cipher_version varchar(32) not null,
+  nonce bytea not null,
+  ciphertext bytea not null,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp,
+  constraint fk_staff_credential_account_tenant
+    foreign key (staff_account_id, tenant_id) references staff_account(id, tenant_id) on delete cascade,
+  constraint chk_staff_credential_nonce check (octet_length(nonce) = 12),
+  constraint chk_staff_credential_ciphertext check (octet_length(ciphertext) >= 16)
 );
 
 create table staff_profile (

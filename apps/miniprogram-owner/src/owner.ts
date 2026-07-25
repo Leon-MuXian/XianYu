@@ -89,6 +89,13 @@ export interface Staff {
   roleLabel: string
   status: string
   firstLogin?: boolean
+  credentialAvailable: boolean
+}
+
+export interface StaffCredential {
+  staffName: string
+  loginName: string
+  loginPassword: string
 }
 
 export interface Service {

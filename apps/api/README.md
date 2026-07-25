@@ -38,6 +38,10 @@
 | `SEREN_MEET_DB_PASSWORD` | 无，必填 | 数据库密码 |
 | `SEREN_MEET_ADMIN_ORIGIN` | `http://127.0.0.1:5173` | 后台 Web 跨域来源 |
 | `SEREN_MEET_FLYWAY_ENABLED` | `true` | 是否启用 Flyway |
+| `SEREN_MEET_STAFF_CREDENTIAL_ACTIVE_KEY_ID` | 无，必填 | 新写员工凭据使用的加密密钥 ID |
+| `SEREN_MEET_STAFF_CREDENTIAL_KEYS` | 无，必填 | `keyId=Base64` 格式的 AES-256-GCM keyring；密钥解码后必须为 32 字节 |
+
+员工登录仍只校验 PBKDF2 哈希。店长查看员工密码使用独立 AES-GCM 密文；使用 `openssl rand -base64 32` 生成本地或部署密钥，不得把真实 keyring 提交到仓库。轮换时先加入新密钥并切换 active key，旧密钥必须保留到相关密文完成迁移。
 
 运行真实 PostgreSQL 集成测试：
 

@@ -68,12 +68,14 @@ Nginx 推荐规则：
 | `SEREN_MEET_BOOTSTRAP_ADMIN_USERNAME` | 首个管理员用户名，仅空表引导时使用。 |
 | `SEREN_MEET_BOOTSTRAP_ADMIN_PASSWORD` | 首个管理员密码，至少 12 位，无默认值。 |
 | `SEREN_MEET_BOOTSTRAP_ADMIN_DISPLAY_NAME` | 首个管理员显示名。 |
+| `SEREN_MEET_STAFF_CREDENTIAL_ACTIVE_KEY_ID` | 新写员工凭据使用的 AES-256-GCM 密钥 ID，无默认值。 |
+| `SEREN_MEET_STAFF_CREDENTIAL_KEYS` | `keyId=Base64` 格式的版本化员工凭据 keyring；每个密钥解码后必须为 32 字节，部署环境必填且不得提交真实值。 |
 | `SEREN_MEET_OWNER_WECHAT_APP_ID` | 店长端小程序 AppID。 |
 | `SEREN_MEET_OWNER_WECHAT_APP_SECRET` | 店长端小程序 AppSecret。 |
 | `SEREN_MEET_MEMBER_WECHAT_APP_ID` | 会员端小程序 AppID。 |
 | `SEREN_MEET_MEMBER_WECHAT_APP_SECRET` | 会员端小程序 AppSecret。 |
 
-员工端使用账号密码登录，不需要微信凭据。`trial` 和 `prod` 必须注入真实店长端、会员端 AppID/Secret；local/test profile 才会启用微信测试替身。
+员工端使用账号密码登录，不需要微信凭据。员工可恢复凭据密钥必须使用 `openssl rand -base64 32` 等安全随机源生成；轮换时先在 keyring 同时保留新旧密钥，将 active key 切到新版本，确认旧版本密文已完成迁移后再移除旧密钥。`trial` 和 `prod` 必须注入真实店长端、会员端 AppID/Secret；local/test profile 才会启用微信测试替身。
 
 从 `infra/compose/.env.example` 创建不提交仓库的 `infra/compose/.env` 后启动：
 

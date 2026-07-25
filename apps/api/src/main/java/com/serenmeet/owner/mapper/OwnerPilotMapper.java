@@ -85,6 +85,7 @@ public interface OwnerPilotMapper {
       @Param("name") String name,
       @Param("resourceType") String resourceType,
       @Param("capacity") int capacity,
+      @Param("enabled") boolean enabled,
       @Param("sortOrder") int sortOrder);
 
   int updateResource(
@@ -109,6 +110,19 @@ public interface OwnerPilotMapper {
 
   List<Map<String, Object>> selectStaff(@Param("tenantId") Long tenantId);
 
+  Map<String, Object> selectStaffCredential(
+      @Param("tenantId") Long tenantId, @Param("staffId") Long staffId);
+
+  @InterceptorIgnore(tenantLine = "true")
+  List<String> selectStaffCredentialKeyIds();
+
+  @InterceptorIgnore(tenantLine = "true")
+  List<Map<String, Object>> selectStaffCredentialValidationSamples();
+
+  @InterceptorIgnore(tenantLine = "true")
+  int countStaffLoginName(
+      @Param("loginName") String loginName, @Param("excludeStaffId") Long excludeStaffId);
+
   Long insertStaffAccount(
       @Param("tenantId") Long tenantId,
       @Param("storeId") Long storeId,
@@ -121,6 +135,14 @@ public interface OwnerPilotMapper {
       @Param("tenantId") Long tenantId,
       @Param("staffId") Long staffId,
       @Param("displayName") String displayName);
+
+  int insertStaffCredentialSecret(
+      @Param("tenantId") Long tenantId,
+      @Param("staffId") Long staffId,
+      @Param("keyId") String keyId,
+      @Param("cipherVersion") String cipherVersion,
+      @Param("nonce") byte[] nonce,
+      @Param("ciphertext") byte[] ciphertext);
 
   int updateStaffAccount(
       @Param("tenantId") Long tenantId,
@@ -138,6 +160,17 @@ public interface OwnerPilotMapper {
       @Param("tenantId") Long tenantId,
       @Param("staffId") Long staffId,
       @Param("passwordHash") String passwordHash);
+
+  int upsertStaffCredentialSecret(
+      @Param("tenantId") Long tenantId,
+      @Param("staffId") Long staffId,
+      @Param("keyId") String keyId,
+      @Param("cipherVersion") String cipherVersion,
+      @Param("nonce") byte[] nonce,
+      @Param("ciphertext") byte[] ciphertext);
+
+  int revokeStaffSessions(
+      @Param("tenantId") Long tenantId, @Param("staffId") Long staffId);
 
   int updateStaffStatus(
       @Param("tenantId") Long tenantId,

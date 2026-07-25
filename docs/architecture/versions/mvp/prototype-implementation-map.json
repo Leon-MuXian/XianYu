@@ -23,7 +23,7 @@
     { "index": 10, "label": "O-DASHBOARD 店长端 / 工作台 · 创建后待办", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/dashboard/index.vue" },
     { "index": 11, "label": "O-STAFF 店长端 / 员工 - 新增员工抽屉", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/staff/index.vue" },
     { "index": 12, "label": "O-STAFF 店长端 / 员工", "stage": 2, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/staff/index.vue" },
-    { "index": 13, "label": "O-STAFF 店长端 / 员工 - 修改员工", "stage": 2, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/staff/index.vue" },
+    { "index": 13, "label": "O-STAFF 店长端 / 员工 - 修改员工 · 更多菜单展开", "stage": 2, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/staff/index.vue" },
     { "index": 14, "label": "O-SERVICE 店长端 / 服务项目", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/services/index.vue" },
     { "index": 15, "label": "O-SERVICE 店长端 / 服务项目 - 选择资源与员工", "stage": 1, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/services/index.vue" },
     { "index": 16, "label": "O-SERVICE 店长端 / 服务项目 · 无员工阻断", "stage": 2, "status": "implemented", "implementation": "apps/miniprogram-owner/src/pages/services/index.vue" },

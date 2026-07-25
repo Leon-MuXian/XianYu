@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -43,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -66,6 +71,13 @@ class PilotWorkflowPostgresTest {
     registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
     registry.add("spring.datasource.username", POSTGRES::getUsername);
     registry.add("spring.datasource.password", POSTGRES::getPassword);
+    registry.add("seren-meet.staff-credential.active-key-id", () -> "integration");
+    registry.add(
+      "seren-meet.staff-credential.keys",
+      () -> "integration=" + Base64.getEncoder().encodeToString(
+        "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8)
+      )
+    );
   }
 
   @Autowired
@@ -294,8 +306,22 @@ class PilotWorkflowPostgresTest {
     ownerService.saveBusinessHours(owner, Map.of(
       "days", Map.of("monday", Map.of("open", true, "start", "09:00", "end", "21:00"))
     ));
+    mockMvc.perform(put("/owner/onboarding/resources")
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+          {"resources":[{"name":"兼容教室","resourceType":"房间","capacity":1}]}
+          """))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.resources[0].enabled").value(true))
+      .andExpect(jsonPath("$.data.resources[0].sortOrder").value(1));
+    TenantContext.set(owner.tenantId());
     ownerService.saveResourcesDraft(owner, List.of(Map.of(
-      "name", "一号教室", "resourceType", "房间", "capacity", 2
+      "name", "一号教室",
+      "resourceType", " 静语舱 ",
+      "capacity", 2,
+      "enabled", true,
+      "sortOrder", 4
     )));
     assertThat(ownerService.onboardingDraft(owner).get("completion"))
       .isInstanceOfSatisfying(Map.class, completion ->
@@ -304,7 +330,17 @@ class PilotWorkflowPostgresTest {
     ownerService.completeOnboarding(owner);
     assertThat(ownerService.me(owner).get("name")).isEqualTo("闲遇集成测试店");
 
-    Long resourceId = id(ownerService.resources(owner).getFirst());
+    Map<String, Object> primaryResource = ownerService.resources(owner).getFirst();
+    assertThat(primaryResource)
+      .containsEntry("resourceType", "静语舱")
+      .containsEntry("enabled", true)
+      .containsEntry("sortOrder", 4);
+    Long resourceId = id(primaryResource);
+    assertThat(ownerService.createResource(owner, " 二号教室 ", " 设备 ", 1, false, 8))
+      .containsEntry("name", "二号教室")
+      .containsEntry("resourceType", "设备")
+      .containsEntry("enabled", false)
+      .containsEntry("sortOrder", 8);
     Long staffId = id(ownerService.createStaff(owner, "pilot-staff", "staff-pass-2026", "小林", "教练"));
     Long serviceId = id(ownerService.createService(
       owner, "舒缓瑜伽", "瑜伽", 60, 1, 1, List.of(resourceId), List.of(staffId), "active"
@@ -395,6 +431,317 @@ class PilotWorkflowPostgresTest {
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.success").value(false))
       .andExpect(jsonPath("$.error.code").value("TENANT_FROZEN"));
+  }
+
+  @Test
+  void resourceDraftRejectsCustomPlaceholderAndAllDisabledResources() {
+    BusinessLoginResponse ownerLogin = authService.ownerWechatLogin("owner-resource-validation");
+    SessionPrincipal owner = authService.requirePrincipal("Bearer " + ownerLogin.token());
+    TenantContext.set(owner.tenantId());
+
+    assertThatThrownBy(() -> ownerService.saveResourcesDraft(owner, List.of(Map.of(
+      "name", "咨询空间",
+      "resourceType", "自定义",
+      "capacity", 1,
+      "enabled", true,
+      "sortOrder", 1
+    ))))
+      .isInstanceOf(ApiException.class)
+      .hasMessageContaining("具体的自定义资源类型");
+
+    assertThatThrownBy(() -> ownerService.saveResourcesDraft(owner, List.of(Map.of(
+      "name", "咨询舱",
+      "resourceType", "咨询舱",
+      "capacity", 1,
+      "enabled", false,
+      "sortOrder", 1
+    ))))
+      .isInstanceOf(ApiException.class)
+      .hasMessageContaining("至少保留 1 个启用资源");
+  }
+
+  @Test
+  void staffLoginNamesAreNormalizedGloballyUniqueAndConcurrencySafe() throws Exception {
+    SessionPrincipal firstOwner = ownerPrincipal("owner-staff-login-first");
+    TenantContext.set(firstOwner.tenantId());
+    saveCompleteStoreDraft(firstOwner, "员工账号唯一门店一", "021-10000001");
+    ownerService.completeOnboarding(firstOwner);
+
+    Map<String, Object> firstStaff =
+      ownerService.createStaff(
+        firstOwner, "　ＴＥＡＭ－Ａ　", "staff-pass-2026", "员工甲", "教练");
+    Long firstStaffId = id(firstStaff);
+    assertThat(firstStaff).containsEntry("loginName", "team-a");
+
+    BusinessLoginResponse staffLogin =
+      authService.staffLogin(new StaffLoginRequest(" ＴＥＡＭ－Ａ ", "staff-pass-2026"));
+    assertThat(authService.requirePrincipal("Bearer " + staffLogin.token()).tenantId())
+      .isEqualTo(firstOwner.tenantId());
+
+    assertThat(ownerService.updateStaff(
+      firstOwner, firstStaffId, " TEAM-A ", "员工甲", "康复师"
+    )).containsEntry("loginName", "team-a");
+
+    assertThatThrownBy(() -> ownerService.createStaff(
+      firstOwner, " team-a ", "staff-pass-2026", "同租户员工", "教练"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("STAFF_LOGIN_NAME_TAKEN")
+    );
+
+    Long secondStaffId = id(ownerService.createStaff(
+      firstOwner, "team-b", "staff-pass-2026", "员工乙", "教练"
+    ));
+    assertThatThrownBy(() -> ownerService.updateStaff(
+      firstOwner, secondStaffId, "ＴＥＡＭ－Ａ", "员工乙", "教练"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("STAFF_LOGIN_NAME_TAKEN")
+    );
+
+    SessionPrincipal secondOwner = ownerPrincipal("owner-staff-login-second");
+    TenantContext.set(secondOwner.tenantId());
+    saveCompleteStoreDraft(secondOwner, "员工账号唯一门店二", "021-10000002");
+    ownerService.completeOnboarding(secondOwner);
+    assertThatThrownBy(() -> ownerService.createStaff(
+      secondOwner, "Team-A", "staff-pass-2026", "跨租户员工", "教练"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("STAFF_LOGIN_NAME_TAKEN")
+    );
+
+    CountDownLatch ready = new CountDownLatch(2);
+    CountDownLatch start = new CountDownLatch(1);
+    AtomicInteger successes = new AtomicInteger();
+    AtomicInteger conflicts = new AtomicInteger();
+    CompletableFuture<Void> firstAttempt = staffCreationAttempt(
+      firstOwner, " concurrent-staff ", "并发员工一", ready, start, successes, conflicts
+    );
+    CompletableFuture<Void> secondAttempt = staffCreationAttempt(
+      secondOwner, "ＣＯＮＣＵＲＲＥＮＴ－ＳＴＡＦＦ", "并发员工二",
+      ready, start, successes, conflicts
+    );
+    assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+    start.countDown();
+    firstAttempt.get(10, TimeUnit.SECONDS);
+    secondAttempt.get(10, TimeUnit.SECONDS);
+
+    assertThat(successes).hasValue(1);
+    assertThat(conflicts).hasValue(1);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from staff_account where login_name = 'concurrent-staff'", Integer.class
+    )).isEqualTo(1);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from pg_constraint where conname = 'uq_staff_login'", Integer.class
+    )).isEqualTo(1);
+  }
+
+  @Test
+  void staffPasswordResetAndDisablePermanentlyRevokeExistingSessions() {
+    SessionPrincipal owner = ownerPrincipal("owner-staff-session-revocation");
+    TenantContext.set(owner.tenantId());
+    saveCompleteStoreDraft(owner, "员工会话失效门店", "021-10000003");
+    ownerService.completeOnboarding(owner);
+
+    Long staffId = id(ownerService.createStaff(
+      owner, "session-staff", "old-staff-pass-2026", "会话员工", "教练"
+    ));
+    Long unaffectedStaffId = id(ownerService.createStaff(
+      owner, "unaffected-session-staff", "other-staff-pass-2026", "其他员工", "教练"
+    ));
+    BusinessLoginResponse oldLogin =
+      authService.staffLogin(new StaffLoginRequest("session-staff", "old-staff-pass-2026"));
+    BusinessLoginResponse unaffectedLogin = authService.staffLogin(
+      new StaffLoginRequest("unaffected-session-staff", "other-staff-pass-2026")
+    );
+    assertThat(authService.requirePrincipal("Bearer " + oldLogin.token()).subjectId())
+      .isEqualTo(staffId.toString());
+
+    ownerService.updateStaffPassword(owner, staffId, "new-staff-pass-2026");
+
+    assertThat(jdbcTemplate.queryForObject(
+      "select revoked_at is not null from auth_session where token_hash = ?",
+      Boolean.class,
+      tokenHasher.hash(oldLogin.token())
+    )).isTrue();
+    assertThatThrownBy(() -> authService.requirePrincipal("Bearer " + oldLogin.token()))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("UNAUTHORIZED")
+      );
+    assertThatThrownBy(() -> authService.staffLogin(
+      new StaffLoginRequest("session-staff", "old-staff-pass-2026")
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("INVALID_CREDENTIALS")
+    );
+    assertThat(authService.requirePrincipal("Bearer " + unaffectedLogin.token()).subjectId())
+      .isEqualTo(unaffectedStaffId.toString());
+
+    BusinessLoginResponse resetLogin =
+      authService.staffLogin(new StaffLoginRequest("session-staff", "new-staff-pass-2026"));
+    assertThat(authService.requirePrincipal("Bearer " + resetLogin.token()).firstLogin()).isTrue();
+
+    ownerService.updateStaffStatus(owner, staffId, "disabled");
+
+    assertThatThrownBy(() -> authService.requirePrincipal("Bearer " + resetLogin.token()))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("UNAUTHORIZED")
+      );
+    assertThatThrownBy(() -> authService.staffLogin(
+      new StaffLoginRequest("session-staff", "new-staff-pass-2026")
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("STAFF_DISABLED")
+    );
+
+    ownerService.updateStaffStatus(owner, staffId, "active");
+
+    assertThatThrownBy(() -> authService.requirePrincipal("Bearer " + resetLogin.token()))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("UNAUTHORIZED")
+      );
+    BusinessLoginResponse reenabledLogin =
+      authService.staffLogin(new StaffLoginRequest("session-staff", "new-staff-pass-2026"));
+    assertThat(authService.requirePrincipal("Bearer " + reenabledLogin.token()).subjectId())
+      .isEqualTo(staffId.toString());
+    assertThat(authService.requirePrincipal("Bearer " + unaffectedLogin.token()).subjectId())
+      .isEqualTo(unaffectedStaffId.toString());
+  }
+
+  @Test
+  void ownerRevealsEncryptedStaffCredentialWithoutCrossTenantOrCacheLeak() throws Exception {
+    BusinessLoginResponse ownerLogin =
+      authService.ownerWechatLogin("owner-staff-credential-primary");
+    SessionPrincipal owner = authService.requirePrincipal("Bearer " + ownerLogin.token());
+    TenantContext.set(owner.tenantId());
+    saveCompleteStoreDraft(owner, "员工凭据保管门店", "021-10000004");
+    ownerService.completeOnboarding(owner);
+
+    String initialPassword = "initial-staff-pass-2026";
+    Long staffId = id(ownerService.createStaff(
+      owner, "credential-staff", initialPassword, "凭据员工", "教练"
+    ));
+    String idempotentPassword = "idempotent-staff-pass-2026";
+    mockMvc.perform(post("/owner/staff")
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .header("Idempotency-Key", "staff-credential-create")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+          {
+            "loginName":"idempotent-credential-staff",
+            "password":"idempotent-staff-pass-2026",
+            "staffName":"幂等凭据员工",
+            "roleLabel":"教练"
+          }
+          """))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.loginPassword").doesNotExist())
+      .andExpect(jsonPath("$.data.password").doesNotExist());
+    TenantContext.set(owner.tenantId());
+    assertThat(jdbcTemplate.queryForObject(
+      """
+      select response_body::text from idempotency_request
+      where actor_type = 'owner' and actor_id = ? and operation = 'owner.staff.create'
+        and idempotency_key = 'staff-credential-create'
+      """,
+      String.class,
+      owner.subjectId()
+    )).doesNotContain(idempotentPassword);
+    Map<String, Object> listedStaff = ownerService.staff(owner).getFirst();
+    assertThat(listedStaff)
+      .containsEntry("credentialAvailable", true)
+      .doesNotContainKeys("loginPassword", "password", "ciphertext", "nonce");
+
+    Map<String, Object> storedSecret = jdbcTemplate.queryForMap(
+      """
+      select account.password_hash as password_hash, secret.key_id as key_id,
+        encode(secret.nonce, 'base64') as nonce, encode(secret.ciphertext, 'base64') as ciphertext
+      from staff_account account
+      join staff_credential_secret secret on secret.staff_account_id = account.id
+      where account.tenant_id = ? and account.id = ?
+      """,
+      owner.tenantId(),
+      staffId
+    );
+    assertThat(storedSecret.get("password_hash").toString()).doesNotContain(initialPassword);
+    assertThat(storedSecret.get("ciphertext").toString()).doesNotContain(initialPassword);
+    assertThat(storedSecret.get("nonce").toString()).isNotBlank();
+    assertThat(storedSecret.get("key_id")).isEqualTo("integration");
+
+    mockMvc.perform(post("/owner/staff/{staffId}/credential/reveal", staffId)
+        .header("Authorization", "Bearer " + ownerLogin.token()))
+      .andExpect(status().isOk())
+      .andExpect(header().string("Cache-Control", "no-store, no-cache, must-revalidate"))
+      .andExpect(header().string("Pragma", "no-cache"))
+      .andExpect(jsonPath("$.data.staffId").value(staffId))
+      .andExpect(jsonPath("$.data.staffName").value("凭据员工"))
+      .andExpect(jsonPath("$.data.loginName").value("credential-staff"))
+      .andExpect(jsonPath("$.data.loginPassword").value(initialPassword));
+    TenantContext.set(owner.tenantId());
+    assertThat(jdbcTemplate.queryForObject(
+      """
+      select count(*) from audit_log
+      where tenant_id = ? and action = 'reveal_staff_credential'
+        and concat_ws('|', target_name, old_value, new_value, reason) like ?
+      """,
+      Integer.class,
+      owner.tenantId(),
+      "%" + initialPassword + "%"
+    )).isZero();
+
+    String resetPassword = "reset-staff-pass-2026";
+    mockMvc.perform(put("/owner/staff/{staffId}/password", staffId)
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .header("Idempotency-Key", "staff-credential-reset")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"password\":\"reset-staff-pass-2026\"}"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.passwordReset").value(true))
+      .andExpect(jsonPath("$.data.loginPassword").doesNotExist())
+      .andExpect(jsonPath("$.data.password").doesNotExist());
+    TenantContext.set(owner.tenantId());
+    assertThat(jdbcTemplate.queryForObject(
+      """
+      select response_body::text from idempotency_request
+      where actor_type = 'owner' and actor_id = ? and operation = ?
+        and idempotency_key = 'staff-credential-reset'
+      """,
+      String.class,
+      owner.subjectId(),
+      "owner.staff.password." + staffId
+    )).doesNotContain(resetPassword);
+    assertThat(ownerService.revealStaffCredential(owner, staffId).loginPassword())
+      .isEqualTo(resetPassword);
+    assertThat(jdbcTemplate.queryForObject(
+      "select encode(ciphertext, 'base64') from staff_credential_secret where staff_account_id = ?",
+      String.class,
+      staffId
+    )).isNotEqualTo(storedSecret.get("ciphertext"));
+
+    BusinessLoginResponse otherOwnerLogin =
+      authService.ownerWechatLogin("owner-staff-credential-other");
+    SessionPrincipal otherOwner =
+      authService.requirePrincipal("Bearer " + otherOwnerLogin.token());
+    TenantContext.set(otherOwner.tenantId());
+    saveCompleteStoreDraft(otherOwner, "员工凭据隔离门店", "021-10000005");
+    ownerService.completeOnboarding(otherOwner);
+    mockMvc.perform(post("/owner/staff/{staffId}/credential/reveal", staffId)
+        .header("Authorization", "Bearer " + otherOwnerLogin.token()))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
+
+    TenantContext.set(owner.tenantId());
+    Long legacyStaffId = id(ownerService.createStaff(
+      owner, "legacy-credential-staff", "legacy-staff-pass-2026", "历史员工", "教练"
+    ));
+    jdbcTemplate.update(
+      "delete from staff_credential_secret where tenant_id = ? and staff_account_id = ?",
+      owner.tenantId(),
+      legacyStaffId
+    );
+    assertThat(ownerService.staff(owner))
+      .filteredOn(item -> legacyStaffId.equals(id(item)))
+      .singleElement()
+      .satisfies(item -> assertThat(item).containsEntry("credentialAvailable", false));
+    assertThatThrownBy(() -> ownerService.revealStaffCredential(owner, legacyStaffId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("STAFF_CREDENTIAL_UNAVAILABLE")
+      );
   }
 
   private void verifyIdempotentIssuance(SessionPrincipal owner, Long templateId) {
@@ -531,6 +878,36 @@ class PilotWorkflowPostgresTest {
         memberService.createBooking(member.principal(), slotId, member.cardId());
         successes.incrementAndGet();
       } catch (ApiException exception) {
+        conflicts.incrementAndGet();
+      } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(exception);
+      } finally {
+        TenantContext.clear();
+      }
+    });
+  }
+
+  private CompletableFuture<Void> staffCreationAttempt(
+    SessionPrincipal owner,
+    String loginName,
+    String staffName,
+    CountDownLatch ready,
+    CountDownLatch start,
+    AtomicInteger successes,
+    AtomicInteger conflicts
+  ) {
+    return CompletableFuture.runAsync(() -> {
+      TenantContext.set(owner.tenantId());
+      ready.countDown();
+      try {
+        start.await(5, TimeUnit.SECONDS);
+        ownerService.createStaff(owner, loginName, "staff-pass-2026", staffName, "教练");
+        successes.incrementAndGet();
+      } catch (ApiException exception) {
+        if (!"STAFF_LOGIN_NAME_TAKEN".equals(exception.code())) {
+          throw exception;
+        }
         conflicts.incrementAndGet();
       } catch (InterruptedException exception) {
         Thread.currentThread().interrupt();

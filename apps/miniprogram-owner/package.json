@@ -8,7 +8,7 @@
     "build:weapp:device": "../../scripts/build-owner-device.sh",
     "build:weapp:preview": "node ../../scripts/check-miniprogram-preview-config.mjs && taro build --type weapp",
     "typecheck": "vue-tsc --noEmit",
-    "test": "vitest run src/login-diagnostics.test.ts"
+    "test": "vitest run src/*.test.ts"
   },
   "dependencies": {
     "@serenmeet/api-client": "0.0.0",

@@ -5,12 +5,6 @@
     "description": "店长、员工、会员和平台后台统一 API",
     "version": "mvp"
   },
-  "servers": [
-    {
-      "url": "http://127.0.0.1:8080",
-      "description": "Generated server url"
-    }
-  ],
   "paths": {
     "/staff/profile": {
       "get": {
@@ -1197,6 +1191,45 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/staff/{staffId}/credential/reveal": {
+      "post": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "revealStaffCredential",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          },
+          {
+            "name": "staffId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStaffCredentialResponse"
                 }
               }
             }
@@ -3480,12 +3513,18 @@
         "type": "object",
         "properties": {
           "loginName": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "staffName": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "roleLabel": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           }
         }
@@ -3572,9 +3611,13 @@
         "type": "object",
         "properties": {
           "name": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "resourceType": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "capacity": {
@@ -3646,13 +3689,25 @@
         "type": "object",
         "properties": {
           "name": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "resourceType": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "capacity": {
             "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           }
@@ -3849,6 +3904,8 @@
         "type": "object",
         "properties": {
           "loginName": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "password": {
@@ -3857,9 +3914,48 @@
             "type": "string"
           },
           "staffName": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "roleLabel": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseStaffCredentialResponse": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StaffCredentialResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          }
+        }
+      },
+      "StaffCredentialResponse": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "staffName": {
+            "type": "string"
+          },
+          "loginName": {
+            "type": "string"
+          },
+          "loginPassword": {
             "type": "string"
           }
         }

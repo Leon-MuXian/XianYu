@@ -85,7 +85,7 @@ useDidShow(load)
           <Text class="page-title">{{ showForm ? editing ? '修改服务项目' : '创建可预约服务' : '服务项目' }}</Text>
           <Text class="page-copy">{{ showForm ? '先写清楚会员看到的服务，再选择哪些资源和员工可以承接。' : `共 ${services.length} 项，查看服务状态或进入修改。` }}</Text>
         </View>
-        <button v-if="!showForm" class="owner-add-action" aria-label="新增服务" hover-class="owner-add-action-pressed" @tap="reset"><Text class="owner-add-action-icon">+</Text></button>
+        <button v-if="!showForm" class="owner-add-action" aria-label="新增服务" hover-class="owner-add-action-pressed" @tap="reset"><View class="owner-add-action-icon" /></button>
       </View>
       <View v-if="services.length" class="service-summary-list">
         <View v-for="service in services" :key="service.id" class="owner-list-card" @tap="edit(service)"><Text class="list-card-title">{{ service.name }}</Text><Text class="list-card-copy">{{ service.serviceType }} · {{ service.durationMin }} 分钟 · 容量 {{ service.defaultCapacity }} · 每次核销 {{ service.deductCount }} 次</Text><Text class="tag" :class="service.status === 'active' ? '' : 'warn'">{{ service.status === 'active' ? '启用' : '草稿/停用' }}</Text><View class="inline-actions"><Text @tap.stop="edit(service)">修改</Text><Text @tap.stop="changeStatus(service)">{{ service.status === 'active' ? '停用' : '启用' }}</Text></View></View>

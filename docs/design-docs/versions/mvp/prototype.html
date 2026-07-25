@@ -1813,6 +1813,15 @@
       font-size: 13px;
       line-height: 1.35;
     }
+    .field .field-error {
+      display: block;
+      margin-top: 5px;
+      color: var(--red);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 800;
+      line-height: 1.4;
+    }
     .state-stack {
       display: grid;
       gap: 10px;
@@ -3063,34 +3072,44 @@
     }
     .owner-redesign .phone-wrap:has(.topbar > .button):has(.resource-row-actions) .owner-page-head > .tag,
     .owner-redesign .phone-wrap:has(.topbar > .button):has(.coach-roster) .owner-page-head > .tag {
+      position: relative;
       display: grid;
       place-items: center;
       flex: 0 0 auto;
+      box-sizing: border-box;
       width: 44px;
       height: 44px;
+      min-width: 44px;
       min-height: 44px;
       border: 0;
       border-radius: 50%;
-      background: transparent;
+      padding: 3px;
+      background: var(--green-dark);
+      background-clip: content-box;
       color: transparent;
       cursor: pointer;
       font-size: 0;
       box-shadow: none;
       touch-action: manipulation;
     }
+    .owner-redesign .phone-wrap:has(.topbar > .button):has(.resource-row-actions) .owner-page-head > .tag::before,
+    .owner-redesign .phone-wrap:has(.topbar > .button):has(.resource-row-actions) .owner-page-head > .tag::after,
+    .owner-redesign .phone-wrap:has(.topbar > .button):has(.coach-roster) .owner-page-head > .tag::before,
+    .owner-redesign .phone-wrap:has(.topbar > .button):has(.coach-roster) .owner-page-head > .tag::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      content: "";
+      display: block;
+      width: 14px;
+      height: 2px;
+      border-radius: 2px;
+      background: #fff;
+      transform: translate(-50%, -50%);
+    }
     .owner-redesign .phone-wrap:has(.topbar > .button):has(.resource-row-actions) .owner-page-head > .tag::after,
     .owner-redesign .phone-wrap:has(.topbar > .button):has(.coach-roster) .owner-page-head > .tag::after {
-      content: "+";
-      display: grid;
-      place-items: center;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--green-dark);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 500;
-      line-height: 1;
+      transform: translate(-50%, -50%) rotate(90deg);
     }
     .owner-hero {
       position: relative;
@@ -4401,6 +4420,256 @@
       font-size: 11px;
       line-height: 1.45;
       font-weight: 800;
+    }
+    .staff-edit-sheet .sheet-title {
+      position: relative;
+      padding-right: 44px;
+    }
+    .staff-edit-more {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      width: 34px;
+      height: 34px;
+      border: 1px solid #d2dcd6;
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+    .staff-edit-more i {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .staff-edit-menu {
+      position: absolute;
+      z-index: 3;
+      top: 42px;
+      right: 0;
+      width: 126px;
+      overflow: hidden;
+      border: 1px solid #d7dfda;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 12px 28px rgba(20, 35, 28, .15);
+    }
+    .staff-edit-menu span {
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      padding: 0 13px;
+      color: var(--coral);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .staff-password-label {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .staff-password-label i {
+      color: var(--green-dark);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 900;
+    }
+    .staff-edit-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 62px;
+      margin-top: 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 10px 12px;
+    }
+    .staff-edit-status strong,
+    .staff-edit-status small {
+      display: block;
+    }
+    .staff-edit-status strong {
+      font-size: 13px;
+    }
+    .staff-edit-status small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .staff-status-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-width: 142px;
+      border: 1px solid #d6e0da;
+      border-radius: 8px;
+      background: #edf2ee;
+      padding: 3px;
+    }
+    .staff-status-switch span {
+      display: grid;
+      place-items: center;
+      min-height: 34px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .staff-status-switch .active {
+      background: var(--green-dark);
+      color: #fff;
+      box-shadow: 0 2px 5px rgba(16, 63, 54, .16);
+    }
+    .clear-resource-sheet {
+      display: flex;
+      flex-direction: column;
+      max-height: 680px;
+      overflow: hidden;
+      padding: 10px 20px 18px;
+      background: #fffefa;
+    }
+    .clear-resource-sheet .sheet-grip {
+      flex: 0 0 auto;
+      margin: 0 auto 12px;
+    }
+    .clear-resource-sheet .sheet-title {
+      flex: 0 0 auto;
+      margin-bottom: 0;
+      padding: 0 0 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .clear-resource-sheet .sheet-title p {
+      max-width: 280px;
+      line-height: 1.5;
+    }
+    .clear-resource-body {
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd8d0 transparent;
+    }
+    .clear-resource-sheet .resource-section {
+      border: 0;
+      border-bottom: 1px solid var(--line-soft);
+      border-radius: 0;
+      background: transparent;
+      padding: 14px 0;
+      box-shadow: none;
+    }
+    .clear-resource-sheet .resource-section + .resource-section {
+      margin-top: 0;
+    }
+    .clear-resource-sheet .resource-section-head {
+      margin-bottom: 9px;
+    }
+    .clear-resource-sheet .resource-line-field {
+      min-height: 58px;
+      border-color: #cfdad4;
+      background: #fff;
+      box-shadow: none;
+    }
+    .clear-resource-sheet .resource-type-grid {
+      margin-top: 0;
+    }
+    .clear-resource-sheet .resource-type-grid span {
+      background: #fff;
+    }
+    .clear-resource-sheet .resource-type-grid .selected {
+      border-color: #94bdb0;
+      background: var(--green-soft);
+    }
+    .resource-custom-entry {
+      margin-top: 10px;
+      padding-top: 2px;
+    }
+    .resource-custom-entry > span {
+      display: block;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .resource-custom-entry > strong {
+      display: block;
+      margin-top: 6px;
+      border: 1px solid #9fc4b8;
+      border-radius: 7px;
+      background: #fbfdfa;
+      padding: 10px 11px;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .resource-parameter-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .resource-parameter {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+    }
+    .resource-parameter > span {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .resource-parameter .resource-stepper {
+      grid-template-columns: 34px minmax(48px, 1fr) 34px;
+      gap: 5px;
+    }
+    .resource-parameter .resource-stepper button,
+    .resource-parameter .resource-stepper strong {
+      min-height: 38px;
+    }
+    .resource-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .resource-status-copy strong,
+    .resource-status-copy small {
+      display: block;
+    }
+    .resource-status-copy strong {
+      font-size: 13px;
+    }
+    .resource-status-copy small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .resource-status-row .resource-toggle {
+      flex: 0 0 132px;
+      margin-top: 0;
+    }
+    .resource-status-row .resource-toggle span {
+      min-height: 40px;
+      font-size: 12px;
+    }
+    .clear-resource-sheet > .form-footer {
+      flex: 0 0 auto;
+      margin-top: 0;
+      padding-top: 13px;
+      border-top: 1px solid var(--line-soft);
     }
     .bottom-nav div {
       min-height: 64px;
@@ -6148,45 +6417,44 @@
               <div class="owner-start-note"><div><strong>保存资源后继续确认</strong>至少 1 个启用资源即可完成开店必填项。</div><span class="tag warn">新增中</span></div>
             </div>
             <div class="modal-backdrop">
-              <div class="sheet resource-sheet">
+              <div class="sheet resource-sheet clear-resource-sheet">
                 <div class="sheet-grip"></div>
-                <div class="sheet-title"><div><h4>新增第 4 个资源</h4><p>资源是排期会占用的房间、场地、床位、设备或工位。</p></div><span class="tag blue">保存后入列表</span></div>
-                <div class="resource-section">
-                  <div class="resource-section-head"><h5>基础信息 <em class="required-mark">必填</em></h5><span>名称必填</span></div>
-                  <div class="resource-line-field"><span>资源名称 <em class="required-mark">必填</em></span><strong>咨询室 2</strong><small>门店内部能快速识别的名称，可用房间号、区域名或设备名。</small></div>
-                </div>
-                <div class="resource-section">
-                  <div class="resource-section-head"><h5>资源类型 <em class="required-mark">必填</em></h5><span>固定类型 + 自定义</span></div>
-                  <div class="resource-type-grid"><span class="selected">房间</span><span>场地</span><span>床位</span><span>设备</span><span>工位</span><span>自定义</span></div>
-                  <p class="resource-type-help">类型用于服务项目和排期筛选，不包含员工；员工在员工账号中单独管理。</p>
-                  <div class="resource-custom-field">选择自定义时填写：如咨询室、护理间、器材车。</div>
-                </div>
-                <div class="resource-section">
-                  <div class="resource-section-head"><h5>容量与排序 <em class="required-mark">必填</em></h5><span>用于排期</span></div>
-                  <div class="resource-setting-list">
-                    <div class="resource-setting-row"><div><span>默认容量 <em class="required-mark">必填</em></span><small>最小 1 人</small></div><div class="resource-stepper"><button>-</button><strong>2 人</strong><button>+</button></div></div>
-                    <div class="resource-setting-row"><div><span>排序 <em class="required-mark">必填</em></span><small>数字越小越靠前</small></div><strong class="resource-sort-pill">4</strong></div>
+                <div class="sheet-title"><div><h4>新增资源</h4><p>填写资源信息，保存后回到资源列表。</p></div></div>
+                <div class="clear-resource-body">
+                  <div class="resource-section">
+                    <div class="resource-section-head"><h5>资源名称 <em class="required-mark">必填</em></h5><span>列表与排期中展示</span></div>
+                    <div class="resource-line-field"><strong>静语间 C</strong><small>门店内部能快速识别的具体空间或设备名称。</small></div>
                   </div>
-                </div>
-                <div class="resource-section">
-                  <div class="resource-section-head"><h5>启用状态 <em class="required-mark">必填</em></h5><span>默认启用</span></div>
-                  <div class="resource-toggle"><span class="selected">启用</span><span>停用</span></div>
-                  <div class="resource-sheet-note">停用后不会进入新排期选择；保存后资源会出现在服务项目适用资源和排期资源选择中。</div>
+                  <div class="resource-section">
+                    <div class="resource-section-head"><h5>资源类型 <em class="required-mark">必填</em></h5><span>选择一项</span></div>
+                    <div class="resource-type-grid"><span>房间</span><span>场地</span><span>床位</span><span>设备</span><span>工位</span><span class="selected">自定义</span></div>
+                    <div class="resource-custom-entry"><span>自定义类型 <em class="required-mark">必填</em></span><strong>咨询舱</strong></div>
+                  </div>
+                  <div class="resource-section">
+                    <div class="resource-section-head"><h5>容量与排序 <em class="required-mark">必填</em></h5><span>用于排期</span></div>
+                    <div class="resource-parameter-pair">
+                      <div class="resource-parameter"><span>默认容量</span><div class="resource-stepper"><button>-</button><strong>2 人</strong><button>+</button></div></div>
+                      <div class="resource-parameter"><span>列表排序</span><div class="resource-stepper"><button>-</button><strong>4 位</strong><button>+</button></div></div>
+                    </div>
+                  </div>
+                  <div class="resource-section">
+                    <div class="resource-status-row"><div class="resource-status-copy"><strong>启用资源</strong><small>启用后可用于服务项目和新排期。</small></div><div class="resource-toggle"><span class="selected">启用</span><span>停用</span></div></div>
+                  </div>
                 </div>
                 <div class="form-footer"><span class="button secondary">取消</span><span class="button">保存资源</span></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="phone-wrap"><div class="frame-label">O-RESOURCE 店长端 / 资源列表确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>资源管理</h3><span class="button">新增资源</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>履约资源</h4><p>资源可以是房间、场地、床位、设备或工位。</p></div><span class="tag">3 个</span></div><div class="owner-progress"><div class="owner-step"><b>A</b><div><strong class="resource-name-line">评估室 A <span class="resource-status">启用</span></strong><small>房间 · 容量 2 · 排序 1</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div><div class="owner-step"><b>B</b><div><strong class="resource-name-line">护理间 B <span class="resource-status">启用</span></strong><small>床位 · 容量 1 · 排序 2</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div><div class="owner-step"><b>C</b><div><strong class="resource-name-line">活动区 C <span class="resource-status off">停用</span></strong><small>场地 · 容量 8 · 排序 3</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div></div><div class="owner-card-grid"><div class="tile"><span>启用资源</span><strong>2 个</strong></div><div class="tile"><span>可预约资源</span><strong>2 个</strong></div></div><div class="owner-start-note"><div><strong>已满足开店资源要求</strong>至少 1 个启用资源即可创建门店，停用资源不会进入新排期选择。</div><span class="tag">可完成</span></div><div class="form-footer single"><span class="button">完成并返回清单</span></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-RESOURCE 店长端 / 资源列表确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>资源管理</h3><span class="button">新增资源</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>履约资源</h4><p>资源可以是房间、场地、床位、设备或工位。</p></div><span class="tag">3 个</span></div><div class="owner-progress"><div class="owner-step"><b>A</b><div><strong class="resource-name-line">评估室 A <span class="resource-status">启用</span></strong><small>房间 · 容量 2 · 排序 1</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div><div class="owner-step"><b>B</b><div><strong class="resource-name-line">护理间 B <span class="resource-status">启用</span></strong><small>床位 · 容量 1 · 排序 2</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div><div class="owner-step"><b>C</b><div><strong class="resource-name-line">活动区 C <span class="resource-status off">停用</span></strong><small>场地 · 容量 8 · 排序 3</small></div><span class="resource-row-actions"><span class="resource-action">修改</span><span class="resource-action danger">删除</span></span></div></div><div class="owner-card-grid"><div class="tile"><span>启用资源</span><strong>2 个</strong></div><div class="tile"><span>可预约资源</span><strong>2 个</strong></div></div><div class="form-footer single"><span class="button">完成并返回清单</span></div></div></div></div>
 
         <div class="phone-wrap"><div class="frame-label">O-RESOURCE-DELETE 店长端 / 资源删除确认</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>删除资源</h3><span class="tag red">确认</span></div><div class="content owner-dense"><div class="detail-hero" style="background:#5a2a22"><h4>确认删除护理间 B？</h4><p>床位 · 容量 1 · 当前启用</p><span>删除后不会影响历史记录，但不能再用于新排期。</span></div><h4 class="screen-heading">删除前校验</h4><div class="owner-progress"><div class="owner-step"><b>排</b><div><strong>未来排期</strong><small>未来 7 天无已发布时段占用。</small></div><span class="tag">通过</span></div><div class="owner-step"><b>服</b><div><strong>服务项目</strong><small>无启用服务仅绑定该资源。</small></div><span class="tag">通过</span></div><div class="owner-step"><b>启</b><div><strong>启用资源</strong><small>删除后仍保留 1 个以上启用资源。</small></div><span class="tag blue">通过</span></div></div><div class="owner-list-card"><h4>阻断示例</h4><p>若有关联未来排期，或删除后启用资源少于 1 个，确认删除按钮禁用并提示先处理。</p><span class="tag warn">禁用原因</span></div><div class="form-footer"><span class="button secondary">取消</span><span class="button coral">确认删除</span></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-START 店长端 / 开始使用 · 必填项完成</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>开始使用</h3><span class="tag warn">试用中</span></div><div class="content owner-dense onboarding-fixed ready"><div class="owner-hero"><h4>可以创建门店了</h4><p>门店资料、营业时间和履约资源已保存。创建后进入工作台，继续完成后续运营设置。</p><div class="owner-hero-meta"><span>必填完成</span><span>进入工作台</span></div></div><div class="owner-progress"><div class="owner-step required-action done"><b>✓</b><div><strong>门店资料</strong><small>和序预约中心 · 康复理疗、咨询评估</small></div><span class="tag">已完成</span></div><div class="owner-step required-action done"><b>✓</b><div><strong>营业时间</strong><small>每周营业 6 天 · 3 个营业时段</small></div><span class="tag">已完成</span></div><div class="owner-step required-action done"><b>✓</b><div><strong>履约资源</strong><small>2 个启用资源，可用于服务项目和排期</small></div><span class="tag">已完成</span></div></div><div class="button" style="width:100%;height:50px;background:var(--green-dark);font-size:16px">创建门店</div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-DASHBOARD 店长端 / 工作台 · 创建后待办</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>门店工作台</h3><span class="tag warn">试用剩6天</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>开放预约前还差 5 项</h4><p>和序预约中心已创建。先补齐员工、服务、会员卡、会员和首个时段。</p></div><span class="tag warn">待配置</span></div><div class="owner-card-grid"><div class="tile"><span>已完成必填</span><strong>3 项</strong></div><div class="tile"><span>待配置</span><strong>5 项</strong></div></div><h4 class="screen-heading">下一步待办</h4><div class="owner-progress"><div class="owner-step pending"><b>1</b><div><strong>创建员工账号</strong><small>为可履约人员分配登录账号，后续服务才能绑定员工。</small></div><span class="tag blue">去创建</span></div><div class="owner-step pending"><b>2</b><div><strong>创建服务项目</strong><small>设置名称、时长、容量和适用员工，会员才能看到服务。</small></div><span class="tag blue">去设置</span></div><div class="owner-step pending"><b>3</b><div><strong>创建会员卡模板</strong><small>录入售价、次数、有效期和适用服务，用于发卡和预约校验。</small></div><span class="tag blue">去创建</span></div><div class="owner-step pending"><b>4</b><div><strong>添加会员并发卡</strong><small>生成邀请码交给会员绑定，会员才能使用卡预约。</small></div><span class="tag blue">去添加</span></div><div class="owner-step pending"><b>5</b><div><strong>发布预约时段</strong><small>选择服务、员工、资源、日期和时间，开放会员预约。</small></div><span class="tag blue">去发布</span></div></div></div><nav class="bottom-nav"><div class="active"><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
 
-        <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工 - 新增员工抽屉</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>当前仍停留在员工列表，底部抽屉用于创建新员工账号。</p></div><span class="tag blue">抽屉：新增</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="owner-tabs"><span class="active">全部</span><span>启用</span><span>停用</span></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action danger">修改</span></span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav><div class="modal-backdrop"><div class="sheet resource-sheet"><div class="sheet-grip"></div><div class="sheet-title"><div><h4>新增员工账号</h4><p>创建后员工出现在列表，可继续在列表中打开修改抽屉。</p></div><span class="tag blue">从员工页打开</span></div><div class="owner-form-grid"><div class="field wide"><span>员工姓名 <em class="required-mark">必填</em></span><strong>Nora</strong></div><div class="field"><span>角色标签 <em class="required-mark">必填</em></span><strong>康复师</strong></div><div class="field wide"><span>登录账号 <em class="required-mark">必填</em></span><strong>staff_nora</strong></div><div class="field"><span>初始密码 <em class="required-mark">必填</em></span><strong>8K42Q9A</strong></div><div class="field"><span>确认密码 <em class="required-mark">必填</em></span><strong>8K42Q9A</strong></div></div><div class="resource-sheet-note">账号创建后默认为启用；取消或创建成功后回到员工列表。</div><div class="form-footer"><span class="button secondary">取消</span><span class="button">创建账号</span></div></div></div></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>查看员工是否可登录、可排期；可快速复制账号发给教练。</p></div><span class="tag blue">3 人</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="owner-tabs"><span class="active">全部</span><span>启用</span><span>停用</span></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action danger">修改</span></span></div></div><div class="owner-list-card"><h4>快速复制账号</h4><p>复制员工姓名和登录账号；店长再通过微信等渠道手动分享给教练。</p><span class="tag blue">复制</span></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
-        <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工 - 修改员工</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>点击 Luna 后在当前页面打开修改抽屉，完成账号、密码和启停操作。</p></div><span class="tag blue">修改中</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="tag blue">修改中</span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="tag">启用</span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="tag red">停用</span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav><div class="modal-backdrop"><div class="sheet resource-sheet"><div class="sheet-grip"></div><div class="sheet-title"><div><h4>修改 Luna 账号</h4><p>只保留常用修改项；删除前先校验是否有关联项目。</p></div><span class="tag">当前启用</span></div><div class="owner-form-grid"><div class="field wide"><span>员工姓名 <em class="required-mark">必填</em></span><strong>Luna</strong></div><div class="field"><span>角色标签 <em class="required-mark">必填</em></span><strong>康复师</strong></div><div class="field wide"><span>登录账号 <em class="required-mark">必填</em></span><strong>staff_luna</strong></div><div class="field"><span>账号状态 <em class="required-mark">必填</em></span><strong>启用</strong></div><div class="field"><span>新密码</span><strong>可选修改</strong></div><div class="field"><span>确认密码</span><strong>可选修改</strong></div></div><div class="owner-progress"><div class="owner-step"><b>停</b><div><strong>停用账号</strong><small>停用后员工不能登录，也不能被新排期选择。</small></div><span class="tag red">停用</span></div><div class="owner-step"><b>启</b><div><strong>启用账号</strong><small>账号恢复登录，并可重新进入新排期选择。</small></div><span class="tag">启用</span></div><div class="owner-step"><b>删</b><div><strong>删除账号</strong><small>已关联 2 个服务项目和 2 个未来排期，暂不能物理删除。</small></div><span class="tag red">不可删</span></div></div><div class="resource-sheet-note">删除账号前必须校验关联项目；有关联项目时禁用删除，并提示先解除服务绑定或处理未来排期。</div><div class="form-footer"><span class="button secondary">取消</span><span class="button">保存修改</span></div><div class="form-footer single"><span class="button disabled">删除账号</span></div></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工 - 新增员工抽屉</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>当前仍停留在员工列表，底部抽屉用于创建新员工账号。</p></div><span class="tag blue">抽屉：新增</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="owner-tabs"><span class="active">全部</span><span>启用</span><span>停用</span></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action danger">修改</span></span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav><div class="modal-backdrop"><div class="sheet resource-sheet"><div class="sheet-grip"></div><div class="sheet-title"><div><h4>新增员工账号</h4><p>创建后员工出现在列表，可继续在列表中打开修改抽屉。</p></div><span class="tag blue">从员工页打开</span></div><div class="owner-form-grid"><div class="field wide"><span>员工姓名 <em class="required-mark">必填</em></span><strong>Nora</strong></div><div class="field"><span>角色标签 <em class="required-mark">必填</em></span><strong>康复师</strong></div><div class="field wide"><span>登录账号 <em class="required-mark">必填</em></span><strong>STAFF_LUNA</strong><em class="field-error">该登录账号已被使用，请更换账号</em></div><div class="field"><span>初始密码 <em class="required-mark">必填</em></span><strong>8K42Q9A</strong></div><div class="field"><span>确认密码 <em class="required-mark">必填</em></span><strong>8K42Q9A</strong></div></div><div class="form-footer"><span class="button secondary">取消</span><span class="button">创建账号</span></div></div></div></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>查看员工是否可登录、可排期；可直接复制完整登录信息发给员工。</p></div><span class="tag blue">3 人</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="owner-tabs"><span class="active">全部</span><span>启用</span><span>停用</span></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action">修改</span></span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="resource-row-actions"><span class="resource-action">复制</span><span class="resource-action danger">修改</span></span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav></div></div>
+        <div class="phone-wrap"><div class="frame-label">O-STAFF 店长端 / 员工 - 修改员工 · 更多菜单展开</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>员工</h3><span class="button">新增员工</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>员工账号</h4><p>点击 Luna 后在当前页面打开修改抽屉，完成账号、密码和启停操作。</p></div><span class="tag blue">修改中</span></div><div class="owner-status-strip"><div class="owner-status"><span>启用</span><strong>2</strong><em>可排期</em></div><div class="owner-status"><span>停用</span><strong>1</strong><em style="color:var(--coral)">不可登录</em></div><div class="owner-status"><span>今日服务</span><strong>3</strong><em style="color:var(--blue)">时段</em></div></div><div class="coach-roster"><div class="coach-row"><span class="avatar">Lu</span><div><strong>Luna · 康复师</strong><small>staff_luna · 启用 · 今日 2 个服务</small></div><span class="tag blue">修改中</span></div><div class="coach-row"><span class="avatar">Mi</span><div><strong>Mia · 顾问</strong><small>staff_mia · 启用 · 最近登录 昨天</small></div><span class="tag">启用</span></div><div class="coach-row"><span class="avatar">Ke</span><div><strong>Ken · 康复师</strong><small>staff_ken · 停用 · 历史记录保留</small></div><span class="tag red">停用</span></div></div></div><nav class="bottom-nav"><div><b>台</b>工作台</div><div><b>排</b>排期</div><div><b>会</b>会员</div><div><b>报</b>报表</div><div><b>我</b>我的</div></nav><div class="modal-backdrop"><div class="sheet resource-sheet staff-edit-sheet"><div class="sheet-grip"></div><div class="sheet-title"><div><h4>修改 Luna 账号</h4><p>维护员工资料、登录密码和账号状态。</p></div><span class="staff-edit-more" aria-label="更多账号操作"><i></i><i></i><i></i></span><div class="staff-edit-menu"><span>删除账号</span></div></div><div class="owner-form-grid"><div class="field wide"><span>员工姓名 <em class="required-mark">必填</em></span><strong>Luna</strong></div><div class="field"><span>角色标签 <em class="required-mark">必填</em></span><strong>康复师</strong></div><div class="field wide"><span>登录账号 <em class="required-mark">必填</em></span><strong>staff_luna</strong></div><div class="field"><span class="staff-password-label"><span>登录密码 <em class="required-mark">必填</em></span><i>隐藏密码</i></span><strong>Luna@2026</strong></div><div class="field"><span>确认密码 <em class="required-mark">必填</em></span><strong>Luna@2026</strong></div></div><div class="staff-edit-status"><div><strong>账号状态</strong><small>当前可登录和参与排期</small></div><div class="staff-status-switch"><span class="active">启用</span><span>停用</span></div></div><div class="form-footer"><span class="button secondary">取消</span><span class="button">保存修改</span></div></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-SERVICE 店长端 / 服务项目</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>服务项目</h3><span class="button">新增服务</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>创建可预约服务</h4><p>先写清楚会员看到的服务，再选择哪些资源和员工可以承接。</p></div><span class="tag blue">编辑中</span></div><div class="owner-form-grid"><div class="field wide"><span>服务名称 <em class="required-mark">必填</em></span><strong>姿态评估服务</strong></div><div class="field"><span>服务类型 <em class="required-mark">必填</em></span><strong>一对一服务 ▾</strong></div><div class="field"><span>服务时长 <em class="required-mark">必填</em></span><strong>60 分钟</strong></div><div class="field"><span>默认容量 <em class="required-mark">必填</em></span><strong>2 人</strong></div><div class="field"><span>每次核销 <em class="required-mark">必填</em></span><strong>1 次</strong></div><div class="field"><span>服务状态</span><strong>保存后启用</strong></div><div class="field wide"><span>适用资源（下拉多选） <em class="required-mark">必填</em></span><strong>已选 2 个：评估室 A、咨询工位 1 ▾</strong></div><div class="field wide"><span>可履约员工（下拉多选） <em class="required-mark">必填</em></span><strong>已选 2 人：Luna、Mia ▾</strong></div></div><div class="owner-list-card"><h4>保存后会影响哪里</h4><p>会员卡选择适用服务、排期选择服务和员工时都会用到这份配置。</p><span class="tag blue">说明</span></div><div class="owner-list-card"><h4>启用前检查</h4><p>服务名称、时长、容量、核销次数、至少 1 个启用资源和 1 个启用员工都完整后才可启用。</p><span class="tag">可启用</span></div><div class="form-footer"><span class="button secondary">保存草稿</span><span class="button">保存并启用</span></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-SERVICE 店长端 / 服务项目 - 选择资源与员工</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>服务项目</h3><span class="tag blue">下拉选择</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>选择适用范围</h4><p>资源和员工都支持多选；排期时只能从已选范围里安排。</p></div><span class="tag blue">可多选</span></div><div class="owner-form-grid"><div class="field wide"><span>当前服务 <em class="required-mark">必填</em></span><strong>姿态评估服务</strong></div><div class="field wide"><span>适用资源 <em class="required-mark">必填</em></span><strong>评估室 A、咨询工位 1 ▾</strong></div><div class="field wide"><span>可履约员工 <em class="required-mark">必填</em></span><strong>Luna、Mia ▾</strong></div></div><h4 class="screen-heading">资源下拉</h4><div class="owner-progress"><div class="owner-step"><b>✓</b><div><strong>评估室 A</strong><small>房间 · 启用 · 容量 2</small></div><span class="tag">已选</span></div><div class="owner-step"><b>✓</b><div><strong>咨询工位 1</strong><small>工位 · 启用 · 容量 1</small></div><span class="tag">已选</span></div><div class="owner-step"><b>-</b><div><strong>活动区 C</strong><small>当前停用，不能作为新排期资源。</small></div><span class="tag red">不可选</span></div></div><h4 class="screen-heading">员工下拉</h4><div class="owner-progress"><div class="owner-step"><b>✓</b><div><strong>Luna</strong><small>康复师 · 启用 · 可排期</small></div><span class="tag">已选</span></div><div class="owner-step"><b>✓</b><div><strong>Mia</strong><small>顾问 · 启用 · 可排期</small></div><span class="tag">已选</span></div><div class="owner-step"><b>-</b><div><strong>Ken</strong><small>账号停用，不能承接新服务。</small></div><span class="tag red">不可选</span></div></div><div class="form-footer"><span class="button secondary">取消</span><span class="button">确认选择</span></div></div></div></div>
         <div class="phone-wrap"><div class="frame-label">O-SERVICE 店长端 / 服务项目 · 无员工阻断</div><div class="phone"><div class="status-bar"><span>9:41</span><span>5G 100%</span></div><div class="topbar"><h3>服务项目</h3><span class="tag warn">仅草稿</span></div><div class="content owner-dense"><div class="owner-page-head"><div><h4>咨询评估服务</h4><p>服务内容可以先保存，但还没有可履约员工，不能启用或进入排期。</p></div><span class="tag warn">缺员工</span></div><div class="owner-form-grid"><div class="field wide"><span>服务名称 <em class="required-mark">必填</em></span><strong>咨询评估服务</strong></div><div class="field"><span>服务类型 <em class="required-mark">必填</em></span><strong>一对一服务 ▾</strong></div><div class="field"><span>服务时长 <em class="required-mark">必填</em></span><strong>45 分钟</strong></div><div class="field"><span>默认容量 <em class="required-mark">必填</em></span><strong>1 人</strong></div><div class="field wide"><span>适用资源（下拉多选） <em class="required-mark">必填</em></span><strong>已选 1 个：咨询工位 1 ▾</strong></div><div class="field wide"><span>可履约员工（下拉多选） <em class="required-mark">必填</em></span><strong style="color:var(--gold)">请选择至少 1 个启用员工 ▾</strong></div></div><div class="owner-list-card"><h4>为什么不能启用</h4><p>会员预约后必须有人服务；请先创建或启用员工，再在下拉里选择可履约员工。</p><span class="tag red">启用禁用</span></div><div class="form-footer"><span class="button secondary">保存草稿</span><span class="button disabled">保存并启用</span></div></div></div></div>
@@ -6610,6 +6878,7 @@
         const title = wrap.querySelector(".frame-label")?.textContent || "";
         return title.includes(pageId) && (!stateName || title.includes(stateName));
       });
+
       const findDirectField = (container, label) => Array.from(container?.children || []).find((field) => {
         const fieldLabel = field.querySelector(":scope > span");
         return fieldLabel?.textContent.trim() === label;

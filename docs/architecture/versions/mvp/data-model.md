@@ -90,7 +90,7 @@ flowchart LR
 | --- | --- | --- |
 | `id` | bigint | 后台账号 ID。 |
 | `login_name` | varchar(80) unique | 登录账号。 |
-| `password_hash` | varchar(255) | 密码哈希。 |
+| `password_hash` | varchar(255) | PBKDF2 密码哈希，是员工登录校验的唯一依据。 |
 | `display_name` | varchar(80) | 展示名。 |
 | `status` | varchar(32) | `active`、`disabled`。 |
 
@@ -186,7 +186,7 @@ flowchart LR
 | `tenant_id` | bigint | 租户 ID。 |
 | `store_id` | bigint | 门店 ID。 |
 | `name` | varchar(80) | 资源名称。 |
-| `resource_type` | varchar(80) | 房间、场地、床位、设备、工位或自定义。 |
+| `resource_type` | varchar(80) | 资源的真实类型文本；固定快捷值为房间、场地、床位、设备、工位，自定义时直接保存用户输入值，不保存“自定义”占位值。 |
 | `capacity` | integer | 默认容量，最小为 1。 |
 | `enabled` | boolean | 是否启用。 |
 | `sort_order` | integer | 排序。 |
@@ -223,13 +223,28 @@ flowchart LR
 | `id` | bigint | 员工账号 ID。 |
 | `tenant_id` | bigint | 租户 ID。 |
 | `store_id` | bigint | 门店 ID。 |
-| `login_name` | varchar(80) | 登录账号。 |
+| `login_name` | varchar(80) unique | 规范化后全平台唯一的登录账号。 |
 | `password_hash` | varchar(255) | 密码哈希。 |
 | `staff_name` | varchar(80) | 姓名。 |
 | `role_label` | varchar(80) | 角色标签。 |
 | `status` | varchar(32) | `active`、`disabled`。 |
 
-### 5.4 `staff_profile`
+### 5.4 `staff_credential_secret`
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `tenant_id` | bigint | 租户 ID，用于显式隔离。 |
+| `staff_account_id` | bigint primary key | 员工账号，一对一且随员工物理删除级联删除。 |
+| `cipher_version` | varchar(32) | 密文格式版本。 |
+| `key_id` | varchar(32) | 加密密钥版本，用于轮换和历史解密。 |
+| `nonce` | bytea | AES-GCM 随机 12 字节 nonce。 |
+| `ciphertext` | bytea | 包含认证标签的员工密码密文。 |
+| `created_at` | timestamptz | 创建时间。 |
+| `updated_at` | timestamptz | 最近更新。 |
+
+该表只服务所属店长逐员工查看和交付登录凭据。AES-256-GCM 的 AAD 绑定 `tenant_id + staff_account_id`；员工列表只查询凭据是否存在，不批量解密。明文不得进入表、审计、幂等响应或日志。
+
+### 5.5 `staff_profile`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -500,7 +515,8 @@ MVP 报表优先实时查询，必要时使用快照。
 - `administrative_city(enabled, sort_order)`
 - `administrative_district(city_code, enabled, sort_order)`
 - `resource(tenant_id, store_id, enabled)`
-- `staff_account(tenant_id, store_id, login_name)`
+- `staff_account(login_name)` 全局唯一
+- `staff_account(tenant_id, store_id)`
 - `service_item(tenant_id, store_id, status)`
 - `card_template(tenant_id, store_id, status)`
 - `member(tenant_id, store_id, bind_status)`

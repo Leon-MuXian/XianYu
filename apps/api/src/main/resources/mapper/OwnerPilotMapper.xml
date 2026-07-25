@@ -190,8 +190,8 @@
   </select>
 
   <select id="insertResource" resultType="long" flushCache="true" affectData="true">
-    insert into resource(tenant_id, store_id, name, resource_type, capacity, sort_order)
-    values (#{tenantId}, #{storeId}, #{name}, #{resourceType}, #{capacity}, #{sortOrder})
+    insert into resource(tenant_id, store_id, name, resource_type, capacity, enabled, sort_order)
+    values (#{tenantId}, #{storeId}, #{name}, #{resourceType}, #{capacity}, #{enabled}, #{sortOrder})
     returning id
   </select>
 
@@ -221,10 +221,48 @@
 
   <select id="selectStaff" resultType="map">
     select id, login_name as "loginName", staff_name as "staffName", role_label as "roleLabel",
-      status, first_login as "firstLogin"
+      status, first_login as "firstLogin",
+      exists(
+        select 1
+        from staff_credential_secret secret
+        where secret.tenant_id = staff_account.tenant_id
+          and secret.staff_account_id = staff_account.id
+      ) as "credentialAvailable"
     from staff_account
     where tenant_id = #{tenantId}
     order by id
+  </select>
+
+  <select id="selectStaffCredential" resultType="map">
+    select account.id as "staffId", account.staff_name as "staffName",
+      account.login_name as "loginName", secret.key_id as "keyId",
+      secret.cipher_version as "cipherVersion", secret.nonce, secret.ciphertext
+    from staff_account account
+    join staff_credential_secret secret
+      on secret.tenant_id = account.tenant_id and secret.staff_account_id = account.id
+    where account.tenant_id = #{tenantId} and account.id = #{staffId}
+  </select>
+
+  <select id="selectStaffCredentialKeyIds" resultType="string">
+    select distinct key_id
+    from staff_credential_secret
+    order by key_id
+  </select>
+
+  <select id="selectStaffCredentialValidationSamples" resultType="map">
+    select distinct on (key_id) tenant_id as "tenantId", staff_account_id as "staffId",
+      key_id as "keyId", cipher_version as "cipherVersion", nonce, ciphertext
+    from staff_credential_secret
+    order by key_id, staff_account_id
+  </select>
+
+  <select id="countStaffLoginName" resultType="int">
+    select count(*)
+    from staff_account
+    where login_name = #{loginName}
+    <if test="excludeStaffId != null">
+      and id != #{excludeStaffId}
+    </if>
   </select>
 
   <select id="insertStaffAccount" resultType="long" flushCache="true" affectData="true">
@@ -236,6 +274,14 @@
   <insert id="insertStaffProfile">
     insert into staff_profile(tenant_id, staff_account_id, display_name)
     values (#{tenantId}, #{staffId}, #{displayName})
+  </insert>
+
+  <insert id="insertStaffCredentialSecret">
+    insert into staff_credential_secret(
+      tenant_id, staff_account_id, key_id, cipher_version, nonce, ciphertext
+    ) values (
+      #{tenantId}, #{staffId}, #{keyId}, #{cipherVersion}, #{nonce}, #{ciphertext}
+    )
   </insert>
 
   <update id="updateStaffAccount">
@@ -255,6 +301,30 @@
     update staff_account
     set password_hash = #{passwordHash}, first_login = true, updated_at = current_timestamp
     where tenant_id = #{tenantId} and id = #{staffId}
+  </update>
+
+  <insert id="upsertStaffCredentialSecret">
+    insert into staff_credential_secret(
+      tenant_id, staff_account_id, key_id, cipher_version, nonce, ciphertext
+    ) values (
+      #{tenantId}, #{staffId}, #{keyId}, #{cipherVersion}, #{nonce}, #{ciphertext}
+    )
+    on conflict (staff_account_id) do update
+    set key_id = excluded.key_id,
+      cipher_version = excluded.cipher_version,
+      nonce = excluded.nonce,
+      ciphertext = excluded.ciphertext,
+      updated_at = current_timestamp
+    where staff_credential_secret.tenant_id = excluded.tenant_id
+  </insert>
+
+  <update id="revokeStaffSessions">
+    update auth_session
+    set revoked_at = current_timestamp
+    where tenant_id = #{tenantId}
+      and actor_type = 'staff'
+      and subject_id = cast(#{staffId} as varchar)
+      and revoked_at is null
   </update>
 
   <update id="updateStaffStatus">

@@ -5,6 +5,7 @@ import com.serenmeet.auth.support.SessionPrincipal;
 import com.serenmeet.common.ApiResponse;
 import com.serenmeet.common.IdempotencyWorkflow;
 import com.serenmeet.owner.application.OwnerPilotApplicationService;
+import com.serenmeet.owner.dto.StaffCredentialResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -18,6 +19,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -177,7 +180,12 @@ public class OwnerPilotController {
             request,
             () ->
                 ownerService.createResource(
-                    principal, request.name(), request.resourceType(), request.capacity())));
+                    principal,
+                    request.name(),
+                    request.resourceType(),
+                    request.capacity(),
+                    request.enabled(),
+                    request.sortOrder())));
   }
 
   @PutMapping("/resources/{resourceId}")
@@ -220,6 +228,15 @@ public class OwnerPilotController {
   @GetMapping("/staff")
   public ApiResponse<List<Map<String, Object>>> staff(@CurrentSession SessionPrincipal principal) {
     return ApiResponse.ok(ownerService.staff(principal));
+  }
+
+  @PostMapping("/staff/{staffId}/credential/reveal")
+  public ResponseEntity<ApiResponse<StaffCredentialResponse>> revealStaffCredential(
+      @CurrentSession SessionPrincipal principal, @PathVariable Long staffId) {
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate")
+        .header(HttpHeaders.PRAGMA, "no-cache")
+        .body(ApiResponse.ok(ownerService.revealStaffCredential(principal, staffId)));
   }
 
   @PostMapping("/staff")
@@ -633,23 +650,29 @@ public class OwnerPilotController {
   public record ResourcesDraftRequest(@NotEmpty List<@Valid ResourceRequest> resources) {}
 
   public record ResourceRequest(
-      @NotBlank String name, @NotBlank String resourceType, @Min(1) int capacity) {}
+      @NotBlank @Size(max = 80) String name,
+      @NotBlank @Size(max = 80) String resourceType,
+      @Min(1) int capacity,
+      Boolean enabled,
+      @Min(0) Integer sortOrder) {}
 
   public record UpdateResourceRequest(
-      @NotBlank String name,
-      @NotBlank String resourceType,
+      @NotBlank @Size(max = 80) String name,
+      @NotBlank @Size(max = 80) String resourceType,
       @Min(1) int capacity,
       boolean enabled,
       @Min(0) int sortOrder) {}
 
   public record CreateStaffRequest(
-      @NotBlank String loginName,
+      @NotBlank @Size(max = 80) String loginName,
       @NotBlank @Size(min = 8, max = 120) String password,
-      @NotBlank String staffName,
-      @NotBlank String roleLabel) {}
+      @NotBlank @Size(max = 80) String staffName,
+      @NotBlank @Size(max = 80) String roleLabel) {}
 
   public record UpdateStaffRequest(
-      @NotBlank String loginName, @NotBlank String staffName, @NotBlank String roleLabel) {}
+      @NotBlank @Size(max = 80) String loginName,
+      @NotBlank @Size(max = 80) String staffName,
+      @NotBlank @Size(max = 80) String roleLabel) {}
 
   public record UpdatePasswordRequest(@NotBlank @Size(min = 8, max = 120) String password) {}
 

@@ -8,6 +8,7 @@ import com.serenmeet.auth.mapper.AdminSessionMapper;
 import com.serenmeet.auth.mapper.BusinessAuthMapper;
 import com.serenmeet.auth.support.PasswordHasher;
 import com.serenmeet.auth.support.SessionPrincipal;
+import com.serenmeet.auth.support.StaffLoginNameNormalizer;
 import com.serenmeet.auth.support.TokenHasher;
 import com.serenmeet.auth.support.WechatCodeSessionClient;
 import com.serenmeet.common.ApiException;
@@ -78,7 +79,8 @@ public class BusinessAuthApplicationService {
 
     @Transactional
     public BusinessLoginResponse staffLogin(StaffLoginRequest request) {
-        StaffCredential credential = findStaffCredential(request.loginName());
+        String loginName = StaffLoginNameNormalizer.normalize(request.loginName());
+        StaffCredential credential = findStaffCredential(loginName);
         if (credential == null || !passwordHasher.matches(request.password(), credential.passwordHash())) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "账号或密码错误");
         }

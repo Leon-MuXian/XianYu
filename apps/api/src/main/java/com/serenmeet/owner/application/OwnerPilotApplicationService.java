@@ -5,9 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serenmeet.auth.support.PasswordHasher;
 import com.serenmeet.auth.support.SessionPrincipal;
+import com.serenmeet.auth.support.StaffCredentialCipher;
+import com.serenmeet.auth.support.StaffLoginNameNormalizer;
 import com.serenmeet.auth.support.TokenHasher;
 import com.serenmeet.common.ApiException;
+import com.serenmeet.owner.dto.StaffCredentialResponse;
 import com.serenmeet.owner.mapper.OwnerPilotMapper;
+import com.serenmeet.owner.support.StaffCredentialRevealRateLimiter;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.text.Normalizer;
@@ -21,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,11 +39,16 @@ public class OwnerPilotApplicationService {
   private static final String INVITE_VALID_DAYS_CONFIG = "member.invite.default_valid_days";
   private static final String CANCELLATION_DEADLINE_CONFIG = "booking.cancel.default_deadline_min";
   private static final int MAX_SERVICE_SCOPE_COUNT = 6;
+  private static final int MAX_RESOURCE_TEXT_LENGTH = 80;
+  private static final int MAX_STAFF_LOGIN_NAME_LENGTH = 80;
+  private static final String CUSTOM_RESOURCE_TYPE_PLACEHOLDER = "自定义";
   private static final Pattern STORE_NAME_WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
 
   private final OwnerPilotMapper ownerMapper;
   private final ObjectMapper objectMapper;
   private final PasswordHasher passwordHasher;
+  private final StaffCredentialCipher staffCredentialCipher;
+  private final StaffCredentialRevealRateLimiter staffCredentialRevealRateLimiter;
   private final TokenHasher tokenHasher;
   private final Clock clock;
   private final SecureRandom secureRandom = new SecureRandom();
@@ -47,11 +57,15 @@ public class OwnerPilotApplicationService {
       OwnerPilotMapper ownerMapper,
       ObjectMapper objectMapper,
       PasswordHasher passwordHasher,
+      StaffCredentialCipher staffCredentialCipher,
+      StaffCredentialRevealRateLimiter staffCredentialRevealRateLimiter,
       TokenHasher tokenHasher,
       Clock clock) {
     this.ownerMapper = ownerMapper;
     this.objectMapper = objectMapper;
     this.passwordHasher = passwordHasher;
+    this.staffCredentialCipher = staffCredentialCipher;
+    this.staffCredentialRevealRateLimiter = staffCredentialRevealRateLimiter;
     this.tokenHasher = tokenHasher;
     this.clock = clock;
   }
@@ -195,7 +209,7 @@ public class OwnerPilotApplicationService {
 
   @Transactional
   public Map<String, Object> saveResourcesDraft(SessionPrincipal principal, Object request) {
-    updateDraft(principal.tenantId(), DraftSection.RESOURCES, request);
+    updateDraft(principal.tenantId(), DraftSection.RESOURCES, normalizeResourcesDraft(request));
     return onboardingDraft(principal);
   }
 
@@ -271,16 +285,34 @@ public class OwnerPilotApplicationService {
 
   @Transactional
   public Map<String, Object> createResource(
-      SessionPrincipal principal, String name, String type, int capacity) {
+      SessionPrincipal principal,
+      String name,
+      String type,
+      int capacity,
+      Boolean enabled,
+      Integer sortOrder) {
     Long storeId = requireStoreId(principal.tenantId());
+    String normalizedName = normalizeResourceText(name, "资源名称不能为空");
+    String normalizedType = normalizeResourceType(type);
+    boolean normalizedEnabled = enabled == null || enabled;
+    int normalizedSortOrder = sortOrder == null ? 0 : Math.max(0, sortOrder);
     try {
-      Long id = ownerMapper.insertResource(principal.tenantId(), storeId, name, type, capacity, 0);
+      Long id =
+          ownerMapper.insertResource(
+              principal.tenantId(),
+              storeId,
+              normalizedName,
+              normalizedType,
+              capacity,
+              normalizedEnabled,
+              normalizedSortOrder);
       return Map.of(
           "id", id,
-          "name", name,
-          "resourceType", type,
+          "name", normalizedName,
+          "resourceType", normalizedType,
           "capacity", capacity,
-          "enabled", true);
+          "enabled", normalizedEnabled,
+          "sortOrder", normalizedSortOrder);
     } catch (DataIntegrityViolationException exception) {
       throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "资源名称已存在");
     }
@@ -296,6 +328,8 @@ public class OwnerPilotApplicationService {
       boolean enabled,
       int sortOrder) {
     Long tenantId = principal.tenantId();
+    String normalizedName = normalizeResourceText(name, "资源名称不能为空");
+    String normalizedType = normalizeResourceType(type);
     requireOwned(ownerMapper.countOwnedResource(tenantId, resourceId));
     if (!enabled && ownerMapper.countEnabledResourcesExcluding(tenantId, resourceId) == 0) {
       throw new ApiException(HttpStatus.CONFLICT, "RESOURCE_REQUIRED", "至少保留 1 个启用资源");
@@ -303,12 +337,18 @@ public class OwnerPilotApplicationService {
     try {
       requireOwned(
           ownerMapper.updateResource(
-              tenantId, resourceId, name, type, capacity, enabled, Math.max(0, sortOrder)));
-      audit(tenantId, principal, "update_resource", name, null, "updated", null);
+              tenantId,
+              resourceId,
+              normalizedName,
+              normalizedType,
+              capacity,
+              enabled,
+              Math.max(0, sortOrder)));
+      audit(tenantId, principal, "update_resource", normalizedName, null, "updated", null);
       return Map.of(
           "id", resourceId,
-          "name", name,
-          "resourceType", type,
+          "name", normalizedName,
+          "resourceType", normalizedType,
           "capacity", capacity,
           "enabled", enabled,
           "sortOrder", Math.max(0, sortOrder));
@@ -338,6 +378,39 @@ public class OwnerPilotApplicationService {
   }
 
   @Transactional
+  public StaffCredentialResponse revealStaffCredential(
+      SessionPrincipal principal, Long staffId) {
+    Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedStaff(tenantId, staffId));
+    staffCredentialRevealRateLimiter.acquire(principal.subjectId(), staffId);
+    Map<String, Object> row = ownerMapper.selectStaffCredential(tenantId, staffId);
+    if (row == null || row.isEmpty()) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "STAFF_CREDENTIAL_UNAVAILABLE",
+          "该员工密码创建于凭据保管启用前，请先重置密码");
+    }
+    String password =
+        staffCredentialCipher.decrypt(
+            tenantId,
+            staffId,
+            row.get("keyId").toString(),
+            row.get("cipherVersion").toString(),
+            (byte[]) row.get("nonce"),
+            (byte[]) row.get("ciphertext"));
+    audit(
+        tenantId,
+        principal,
+        "reveal_staff_credential",
+        staffId.toString(),
+        null,
+        "revealed",
+        null);
+    return new StaffCredentialResponse(
+        staffId, row.get("staffName").toString(), row.get("loginName").toString(), password);
+  }
+
+  @Transactional
   public Map<String, Object> createStaff(
       SessionPrincipal principal,
       String loginName,
@@ -348,25 +421,40 @@ public class OwnerPilotApplicationService {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "员工密码至少 8 位");
     }
     Long tenantId = principal.tenantId();
-    try {
-      Long id =
-          ownerMapper.insertStaffAccount(
-              tenantId,
-              requireStoreId(tenantId),
-              loginName,
-              passwordHasher.encode(password),
-              staffName,
-              roleLabel);
-      ownerMapper.insertStaffProfile(tenantId, id, staffName);
-      return Map.of(
-          "id", id,
-          "loginName", loginName,
-          "staffName", staffName,
-          "roleLabel", roleLabel,
-          "status", "active");
-    } catch (DataIntegrityViolationException exception) {
-      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "登录账号已存在，请更换账号");
+    String normalizedLoginName = normalizeStaffLoginName(loginName);
+    if (ownerMapper.countStaffLoginName(normalizedLoginName, null) > 0) {
+      throw staffLoginNameTaken();
     }
+    Long id;
+    try {
+      id =
+        ownerMapper.insertStaffAccount(
+          tenantId,
+          requireStoreId(tenantId),
+          normalizedLoginName,
+          passwordHasher.encode(password),
+          staffName,
+          roleLabel);
+    } catch (DuplicateKeyException exception) {
+      throw staffLoginNameTaken(exception);
+    }
+    StaffCredentialCipher.EncryptedCredential credential =
+        staffCredentialCipher.encrypt(tenantId, id, password);
+    requireOwned(
+        ownerMapper.insertStaffCredentialSecret(
+            tenantId,
+            id,
+            credential.keyId(),
+            credential.cipherVersion(),
+            credential.nonce(),
+            credential.ciphertext()));
+    ownerMapper.insertStaffProfile(tenantId, id, staffName);
+    return Map.of(
+      "id", id,
+      "loginName", normalizedLoginName,
+      "staffName", staffName,
+      "roleLabel", roleLabel,
+      "status", "active");
   }
 
   @Transactional
@@ -378,19 +466,26 @@ public class OwnerPilotApplicationService {
       String roleLabel) {
     Long tenantId = principal.tenantId();
     requireOwned(ownerMapper.countOwnedStaff(tenantId, staffId));
-    try {
-      requireOwned(
-          ownerMapper.updateStaffAccount(tenantId, staffId, loginName, staffName, roleLabel));
-      requireOwned(ownerMapper.updateStaffProfileName(tenantId, staffId, staffName));
-      audit(tenantId, principal, "update_staff", staffName, null, "updated", null);
-      return Map.of(
-          "id", staffId,
-          "loginName", loginName,
-          "staffName", staffName,
-          "roleLabel", roleLabel);
-    } catch (DataIntegrityViolationException exception) {
-      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "登录账号已存在，请更换账号");
+    String normalizedLoginName = normalizeStaffLoginName(loginName);
+    if (ownerMapper.countStaffLoginName(normalizedLoginName, staffId) > 0) {
+      throw staffLoginNameTaken();
     }
+    int updated;
+    try {
+      updated =
+        ownerMapper.updateStaffAccount(
+          tenantId, staffId, normalizedLoginName, staffName, roleLabel);
+    } catch (DuplicateKeyException exception) {
+      throw staffLoginNameTaken(exception);
+    }
+    requireOwned(updated);
+    requireOwned(ownerMapper.updateStaffProfileName(tenantId, staffId, staffName));
+    audit(tenantId, principal, "update_staff", staffName, null, "updated", null);
+    return Map.of(
+      "id", staffId,
+      "loginName", normalizedLoginName,
+      "staffName", staffName,
+      "roleLabel", roleLabel);
   }
 
   @Transactional
@@ -400,8 +495,20 @@ public class OwnerPilotApplicationService {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "员工密码至少 8 位");
     }
     Long tenantId = principal.tenantId();
+    requireOwned(ownerMapper.countOwnedStaff(tenantId, staffId));
+    StaffCredentialCipher.EncryptedCredential credential =
+        staffCredentialCipher.encrypt(tenantId, staffId, password);
     requireOwned(
         ownerMapper.updateStaffPassword(tenantId, staffId, passwordHasher.encode(password)));
+    requireOwned(
+        ownerMapper.upsertStaffCredentialSecret(
+            tenantId,
+            staffId,
+            credential.keyId(),
+            credential.cipherVersion(),
+            credential.nonce(),
+            credential.ciphertext()));
+    ownerMapper.revokeStaffSessions(tenantId, staffId);
     audit(tenantId, principal, "update_staff_password", staffId.toString(), null, "reset", null);
     return Map.of("id", staffId, "passwordReset", true);
   }
@@ -412,6 +519,9 @@ public class OwnerPilotApplicationService {
     validateStatus(status, List.of("active", "disabled"), "员工状态无效");
     Long tenantId = principal.tenantId();
     requireOwned(ownerMapper.updateStaffStatus(tenantId, staffId, status));
+    if ("disabled".equals(status)) {
+      ownerMapper.revokeStaffSessions(tenantId, staffId);
+    }
     audit(tenantId, principal, "update_staff_status", staffId.toString(), null, status, null);
     return Map.of("id", staffId, "status", status);
   }
@@ -825,6 +935,16 @@ public class OwnerPilotApplicationService {
     if (!resources.isArray() || resources.isEmpty()) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "至少需要一个履约资源");
     }
+    boolean hasEnabledResource = false;
+    for (JsonNode resource : resources) {
+      if (!resource.hasNonNull("enabled") || resource.path("enabled").asBoolean()) {
+        hasEnabledResource = true;
+        break;
+      }
+    }
+    if (!hasEnabledResource) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "RESOURCE_REQUIRED", "至少保留 1 个启用资源");
+    }
   }
 
   private StoreProfileData buildStoreProfile(
@@ -957,6 +1077,30 @@ public class OwnerPilotApplicationService {
         HttpStatus.CONFLICT, "STORE_NAME_TAKEN", "该门店名称已被使用，请更换名称", cause);
   }
 
+  private String normalizeStaffLoginName(String loginName) {
+    String normalized = StaffLoginNameNormalizer.normalize(loginName);
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "员工登录账号不能为空");
+    }
+    if (normalized.length() > MAX_STAFF_LOGIN_NAME_LENGTH) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "员工登录账号不能超过 80 个字符");
+    }
+    return normalized;
+  }
+
+  private ApiException staffLoginNameTaken() {
+    return new ApiException(
+        HttpStatus.CONFLICT, "STAFF_LOGIN_NAME_TAKEN", "该登录账号已被使用，请更换账号");
+  }
+
+  private ApiException staffLoginNameTaken(Throwable cause) {
+    return new ApiException(
+        HttpStatus.CONFLICT,
+        "STAFF_LOGIN_NAME_TAKEN",
+        "该登录账号已被使用，请更换账号",
+        cause);
+  }
+
   private void validateCardTemplate(
       String cardType, Integer totalCount, Integer lowBalanceThreshold) {
     if (!List.of("count", "period").contains(cardType)) {
@@ -999,14 +1143,80 @@ public class OwnerPilotApplicationService {
     }
   }
 
-  private void insertResource(Long tenantId, Long storeId, JsonNode resource, int sortOrder) {
-    String name = requiredText(resource, "name", "资源名称不能为空");
-    String type = requiredText(resource, "resourceType", "资源类型不能为空");
+  private void insertResource(Long tenantId, Long storeId, JsonNode resource, int fallbackSortOrder) {
+    String name = normalizeResourceText(requiredText(resource, "name", "资源名称不能为空"), "资源名称不能为空");
+    String type = normalizeResourceType(requiredText(resource, "resourceType", "资源类型不能为空"));
     int capacity = resource.path("capacity").asInt(0);
     if (capacity < 1) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "资源容量至少为 1");
     }
-    ownerMapper.insertResource(tenantId, storeId, name, type, capacity, sortOrder);
+    boolean enabled = !resource.hasNonNull("enabled") || resource.path("enabled").asBoolean();
+    int sortOrder =
+        resource.hasNonNull("sortOrder")
+            ? Math.max(0, resource.path("sortOrder").asInt(fallbackSortOrder))
+            : fallbackSortOrder;
+    ownerMapper.insertResource(tenantId, storeId, name, type, capacity, enabled, sortOrder);
+  }
+
+  private List<Map<String, Object>> normalizeResourcesDraft(Object request) {
+    JsonNode resources = json(request);
+    if (!resources.isArray() || resources.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "至少需要一个履约资源");
+    }
+    List<Map<String, Object>> normalized = new ArrayList<>();
+    boolean hasEnabledResource = false;
+    int defaultSortOrder = 1;
+    for (JsonNode resource : resources) {
+      String name =
+          normalizeResourceText(
+              requiredText(resource, "name", "资源名称不能为空"), "资源名称不能为空");
+      String resourceType =
+          normalizeResourceType(requiredText(resource, "resourceType", "资源类型不能为空"));
+      int capacity = resource.path("capacity").asInt(0);
+      if (capacity < 1) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "资源容量至少为 1");
+      }
+      boolean enabled = !resource.hasNonNull("enabled") || resource.path("enabled").asBoolean();
+      int sortOrder =
+          resource.hasNonNull("sortOrder")
+              ? resource.path("sortOrder").asInt(-1)
+              : defaultSortOrder;
+      if (sortOrder < 0) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "资源排序不能小于 0");
+      }
+      Map<String, Object> item = new LinkedHashMap<>();
+      item.put("name", name);
+      item.put("resourceType", resourceType);
+      item.put("capacity", capacity);
+      item.put("enabled", enabled);
+      item.put("sortOrder", sortOrder);
+      normalized.add(item);
+      hasEnabledResource = hasEnabledResource || enabled;
+      defaultSortOrder++;
+    }
+    if (!hasEnabledResource) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "RESOURCE_REQUIRED", "至少保留 1 个启用资源");
+    }
+    return normalized;
+  }
+
+  private String normalizeResourceType(String value) {
+    String normalized = normalizeResourceText(value, "资源类型不能为空");
+    if (CUSTOM_RESOURCE_TYPE_PLACEHOLDER.equals(normalized)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "请填写具体的自定义资源类型");
+    }
+    return normalized;
+  }
+
+  private String normalizeResourceText(String value, String emptyMessage) {
+    String normalized = value == null ? "" : value.trim();
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", emptyMessage);
+    }
+    if (normalized.length() > MAX_RESOURCE_TEXT_LENGTH) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "资源名称和类型不能超过 80 个字符");
+    }
+    return normalized;
   }
 
   private JsonNode json(Object databaseValue) {

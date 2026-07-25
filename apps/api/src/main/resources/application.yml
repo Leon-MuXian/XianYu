@@ -51,6 +51,12 @@ seren-meet:
     username: ${SEREN_MEET_BOOTSTRAP_ADMIN_USERNAME:}
     password: ${SEREN_MEET_BOOTSTRAP_ADMIN_PASSWORD:}
     display-name: ${SEREN_MEET_BOOTSTRAP_ADMIN_DISPLAY_NAME:}
+  staff-credential:
+    active-key-id: ${SEREN_MEET_STAFF_CREDENTIAL_ACTIVE_KEY_ID:}
+    keys: ${SEREN_MEET_STAFF_CREDENTIAL_KEYS:}
+    cipher-version: ${SEREN_MEET_STAFF_CREDENTIAL_CIPHER_VERSION:aes-256-gcm-v1}
+    max-reveals-per-window: ${SEREN_MEET_STAFF_CREDENTIAL_MAX_REVEALS:10}
+    reveal-window-minutes: ${SEREN_MEET_STAFF_CREDENTIAL_REVEAL_WINDOW_MINUTES:1}
   wechat:
     owner:
       app-id: ${SEREN_MEET_OWNER_WECHAT_APP_ID:}

@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/staff/{staffId}/credential/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["revealStaffCredential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/owner/services": {
         parameters: {
             query?: never;
@@ -1273,6 +1289,9 @@ export interface components {
             resourceType: string;
             /** Format: int32 */
             capacity?: number;
+            enabled?: boolean;
+            /** Format: int32 */
+            sortOrder?: number;
         };
         ResourcesDraftRequest: {
             resources: components["schemas"]["ResourceRequest"][];
@@ -1330,6 +1349,19 @@ export interface components {
             password: string;
             staffName: string;
             roleLabel: string;
+        };
+        ApiResponseStaffCredentialResponse: {
+            requestId?: string;
+            success?: boolean;
+            data?: components["schemas"]["StaffCredentialResponse"];
+            error?: components["schemas"]["ApiError"];
+        };
+        StaffCredentialResponse: {
+            /** Format: int64 */
+            staffId?: number;
+            staffName?: string;
+            loginName?: string;
+            loginPassword?: string;
         };
         PublishSlotRequest: {
             /** Format: int64 */
@@ -2333,6 +2365,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    revealStaffCredential: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header?: never;
+            path: {
+                staffId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseStaffCredentialResponse"];
                 };
             };
         };
