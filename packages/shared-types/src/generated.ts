@@ -1379,8 +1379,7 @@ export interface components {
         };
         CreateMemberRequest: {
             name: string;
-            memberNo: string;
-            contactText?: string;
+            contactText: string;
         };
         IssueCardRequest: {
             /** Format: int64 */

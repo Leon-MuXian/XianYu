@@ -45,6 +45,8 @@ public class OwnerPilotApplicationService {
   private static final int MAX_SERVICE_NAME_LENGTH = 120;
   private static final int MAX_CARD_TEMPLATE_NAME_LENGTH = 120;
   private static final int MAX_STAFF_LOGIN_NAME_LENGTH = 80;
+  private static final int MAX_MEMBER_NAME_LENGTH = 80;
+  private static final int MAX_MEMBER_CONTACT_LENGTH = 120;
   private static final String CUSTOM_RESOURCE_TYPE_PLACEHOLDER = "自定义";
   private static final Pattern STORE_NAME_WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
 
@@ -879,20 +881,19 @@ public class OwnerPilotApplicationService {
 
   @Transactional
   public Map<String, Object> createMember(
-      SessionPrincipal principal, String name, String memberNo, String contactText) {
+      SessionPrincipal principal, String name, String contactText) {
     Long tenantId = principal.tenantId();
-    try {
-      Long id =
-          ownerMapper.insertMember(
-              tenantId,
-              requireStoreId(tenantId),
-              name,
-              memberNo,
-              contactText == null ? "" : contactText);
-      return Map.of("id", id, "name", name, "memberNo", memberNo, "bindStatus", "unbound");
-    } catch (DataIntegrityViolationException exception) {
-      throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "会员编号已存在");
-    }
+    String normalizedName = normalizeMemberName(name);
+    String normalizedContactText = normalizeMemberContact(contactText);
+    Map<String, Object> member =
+        ownerMapper.insertMember(
+            tenantId, requireStoreId(tenantId), normalizedName, normalizedContactText);
+    return Map.of(
+        "id", member.get("id"),
+        "name", normalizedName,
+        "memberNo", member.get("memberNo"),
+        "contactText", normalizedContactText,
+        "bindStatus", "unbound");
   }
 
   @Transactional
@@ -1260,6 +1261,28 @@ public class OwnerPilotApplicationService {
     }
     if (normalized.length() > MAX_CARD_TEMPLATE_NAME_LENGTH) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员卡名称不能超过 120 个字符");
+    }
+    return normalized;
+  }
+
+  private String normalizeMemberName(String name) {
+    String normalized = name == null ? "" : name.trim();
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员姓名不能为空");
+    }
+    if (normalized.length() > MAX_MEMBER_NAME_LENGTH) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员姓名不能超过 80 个字符");
+    }
+    return normalized;
+  }
+
+  private String normalizeMemberContact(String contactText) {
+    String normalized = contactText == null ? "" : contactText.trim();
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员联系方式不能为空");
+    }
+    if (normalized.length() > MAX_MEMBER_CONTACT_LENGTH) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员联系方式不能超过 120 个字符");
     }
     return normalized;
   }

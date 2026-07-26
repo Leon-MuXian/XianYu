@@ -10,14 +10,19 @@ interface InviteResult { code: string; expiresAt: string; status: string }
 interface IssueResult { receivedAmountYuan: number; validUntil: string }
 
 const templates = ref<CardTemplate[]>([])
-const form = reactive({ name: '', memberNo: '', contactText: '', templateId: 0, receivedAmountYuan: 0, saleDate: new Date().toISOString().slice(0, 10), payMethodLabel: '门店已收' })
+const form = reactive({ name: '', contactText: '', templateId: 0, receivedAmountYuan: 0, saleDate: new Date().toISOString().slice(0, 10), payMethodLabel: '门店已收' })
 const createdMember = ref<Member | null>(null)
 const issueResult = ref<IssueResult | null>(null)
 const invite = ref<InviteResult | null>(null)
 const loading = ref(false)
 const message = ref('')
 const selectedTemplate = computed(() => templates.value.find((item) => item.id === form.templateId))
-const canSubmit = computed(() => form.name && form.memberNo && form.templateId && Number(form.receivedAmountYuan) >= 0)
+const canSubmit = computed(() => Boolean(
+  form.name.trim()
+  && form.contactText.trim()
+  && form.templateId
+  && Number(form.receivedAmountYuan) >= 0
+))
 
 async function load() {
   try {
@@ -38,11 +43,11 @@ function selectTemplate(event: { detail: { value: string } }) {
 }
 
 async function submit() {
-  if (!canSubmit.value || loading.value) { message.value = '请完成所有必填项，实收金额不能为负数'; return }
+  if (!canSubmit.value || loading.value) { message.value = '请填写会员姓名和联系方式，实收金额不能为负数'; return }
   loading.value = true
   message.value = ''
   try {
-    if (!createdMember.value) createdMember.value = await api.request<Member>('POST', '/owner/members', { name: form.name, memberNo: form.memberNo, contactText: form.contactText }, createIdempotencyKey('member-create'))
+    if (!createdMember.value) createdMember.value = await api.request<Member>('POST', '/owner/members', { name: form.name.trim(), contactText: form.contactText.trim() }, createIdempotencyKey('member-create'))
     if (!issueResult.value) issueResult.value = await api.request<IssueResult>('POST', `/owner/members/${createdMember.value.id}/cards`, { templateId: form.templateId, receivedAmountYuan: Number(form.receivedAmountYuan), saleDate: form.saleDate, payMethodLabel: form.payMethodLabel }, createIdempotencyKey('member-issue-card'))
     invite.value = await api.request<InviteResult>('POST', `/owner/members/${createdMember.value.id}/invite-codes`, {}, createIdempotencyKey('member-invite'))
     await Taro.showToast({ title: '会员已添加并发卡', icon: 'success' })
@@ -72,17 +77,14 @@ useLoad(load)
     <OwnerTopbar :title="invite ? '发卡结果' : '添加会员'" back />
     <View class="content owner-dense">
       <template v-if="!invite">
-        <View class="owner-page-head"><View><Text class="page-title">{{ form.name || '添加新会员' }}</Text><Text class="page-copy">录入会员档案，发放会员卡并在保存后生成邀请码。</Text></View></View>
+        <View class="owner-page-head"><View><Text class="page-title">{{ form.name || '添加新会员' }}</Text><Text class="page-copy">录入会员信息，选择会员卡并确认门店实收。</Text></View></View>
         <View v-if="!templates.length" class="owner-list-card" @tap="Taro.redirectTo({ url: ownerRoutes.cards })"><Text class="list-card-title">请先创建会员卡</Text><Text class="list-card-copy">至少需要 1 张启用会员卡，才能给会员发卡。</Text><Text class="tag red">阻断</Text></View>
         <View class="owner-form-grid">
-          <View class="field"><Text>会员姓名 <Text class="required-mark">必填</Text></Text><input v-model="form.name" class="field-input" placeholder="请输入姓名" /></View>
-          <View class="field"><Text>会员编号 <Text class="required-mark">必填</Text></Text><input v-model="form.memberNo" class="field-input" placeholder="如 SM-0268" /></View>
-          <View class="field wide"><Text>联系方式/备注</Text><input v-model="form.contactText" class="field-input" placeholder="只录入必要的联系备注" /></View>
+          <View class="field wide"><Text>会员姓名 <Text class="required-mark">必填</Text></Text><input v-model="form.name" class="field-input" maxlength="80" placeholder="请输入姓名" /></View>
+          <View class="field wide"><Text>会员联系方式 <Text class="required-mark">必填</Text></Text><input v-model="form.contactText" class="field-input" maxlength="120" placeholder="请输入手机号或微信号" /></View>
           <picker class="field wide" mode="selector" :range="templates" range-key="name" @change="selectTemplate"><View><Text>发放会员卡 <Text class="required-mark">必填</Text></Text><Text class="field-value">{{ selectedTemplate?.name || '请选择会员卡' }} ▾</Text></View></picker>
-          <View class="field"><Text>实收金额 <Text class="required-mark">必填</Text></Text><input v-model.number="form.receivedAmountYuan" class="field-input" type="digit" /></View>
-          <View class="field"><Text>实收确认 <Text class="required-mark">必填</Text></Text><Text class="field-value">门店已收</Text></View>
+          <View class="field wide"><Text>实收金额 <Text class="required-mark">必填</Text></Text><input v-model.number="form.receivedAmountYuan" class="field-input" type="digit" /></View>
         </View>
-        <View class="owner-list-card"><Text class="list-card-title">保存后生成邀请码</Text><Text class="list-card-copy">邀请码 7 天有效，生成后交给会员在会员端绑定身份并查看卡包。</Text><Text class="tag blue">待生成</Text></View>
         <View v-if="message" class="error-banner">{{ message }}</View>
         <View class="member-issue-cta"><button class="button issue-button" :disabled="loading || !canSubmit || !templates.length" :loading="loading" @tap="submit">添加会员并生成邀请码</button></View>
       </template>

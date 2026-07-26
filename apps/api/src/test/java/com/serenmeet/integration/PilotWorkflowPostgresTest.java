@@ -922,9 +922,7 @@ class PilotWorkflowPostgresTest {
       List.of(serviceId),
       List.of(staffId)
     ));
-    Long memberId = id(ownerService.createMember(
-      owner, "删除校验会员", "CARD-DELETE-001", ""
-    ));
+    Long memberId = id(ownerService.createMember(owner, "删除校验会员", "13800000001"));
     ownerService.issueCard(
       owner,
       memberId,
@@ -1282,8 +1280,77 @@ class PilotWorkflowPostgresTest {
       );
   }
 
+  @Test
+  void memberNumbersAreDatabaseGeneratedGloballyUniqueAndContactIsRequired() throws Exception {
+    BusinessLoginResponse firstLogin = authService.ownerWechatLogin("owner-member-number-first");
+    SessionPrincipal firstOwner = authService.requirePrincipal("Bearer " + firstLogin.token());
+    TenantContext.set(firstOwner.tenantId());
+    saveCompleteStoreDraft(firstOwner, "会员编号第一门店", "021-13000004");
+    ownerService.completeOnboarding(firstOwner);
+
+    mockMvc.perform(post("/owner/members")
+        .header("Authorization", "Bearer " + firstLogin.token())
+        .header("Idempotency-Key", "member-contact-required")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"name\":\"空联系方式会员\",\"contactText\":\"  \"}"))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.error.code").value("FIELD_ERROR"))
+      .andExpect(jsonPath("$.error.fieldErrors.contactText").exists());
+
+    String firstResponse = mockMvc.perform(post("/owner/members")
+        .header("Authorization", "Bearer " + firstLogin.token())
+        .header("Idempotency-Key", "member-number-generated")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+          {"name":"陈雨","memberNo":"FORGED-MEMBER-NO","contactText":"13800000002"}
+          """))
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString(StandardCharsets.UTF_8);
+    JsonNode firstMember = objectMapper.readTree(firstResponse).path("data");
+    String firstMemberNo = firstMember.path("memberNo").asText();
+    assertThat(firstMemberNo).matches("SM-[0-9]{8,}").isNotEqualTo("FORGED-MEMBER-NO");
+    assertThat(firstMember.path("contactText").asText()).isEqualTo("13800000002");
+
+    BusinessLoginResponse secondLogin = authService.ownerWechatLogin("owner-member-number-second");
+    SessionPrincipal secondOwner = authService.requirePrincipal("Bearer " + secondLogin.token());
+    TenantContext.set(secondOwner.tenantId());
+    saveCompleteStoreDraft(secondOwner, "会员编号第二门店", "021-13000005");
+    ownerService.completeOnboarding(secondOwner);
+    Map<String, Object> secondMember =
+      ownerService.createMember(secondOwner, "周琳", " wechat-contact ");
+    assertThat(secondMember.get("memberNo").toString())
+      .matches("SM-[0-9]{8,}")
+      .isNotEqualTo(firstMemberNo);
+    assertThat(secondMember).containsEntry("contactText", "wechat-contact");
+
+    assertThat(jdbcTemplate.queryForObject(
+      """
+      select count(distinct member_no) = count(*)
+      from member where id in (?, ?)
+      """,
+      Boolean.class,
+      firstMember.path("id").asLong(),
+      secondMember.get("id")
+    )).isTrue();
+    assertThat(jdbcTemplate.queryForObject(
+      """
+      select is_generated from information_schema.columns
+      where table_schema = 'public' and table_name = 'member' and column_name = 'member_no'
+      """,
+      String.class
+    )).isEqualTo("ALWAYS");
+
+    TenantContext.set(firstOwner.tenantId());
+    assertThatThrownBy(() -> ownerService.createMember(firstOwner, "无联系方式会员", " "))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("FIELD_ERROR")
+      );
+  }
+
   private void verifyIdempotentIssuance(SessionPrincipal owner, Long templateId) {
-    Long memberId = id(ownerService.createMember(owner, "幂等会员", "M-IDEMPOTENT", "微信联系"));
+    Long memberId = id(ownerService.createMember(owner, "幂等会员", "微信联系"));
     Map<String, Object> request = Map.of("memberId", memberId, "templateId", templateId, "paidAmount", "499.00");
     String key = "integration-issue-card";
 
@@ -1358,8 +1425,8 @@ class PilotWorkflowPostgresTest {
     });
   }
 
-  private MemberLogin createAndBindMember(SessionPrincipal owner, Long templateId, String memberNo, String loginCode) {
-    Long memberId = id(ownerService.createMember(owner, "会员" + memberNo, memberNo, "微信联系"));
+  private MemberLogin createAndBindMember(SessionPrincipal owner, Long templateId, String memberKey, String loginCode) {
+    Long memberId = id(ownerService.createMember(owner, "会员" + memberKey, "微信联系"));
     Long cardId = ((Number) ownerService.issueCard(
       owner, memberId, templateId, new BigDecimal("499.00"), LocalDate.now(), "线下收款"
     ).get("memberCardId")).longValue();

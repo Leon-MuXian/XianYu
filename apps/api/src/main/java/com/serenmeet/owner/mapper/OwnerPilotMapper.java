@@ -317,11 +317,10 @@ public interface OwnerPilotMapper {
 
   List<Map<String, Object>> selectMembers(@Param("tenantId") Long tenantId);
 
-  Long insertMember(
+  Map<String, Object> insertMember(
       @Param("tenantId") Long tenantId,
       @Param("storeId") Long storeId,
       @Param("name") String name,
-      @Param("memberNo") String memberNo,
       @Param("contactText") String contactText);
 
   Map<String, Object> selectOwnedMember(

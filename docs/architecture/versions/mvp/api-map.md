@@ -180,13 +180,15 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `GET` | `/owner/members` | 会员列表，支持绑定状态、低余额、到期筛选。 |
-| `POST` | `/owner/members` | 创建会员。 |
+| `POST` | `/owner/members` | 以必填姓名和联系方式创建会员；会员编号由数据库生成，不接收前端编号。 |
 | `GET` | `/owner/members/{memberId}` | 会员摘要。 |
 | `PUT` | `/owner/members/{memberId}` | 修改会员资料。 |
 | `POST` | `/owner/members/{memberId}/cards` | 发卡并写线下实收。 |
 | `POST` | `/owner/members/{memberId}/invite-codes` | 重新生成邀请码。 |
 
 发卡接口必须在同一事务内创建会员卡和线下售卡记录，不生成支付订单。
+
+会员编号按全局会员主键生成 `SM-XXXXXXXX` 格式，并由数据库全局唯一约束兜底；位数超过 8 位时完整保留，不得截断。`POST /owner/members` 的姓名和联系方式均为必填项。
 
 ### 4.8 排期
 

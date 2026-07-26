@@ -21,7 +21,7 @@ const inviteCode = ref('')
 const staffForm = reactive({ loginName: '', password: '', staffName: '', roleLabel: '教练' })
 const serviceForm = reactive({ name: '', serviceType: '课程', durationMin: 60, defaultCapacity: 1, deductCount: 1 })
 const cardForm = reactive({ name: '', salePriceYuan: 0, totalCount: 10, validDays: 90, lowBalanceThreshold: 2 })
-const memberForm = reactive({ name: '', memberNo: '', contactText: '' })
+const memberForm = reactive({ name: '', contactText: '' })
 const issueForm = reactive({ receivedAmountYuan: 0, saleDate: new Date().toISOString().slice(0, 10), payMethodLabel: '线下收款' })
 const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
 startAt.setMinutes(0, 0, 0)
@@ -172,9 +172,8 @@ useDidShow(load)
     <View class="panel">
       <Text class="panel-title">4. 会员与发卡</Text>
       <View class="field"><Text class="label">会员姓名</Text><input v-model="memberForm.name" class="input" /></View>
-      <View class="field"><Text class="label">会员编号</Text><input v-model="memberForm.memberNo" class="input" /></View>
       <View class="field"><Text class="label">联系方式</Text><input v-model="memberForm.contactText" class="input" /></View>
-      <button class="button secondary" :disabled="loading || !memberForm.name || !memberForm.memberNo" @tap="createMember">创建会员</button>
+      <button class="button secondary" :disabled="loading || !memberForm.name.trim() || !memberForm.contactText.trim()" @tap="createMember">创建会员</button>
       <View class="field"><Text class="label">本次实收</Text><input v-model.number="issueForm.receivedAmountYuan" class="input" type="digit" /></View>
       <button class="button" :disabled="loading || !readyForIssue" @tap="issueCard">向首位会员发卡</button>
       <button class="button secondary" :disabled="loading || !members.length" @tap="createInvite">生成首位会员邀请码</button>

@@ -127,7 +127,7 @@ export interface Member {
   id: number
   name: string
   memberNo: string
-  contactText?: string
+  contactText: string
   bindStatus: string
 }
 

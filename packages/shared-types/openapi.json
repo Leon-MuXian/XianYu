@@ -4089,18 +4089,19 @@
       },
       "CreateMemberRequest": {
         "required": [
-          "memberNo",
+          "contactText",
           "name"
         ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
-          },
-          "memberNo": {
+            "maxLength": 80,
+            "minLength": 0,
             "type": "string"
           },
           "contactText": {
+            "maxLength": 120,
+            "minLength": 0,
             "type": "string"
           }
         }

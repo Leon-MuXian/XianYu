@@ -236,12 +236,15 @@ create table member (
   tenant_id bigint not null references tenant(id),
   store_id bigint not null references store(id),
   name varchar(80) not null,
-  member_no varchar(80) not null,
-  contact_text varchar(120) not null default '',
+  member_no varchar(80) generated always as (
+    'SM-' || lpad(id::text, greatest(8, length(id::text)), '0')
+  ) stored,
+  contact_text varchar(120) not null,
   bind_status varchar(32) not null default 'unbound',
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,
-  constraint uq_member_no unique (tenant_id, store_id, member_no),
+  constraint uq_member_no unique (member_no),
+  constraint chk_member_contact_text_non_blank check (length(btrim(contact_text)) > 0),
   constraint chk_member_bind_status check (bind_status in ('unbound', 'bound'))
 );
 

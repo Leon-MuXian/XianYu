@@ -42,7 +42,7 @@ useDidShow(load)
       <View v-if="message" class="error-banner">{{ message }}</View>
       <template v-if="tab === 'members'">
         <View v-if="!members.length" class="empty-state" @tap="navigate(ownerRoutes.memberIssue)"><Text class="empty-title">还没有会员</Text><Text>添加会员、记录线下实收并生成邀请码。</Text></View>
-        <View v-for="member in members" :key="member.id" class="owner-list-card"><Text class="list-card-title">{{ member.name }} · {{ member.memberNo }}</Text><Text class="list-card-copy">{{ member.contactText || '无联系备注' }} · {{ member.bindStatus === 'bound' ? '会员已绑定' : '等待会员绑定' }}</Text><Text class="tag" :class="member.bindStatus === 'bound' ? '' : 'warn'">{{ member.bindStatus === 'bound' ? '已绑定' : '待绑定' }}</Text></View>
+        <View v-for="member in members" :key="member.id" class="owner-list-card"><Text class="list-card-title">{{ member.name }} · {{ member.memberNo }}</Text><Text class="list-card-copy">{{ member.contactText }} · {{ member.bindStatus === 'bound' ? '会员已绑定' : '等待会员绑定' }}</Text><Text class="tag" :class="member.bindStatus === 'bound' ? '' : 'warn'">{{ member.bindStatus === 'bound' ? '已绑定' : '待绑定' }}</Text></View>
       </template>
       <template v-else-if="tab === 'cards'">
         <View v-for="item in templates" :key="item.id" class="owner-list-card"><Text class="list-card-title">{{ item.name }}</Text><Text class="list-card-copy">¥{{ item.salePriceYuan }} · {{ item.cardType === 'count' ? `${item.totalCount} 次` : `${item.validDays} 天有效` }} · {{ item.status === 'active' ? '可发卡' : '已停用' }}</Text><Text class="tag" :class="item.cardType === 'count' ? '' : 'blue'">{{ item.cardType === 'count' ? '次数卡' : '期限卡' }}</Text></View>

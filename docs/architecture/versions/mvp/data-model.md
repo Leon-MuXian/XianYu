@@ -329,8 +329,8 @@ flowchart LR
 | `tenant_id` | bigint | 租户 ID。 |
 | `store_id` | bigint | 门店 ID。 |
 | `name` | varchar(80) | 姓名。 |
-| `member_no` | varchar(80) | 门店会员编号。 |
-| `contact_text` | varchar(120) | 联系方式文本。 |
+| `member_no` | varchar(80) | 数据库根据全局会员 ID 生成的 `SM-XXXXXXXX` 编号，全平台唯一。 |
+| `contact_text` | varchar(120) | 必填联系方式文本，数据库禁止空白值。 |
 | `bind_status` | varchar(32) | `unbound`、`bound`。 |
 
 ### 6.8 `member_invite_code`

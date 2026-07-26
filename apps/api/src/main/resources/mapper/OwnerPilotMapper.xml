@@ -540,10 +540,10 @@
     order by id desc
   </select>
 
-  <select id="insertMember" resultType="long" flushCache="true" affectData="true">
-    insert into member(tenant_id, store_id, name, member_no, contact_text)
-    values (#{tenantId}, #{storeId}, #{name}, #{memberNo}, #{contactText})
-    returning id
+  <select id="insertMember" resultType="map" flushCache="true" affectData="true">
+    insert into member(tenant_id, store_id, name, contact_text)
+    values (#{tenantId}, #{storeId}, #{name}, #{contactText})
+    returning id, member_no as "memberNo"
   </select>
 
   <select id="selectOwnedMember" resultType="map">

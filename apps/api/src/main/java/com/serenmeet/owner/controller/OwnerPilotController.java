@@ -521,9 +521,7 @@ public class OwnerPilotController {
             "owner.member.create",
             key,
             request,
-            () ->
-                ownerService.createMember(
-                    principal, request.name(), request.memberNo(), request.contactText())));
+            () -> ownerService.createMember(principal, request.name(), request.contactText())));
   }
 
   @PostMapping("/members/{memberId}/cards")
@@ -727,7 +725,8 @@ public class OwnerPilotController {
       @NotEmpty List<Long> staffIds) {}
 
   public record CreateMemberRequest(
-      @NotBlank String name, @NotBlank String memberNo, String contactText) {}
+      @NotBlank @Size(max = 80) String name,
+      @NotBlank @Size(max = 120) String contactText) {}
 
   public record IssueCardRequest(
       @NotNull Long templateId,
