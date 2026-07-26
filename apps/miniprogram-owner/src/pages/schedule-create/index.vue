@@ -53,7 +53,7 @@ function validate() {
   if (!selectedStaff.value) errors.push('请选择启用员工')
   if (!selectedResource.value) errors.push('请选择启用资源')
   if (form.endTime <= form.startTime) errors.push('结束时间必须晚于开始时间')
-  if (!applicableCards.value.length) errors.push('至少需要 1 个启用会员卡模板')
+  if (!applicableCards.value.length) errors.push('至少需要 1 张启用会员卡')
   precheckErrors.value = errors
   return !errors.length
 }
@@ -97,7 +97,7 @@ useLoad((params) => { void load(params) })
           <picker class="field" mode="time" :value="form.startTime" @change="setTime('startTime', $event)"><View><Text>开始时间 <Text class="required-mark">必填</Text></Text><Text class="field-value">{{ form.startTime }} ▾</Text></View></picker>
           <picker class="field" mode="time" :value="form.endTime" @change="setTime('endTime', $event)"><View><Text>结束时间 <Text class="required-mark">必填</Text></Text><Text class="field-value">{{ form.endTime }} ▾</Text></View></picker>
           <View class="field"><Text>容量 <Text class="required-mark">必填</Text></Text><input v-model.number="form.capacity" class="field-input" type="number" /></View>
-          <View class="field wide"><Text>可用会员卡 <Text class="required-mark">必填</Text></Text><Text class="field-value">{{ applicableCards.map((item) => item.name).join('、') || '没有启用会员卡模板' }}</Text></View>
+          <View class="field wide"><Text>可用会员卡 <Text class="required-mark">必填</Text></Text><Text class="field-value">{{ applicableCards.map((item) => item.name).join('、') || '没有启用会员卡' }}</Text></View>
         </View>
         <Text class="section-title">发布确认</Text>
         <View class="owner-progress" v-if="!precheckErrors.length"><View class="owner-step"><Text class="step-glyph">服</Text><View><Text class="step-title">服务已启用</Text><Text class="step-copy">时长、容量、核销规则完整</Text></View><Text class="tag">通过</Text></View><View class="owner-step"><Text class="step-glyph">员</Text><View><Text class="step-title">员工已安排</Text><Text class="step-copy">已选择启用的可履约员工</Text></View><Text class="tag">通过</Text></View><View class="owner-step"><Text class="step-glyph">卡</Text><View><Text class="step-title">会员卡可使用</Text><Text class="step-copy">会员可使用适用会员卡预约</Text></View><Text class="tag blue">通过</Text></View></View>

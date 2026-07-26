@@ -44,7 +44,7 @@ async function load() {
 const tasks = computed(() => [
   { key: 'staff', title: '创建员工账号', copy: '为可履约人员分配登录账号，后续服务才能绑定员工。', count: metrics.staffCount, action: '去创建', url: ownerRoutes.staff },
   { key: 'service', title: '创建服务项目', copy: '设置名称、时长、容量和适用员工，会员才能看到服务。', count: metrics.serviceCount, action: '去设置', url: ownerRoutes.services },
-  { key: 'card', title: '创建会员卡模板', copy: '录入售价、次数、有效期和适用服务，用于发卡和预约校验。', count: metrics.cardTemplateCount, action: '去创建', url: ownerRoutes.cards },
+  { key: 'card', title: '创建会员卡', copy: '录入售价、次数、有效期和适用服务，用于发卡和预约校验。', count: metrics.cardTemplateCount, action: '去创建', url: ownerRoutes.cards },
   { key: 'member', title: '添加会员并发卡', copy: '生成邀请码交给会员绑定，会员才能使用卡预约。', count: metrics.memberCount, action: '去添加', url: ownerRoutes.memberIssue },
   { key: 'slot', title: '发布预约时段', copy: '选择服务、员工、资源、日期和时间，开放会员预约。', count: metrics.futureSlotCount, action: '去发布', url: ownerRoutes.scheduleCreate }
 ])

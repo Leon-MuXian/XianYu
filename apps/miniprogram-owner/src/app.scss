@@ -33,11 +33,14 @@ button::after { border: 0; }
 
 .screen { min-height: 100vh; background: var(--bg); }
 .staff-screen,
-.service-screen { display: flex; flex-direction: column; height: 100vh; min-height: 0; overflow: hidden; }
+.service-screen,
+.card-screen { display: flex; flex-direction: column; height: 100vh; min-height: 0; overflow: hidden; }
 .staff-page-scroll,
-.service-page-scroll { display: block; flex: 1 1 auto; width: 100%; min-height: 0; overflow: hidden; }
+.service-page-scroll,
+.card-page-scroll { display: block; flex: 1 1 auto; width: 100%; min-height: 0; overflow: hidden; }
 .staff-page-scroll::-webkit-scrollbar,
-.service-page-scroll::-webkit-scrollbar {
+.service-page-scroll::-webkit-scrollbar,
+.card-page-scroll::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
@@ -383,6 +386,70 @@ button::after { border: 0; }
   height: 0;
   color: transparent;
 }
+
+.card-page { padding-bottom: 34px; }
+.card-status-strip { margin-bottom: 12px; }
+.card-tabs { margin-bottom: 14px; }
+.card-template-list { display: grid; gap: 10px; }
+.card-template-row {
+  display: grid;
+  min-height: 104px;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.card-template-row-pressed { background: #f8fbf9; }
+.card-template-main { display: flex; justify-content: center; flex-direction: column; min-width: 0; padding: 13px 14px; }
+.card-template-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.card-template-name { display: block; overflow: hidden; min-width: 0; font-size: 15px; line-height: 1.35; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.card-template-meta { display: block; overflow: hidden; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.4; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.card-template-scope { display: block; overflow: hidden; margin-top: 7px; color: var(--green-dark); font-size: 10px; line-height: 1.3; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.card-template-price { display: flex; align-items: center; justify-content: center; flex-direction: column; min-width: 0; border-left: 1px solid var(--line-soft); background: #f4faf7; }
+.card-template-price.period { background: #f0f6f8; }
+.card-template-price-value { display: block; max-width: 100%; overflow: hidden; color: var(--ink); font-size: 17px; line-height: 1; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.card-template-price-label { display: block; margin-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.2; font-weight: 800; }
+.card-empty { margin-top: 6px; }
+.card-empty-action { width: 136px; min-height: 42px; margin: 16px auto 0; }
+.card-type-backdrop { z-index: 85; }
+.sheet.card-type-sheet { overflow: hidden; background: #fffefa; }
+.card-type-options { display: grid; gap: 9px; }
+.card-type-option {
+  display: grid;
+  width: 100%;
+  min-height: 70px;
+  grid-template-columns: 40px minmax(0, 1fr) 18px;
+  gap: 11px;
+  align-items: center;
+  margin: 0;
+  border: 1px solid #cae2d8;
+  border-radius: 8px;
+  background: #fbfefc;
+  padding: 10px 12px;
+  color: inherit;
+  text-align: left;
+}
+.card-type-option.period { border-color: #d7e3ea; background: #f7fafc; }
+.card-type-option-pressed { opacity: .78; }
+.card-type-glyph { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: var(--green-soft); color: var(--green-dark); font-size: 14px; font-weight: 900; }
+.card-type-option.period .card-type-glyph { background: var(--blue-soft); color: var(--blue); }
+.card-type-title { display: block; font-size: 14px; line-height: 1.35; font-weight: 900; }
+.card-type-copy { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; font-weight: 700; }
+.card-type-arrow { color: var(--muted); text-align: right; font-size: 24px; line-height: 1; }
+.card-type-footer { margin-top: 12px; }
+.card-form-page-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.card-form-page-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; color: transparent; }
+.card-form-page { padding-bottom: 34px; }
+.card-page-form-grid { margin-top: 14px; }
+.card-type-display { border-color: #cae2d8; background: #fbfefc; }
+.card-number-field { position: relative; min-width: 0; padding-right: 8px; padding-left: 8px; }
+.card-number-field .field-input { width: calc(100% - 22px); font-size: 14px; }
+.card-number-unit { position: absolute; right: 8px; bottom: 10px; color: var(--muted); font-size: 9px; line-height: 28px; font-weight: 800; }
+.card-page-form-footer { margin-top: 16px; }
+.card-scope-backdrop { z-index: 90; }
+.sheet.card-scope-sheet { background: #f8faf7; scrollbar-width: none; -ms-overflow-style: none; }
+.card-scope-sheet::-webkit-scrollbar { display: none; width: 0; height: 0; color: transparent; }
 
 .owner-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .owner-form-grid .field.wide { grid-column: 1 / -1; }

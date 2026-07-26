@@ -252,6 +252,14 @@ public interface OwnerPilotMapper {
 
   List<Map<String, Object>> selectCardTemplates(@Param("tenantId") Long tenantId);
 
+  int countCardTemplateNameKey(
+      @Param("tenantId") Long tenantId,
+      @Param("nameKey") String nameKey,
+      @Param("excludeTemplateId") Long excludeTemplateId);
+
+  int countOwnedCardTemplate(
+      @Param("tenantId") Long tenantId, @Param("templateId") Long templateId);
+
   Long insertCardTemplate(
       @Param("tenantId") Long tenantId,
       @Param("storeId") Long storeId,

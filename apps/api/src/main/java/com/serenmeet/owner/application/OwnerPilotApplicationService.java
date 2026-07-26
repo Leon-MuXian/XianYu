@@ -11,6 +11,7 @@ import com.serenmeet.auth.support.TokenHasher;
 import com.serenmeet.common.ApiException;
 import com.serenmeet.owner.dto.StaffCredentialResponse;
 import com.serenmeet.owner.mapper.OwnerPilotMapper;
+import com.serenmeet.owner.support.CardTemplateNameNormalizer;
 import com.serenmeet.owner.support.ServiceNameNormalizer;
 import com.serenmeet.owner.support.StaffCredentialRevealRateLimiter;
 import java.math.BigDecimal;
@@ -42,6 +43,7 @@ public class OwnerPilotApplicationService {
   private static final int MAX_SERVICE_SCOPE_COUNT = 6;
   private static final int MAX_RESOURCE_TEXT_LENGTH = 80;
   private static final int MAX_SERVICE_NAME_LENGTH = 120;
+  private static final int MAX_CARD_TEMPLATE_NAME_LENGTH = 120;
   private static final int MAX_STAFF_LOGIN_NAME_LENGTH = 80;
   private static final String CUSTOM_RESOURCE_TYPE_PLACEHOLDER = "自定义";
   private static final Pattern STORE_NAME_WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
@@ -735,27 +737,34 @@ public class OwnerPilotApplicationService {
       List<Long> serviceIds,
       List<Long> staffIds) {
     Long tenantId = principal.tenantId();
+    String normalizedName = normalizeCardTemplateName(name);
+    requireCardTemplateNameAvailable(tenantId, normalizedName, null);
     validateSelectableIds(OwnedEntity.SERVICE, serviceIds, tenantId);
     validateSelectableIds(OwnedEntity.STAFF, staffIds, tenantId);
     validateCardTemplate(cardType, totalCount, lowBalanceThreshold);
     boolean countCard = "count".equals(cardType);
-    Long id =
-        ownerMapper.insertCardTemplate(
-            tenantId,
-            requireStoreId(tenantId),
-            name,
-            cardType,
-            salePrice,
-            countCard ? totalCount : null,
-            validDays,
-            countCard ? lowBalanceThreshold : null);
+    Long id;
+    try {
+      id =
+          ownerMapper.insertCardTemplate(
+              tenantId,
+              requireStoreId(tenantId),
+              normalizedName,
+              cardType,
+              salePrice,
+              countCard ? totalCount : null,
+              validDays,
+              countCard ? lowBalanceThreshold : null);
+    } catch (DuplicateKeyException exception) {
+      throw cardTemplateNameTaken(exception);
+    }
     for (Long serviceId : serviceIds) {
       ownerMapper.insertCardServiceScope(tenantId, id, serviceId);
     }
     for (Long staffId : staffIds) {
       ownerMapper.insertCardStaffScope(tenantId, id, staffId);
     }
-    return Map.of("id", id, "name", name, "cardType", cardType, "status", "active");
+    return Map.of("id", id, "name", normalizedName, "cardType", cardType, "status", "active");
   }
 
   @Transactional
@@ -771,20 +780,29 @@ public class OwnerPilotApplicationService {
       List<Long> serviceIds,
       List<Long> staffIds) {
     Long tenantId = principal.tenantId();
+    String normalizedName = normalizeCardTemplateName(name);
+    requireOwned(ownerMapper.countOwnedCardTemplate(tenantId, templateId));
+    requireCardTemplateNameAvailable(tenantId, normalizedName, templateId);
     validateSelectableIds(OwnedEntity.SERVICE, serviceIds, tenantId);
     validateSelectableIds(OwnedEntity.STAFF, staffIds, tenantId);
     validateCardTemplate(cardType, totalCount, lowBalanceThreshold);
     boolean countCard = "count".equals(cardType);
-    requireOwned(
-        ownerMapper.updateCardTemplate(
-            tenantId,
-            templateId,
-            name,
-            cardType,
-            salePrice,
-            countCard ? totalCount : null,
-            validDays,
-            countCard ? lowBalanceThreshold : null));
+    int updated;
+    try {
+      updated =
+          ownerMapper.updateCardTemplate(
+              tenantId,
+              templateId,
+              normalizedName,
+              cardType,
+              salePrice,
+              countCard ? totalCount : null,
+              validDays,
+              countCard ? lowBalanceThreshold : null);
+    } catch (DuplicateKeyException exception) {
+      throw cardTemplateNameTaken(exception);
+    }
+    requireOwned(updated);
     ownerMapper.deleteCardServiceScopes(tenantId, templateId);
     ownerMapper.deleteCardStaffScopes(tenantId, templateId);
     for (Long serviceId : serviceIds) {
@@ -793,8 +811,8 @@ public class OwnerPilotApplicationService {
     for (Long staffId : staffIds) {
       ownerMapper.insertCardStaffScope(tenantId, templateId, staffId);
     }
-    audit(tenantId, principal, "update_card_template", name, null, "updated", null);
-    return Map.of("id", templateId, "name", name, "cardType", cardType);
+    audit(tenantId, principal, "update_card_template", normalizedName, null, "updated", null);
+    return Map.of("id", templateId, "name", normalizedName, "cardType", cardType);
   }
 
   @Transactional
@@ -1191,6 +1209,33 @@ public class OwnerPilotApplicationService {
         HttpStatus.CONFLICT,
         "SERVICE_NAME_TAKEN",
         "当前租户已存在同名服务项目，请更换名称",
+        cause);
+  }
+
+  private String normalizeCardTemplateName(String name) {
+    String normalized = CardTemplateNameNormalizer.normalizeDisplayName(name);
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员卡名称不能为空");
+    }
+    if (normalized.length() > MAX_CARD_TEMPLATE_NAME_LENGTH) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "会员卡名称不能超过 120 个字符");
+    }
+    return normalized;
+  }
+
+  private void requireCardTemplateNameAvailable(
+      Long tenantId, String normalizedName, Long excludeTemplateId) {
+    String nameKey = CardTemplateNameNormalizer.keyOf(normalizedName);
+    if (ownerMapper.countCardTemplateNameKey(tenantId, nameKey, excludeTemplateId) > 0) {
+      throw cardTemplateNameTaken(null);
+    }
+  }
+
+  private ApiException cardTemplateNameTaken(Throwable cause) {
+    return new ApiException(
+        HttpStatus.CONFLICT,
+        "CARD_TEMPLATE_NAME_TAKEN",
+        "当前租户已存在同名会员卡，请更换名称",
         cause);
   }
 

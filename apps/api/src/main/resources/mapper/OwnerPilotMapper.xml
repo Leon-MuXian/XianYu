@@ -451,6 +451,20 @@
     order by id
   </select>
 
+  <select id="countCardTemplateNameKey" resultType="int">
+    select count(*)
+    from card_template
+    where tenant_id = #{tenantId} and name_key = #{nameKey}
+    <if test="excludeTemplateId != null">
+      and id != #{excludeTemplateId}
+    </if>
+  </select>
+
+  <select id="countOwnedCardTemplate" resultType="int">
+    select count(*) from card_template
+    where tenant_id = #{tenantId} and id = #{templateId}
+  </select>
+
   <select id="insertCardTemplate" resultType="long" flushCache="true" affectData="true">
     insert into card_template(
       tenant_id, store_id, name, card_type, sale_price_yuan, total_count, valid_days, low_balance_threshold

@@ -582,6 +582,154 @@ class PilotWorkflowPostgresTest {
   }
 
   @Test
+  void cardTemplateNamesAreNormalizedUniquePerTenantAndConcurrencySafe() throws Exception {
+    SessionPrincipal firstOwner = ownerPrincipal("owner-card-name-first");
+    TenantContext.set(firstOwner.tenantId());
+    saveCompleteStoreDraft(firstOwner, "会员卡名称唯一门店一", "021-12000001");
+    ownerService.completeOnboarding(firstOwner);
+    Long firstResourceId = id(ownerService.resources(firstOwner).getFirst());
+    Long firstStaffId = id(ownerService.createStaff(
+      firstOwner, "card-name-staff-first", "staff-pass-2026", "卡务一", "教练"
+    ));
+    Long firstServiceId = id(ownerService.createService(
+      firstOwner,
+      "会员卡名称服务一",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(firstResourceId),
+      List.of(firstStaffId),
+      "active"
+    ));
+
+    Map<String, Object> firstCard = ownerService.createCardTemplate(
+      firstOwner,
+      "  Ｐose　 Card  ",
+      "count",
+      new BigDecimal("600.00"),
+      10,
+      365,
+      2,
+      List.of(firstServiceId),
+      List.of(firstStaffId)
+    );
+    Long firstCardId = id(firstCard);
+    assertThat(firstCard).containsEntry("name", "Pose Card");
+    assertThatThrownBy(() -> ownerService.createCardTemplate(
+      firstOwner,
+      "pose card",
+      "period",
+      new BigDecimal("800.00"),
+      null,
+      30,
+      null,
+      List.of(firstServiceId),
+      List.of(firstStaffId)
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("CARD_TEMPLATE_NAME_TAKEN")
+    );
+
+    Long secondCardId = id(ownerService.createCardTemplate(
+      firstOwner,
+      "替代会员卡",
+      "period",
+      new BigDecimal("900.00"),
+      null,
+      30,
+      null,
+      List.of(firstServiceId),
+      List.of(firstStaffId)
+    ));
+    assertThatThrownBy(() -> ownerService.updateCardTemplate(
+      firstOwner,
+      secondCardId,
+      "ＰＯＳＥ　ＣＡＲＤ",
+      "period",
+      new BigDecimal("900.00"),
+      null,
+      30,
+      null,
+      List.of(firstServiceId),
+      List.of(firstStaffId)
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("CARD_TEMPLATE_NAME_TAKEN")
+    );
+    assertThat(ownerService.updateCardTemplate(
+      firstOwner,
+      firstCardId,
+      " POSE CARD ",
+      "count",
+      new BigDecimal("600.00"),
+      10,
+      365,
+      2,
+      List.of(firstServiceId),
+      List.of(firstStaffId)
+    )).containsEntry("name", "POSE CARD");
+
+    SessionPrincipal secondOwner = ownerPrincipal("owner-card-name-second");
+    TenantContext.set(secondOwner.tenantId());
+    saveCompleteStoreDraft(secondOwner, "会员卡名称唯一门店二", "021-12000002");
+    ownerService.completeOnboarding(secondOwner);
+    Long secondResourceId = id(ownerService.resources(secondOwner).getFirst());
+    Long secondStaffId = id(ownerService.createStaff(
+      secondOwner, "card-name-staff-second", "staff-pass-2026", "卡务二", "教练"
+    ));
+    Long secondServiceId = id(ownerService.createService(
+      secondOwner,
+      "会员卡名称服务二",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(secondResourceId),
+      List.of(secondStaffId),
+      "active"
+    ));
+    assertThat(ownerService.createCardTemplate(
+      secondOwner,
+      "pose card",
+      "count",
+      new BigDecimal("500.00"),
+      8,
+      180,
+      1,
+      List.of(secondServiceId),
+      List.of(secondStaffId)
+    )).containsEntry("name", "pose card");
+
+    TenantContext.set(firstOwner.tenantId());
+    CountDownLatch ready = new CountDownLatch(2);
+    CountDownLatch start = new CountDownLatch(1);
+    AtomicInteger successes = new AtomicInteger();
+    AtomicInteger conflicts = new AtomicInteger();
+    CompletableFuture<Void> firstAttempt = cardTemplateCreationAttempt(
+      firstOwner, firstServiceId, firstStaffId, " concurrent card ", ready, start, successes, conflicts
+    );
+    CompletableFuture<Void> secondAttempt = cardTemplateCreationAttempt(
+      firstOwner, firstServiceId, firstStaffId, "ＣＯＮＣＵＲＲＥＮＴ　ＣＡＲＤ",
+      ready, start, successes, conflicts
+    );
+    assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+    start.countDown();
+    firstAttempt.get(10, TimeUnit.SECONDS);
+    secondAttempt.get(10, TimeUnit.SECONDS);
+
+    assertThat(successes).hasValue(1);
+    assertThat(conflicts).hasValue(1);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from card_template where tenant_id = ? and name_key = 'concurrent card'",
+      Integer.class,
+      firstOwner.tenantId()
+    )).isEqualTo(1);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from pg_constraint where conname = 'uq_card_template_tenant_name_key'",
+      Integer.class
+    )).isEqualTo(1);
+  }
+
+  @Test
   void serviceDeletionRequiresDisabledUnreferencedOwnedService() throws Exception {
     BusinessLoginResponse ownerLogin =
       authService.ownerWechatLogin("owner-service-delete-primary");
@@ -1209,6 +1357,47 @@ class PilotWorkflowPostgresTest {
         successes.incrementAndGet();
       } catch (ApiException exception) {
         if (!"SERVICE_NAME_TAKEN".equals(exception.code())) {
+          throw exception;
+        }
+        conflicts.incrementAndGet();
+      } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(exception);
+      } finally {
+        TenantContext.clear();
+      }
+    });
+  }
+
+  private CompletableFuture<Void> cardTemplateCreationAttempt(
+    SessionPrincipal owner,
+    Long serviceId,
+    Long staffId,
+    String cardName,
+    CountDownLatch ready,
+    CountDownLatch start,
+    AtomicInteger successes,
+    AtomicInteger conflicts
+  ) {
+    return CompletableFuture.runAsync(() -> {
+      TenantContext.set(owner.tenantId());
+      ready.countDown();
+      try {
+        start.await(5, TimeUnit.SECONDS);
+        ownerService.createCardTemplate(
+          owner,
+          cardName,
+          "count",
+          new BigDecimal("700.00"),
+          10,
+          365,
+          2,
+          List.of(serviceId),
+          List.of(staffId)
+        );
+        successes.incrementAndGet();
+      } catch (ApiException exception) {
+        if (!"CARD_TEMPLATE_NAME_TAKEN".equals(exception.code())) {
           throw exception;
         }
         conflicts.incrementAndGet();

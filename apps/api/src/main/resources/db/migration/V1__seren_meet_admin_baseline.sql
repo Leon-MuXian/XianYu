@@ -195,6 +195,9 @@ create table card_template (
   tenant_id bigint not null references tenant(id),
   store_id bigint not null references store(id),
   name varchar(120) not null,
+  name_key text generated always as (
+    lower(regexp_replace(btrim(normalize(name, NFKC)), E'\\s+', ' ', 'g'))
+  ) stored,
   card_type varchar(32) not null,
   sale_price_yuan numeric(12,2) not null,
   total_count integer,
@@ -210,7 +213,8 @@ create table card_template (
   constraint chk_card_template_count check (
     (card_type = 'count' and total_count > 0 and low_balance_threshold >= 0)
     or (card_type = 'period' and total_count is null and low_balance_threshold is null)
-  )
+  ),
+  constraint uq_card_template_tenant_name_key unique (tenant_id, name_key)
 );
 
 create table card_template_service_scope (

@@ -299,6 +299,7 @@ flowchart LR
 | `tenant_id` | bigint | 租户 ID。 |
 | `store_id` | bigint | 门店 ID。 |
 | `name` | varchar(120) | 卡名。 |
+| `name_key` | text generated | 卡名经 NFKC、空白折叠和小写归一化后的比较键。 |
 | `card_type` | varchar(32) | `count`、`period`。 |
 | `sale_price_yuan` | numeric(12,2) | 默认售价。 |
 | `total_count` | integer nullable | 次数卡总次数。 |
@@ -522,6 +523,7 @@ MVP 报表优先实时查询，必要时使用快照。
 - `staff_account(tenant_id, store_id)`
 - `service_item(tenant_id, name_key)` 唯一
 - `service_item(tenant_id, store_id, status)`
+- `card_template(tenant_id, name_key)` 唯一
 - `card_template(tenant_id, store_id, status)`
 - `member(tenant_id, store_id, bind_status)`
 - `member_invite_code(code_hash, status, expires_at)`

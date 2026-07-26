@@ -170,6 +170,8 @@
 | `PUT` | `/owner/card-templates/{templateId}` | 修改模板。 |
 | `PUT` | `/owner/card-templates/{templateId}/status` | 启用或停用。 |
 
+创建和修改会员卡时，名称按 Unicode NFKC、首尾空白清理、连续空白折叠和小写归一化后在当前租户内比较。当前租户已有同名会员卡时返回 HTTP 409 和 `CARD_TEMPLATE_NAME_TAKEN`；修改时排除当前会员卡，不同租户可以使用相同名称。
+
 ### 4.7 会员和发卡
 
 | 方法 | 路径 | 说明 |

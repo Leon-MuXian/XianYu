@@ -73,7 +73,7 @@ useLoad(load)
     <View class="content owner-dense">
       <template v-if="!invite">
         <View class="owner-page-head"><View><Text class="page-title">{{ form.name || '添加新会员' }}</Text><Text class="page-copy">录入会员档案，发放会员卡并在保存后生成邀请码。</Text></View></View>
-        <View v-if="!templates.length" class="owner-list-card" @tap="Taro.redirectTo({ url: ownerRoutes.cards })"><Text class="list-card-title">请先创建会员卡模板</Text><Text class="list-card-copy">至少需要 1 个启用模板，才能给会员发卡。</Text><Text class="tag red">阻断</Text></View>
+        <View v-if="!templates.length" class="owner-list-card" @tap="Taro.redirectTo({ url: ownerRoutes.cards })"><Text class="list-card-title">请先创建会员卡</Text><Text class="list-card-copy">至少需要 1 张启用会员卡，才能给会员发卡。</Text><Text class="tag red">阻断</Text></View>
         <View class="owner-form-grid">
           <View class="field"><Text>会员姓名 <Text class="required-mark">必填</Text></Text><input v-model="form.name" class="field-input" placeholder="请输入姓名" /></View>
           <View class="field"><Text>会员编号 <Text class="required-mark">必填</Text></Text><input v-model="form.memberNo" class="field-input" placeholder="如 SM-0268" /></View>
