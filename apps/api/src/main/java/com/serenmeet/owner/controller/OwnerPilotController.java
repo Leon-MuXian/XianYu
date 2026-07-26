@@ -490,6 +490,20 @@ public class OwnerPilotController {
             () -> ownerService.updateCardTemplateStatus(principal, templateId, request.status())));
   }
 
+  @DeleteMapping("/card-templates/{templateId}")
+  public ApiResponse<Object> deleteCardTemplate(
+      @CurrentSession SessionPrincipal principal,
+      @PathVariable Long templateId,
+      @RequestHeader("Idempotency-Key") String key) {
+    return ApiResponse.ok(
+        idempotency.execute(
+            principal,
+            "owner.card-template.delete." + templateId,
+            key,
+            Map.of("templateId", templateId),
+            () -> ownerService.deleteCardTemplate(principal, templateId)));
+  }
+
   @GetMapping("/members")
   public ApiResponse<List<Map<String, Object>>> members(
       @CurrentSession SessionPrincipal principal) {

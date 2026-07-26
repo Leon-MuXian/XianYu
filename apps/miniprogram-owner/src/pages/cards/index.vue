@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import { computed, nextTick, reactive, ref } from 'vue'
-import { createIdempotencyKey } from '@serenmeet/api-client'
+import { createIdempotencyKey, SerenApiError } from '@serenmeet/api-client'
 import OwnerTopbar from '../../components/OwnerTopbar.vue'
 import { api } from '../../api'
 import {
@@ -15,6 +15,7 @@ import { guardOwner, messageOf, type CardTemplate, type Service, type Staff } fr
 
 type CardFilter = 'all' | 'count' | 'period'
 type CardType = 'count' | 'period'
+type CardDeleteDialog = '' | 'must-disable' | 'confirm' | 'blocked'
 
 const templates = ref<CardTemplate[]>([])
 const services = ref<Service[]>([])
@@ -28,6 +29,8 @@ const loading = ref(false)
 const message = ref('')
 const cardNameError = ref('')
 const editorScrollTop = ref(0)
+const deleteDialog = ref<CardDeleteDialog>('')
+const deleteBlockedMessage = ref('')
 let editorScrollPosition = 0
 let scopeReturnScrollTop = 0
 
@@ -39,7 +42,8 @@ const form = reactive({
   validDays: 365,
   lowBalanceThreshold: 2,
   serviceIds: [] as number[],
-  staffIds: [] as number[]
+  staffIds: [] as number[],
+  status: 'active'
 })
 
 const editing = computed(() => Boolean(form.id))
@@ -64,6 +68,10 @@ const selectedStaffSummary = computed(() => formatCardSelectionSummary(
   '员工',
   '请选择至少 1 个启用员工'
 ))
+const issuedCardSummary = computed(() => {
+  const issuedCount = deleteBlockedMessage.value.match(/已发放\s*(\d+)\s*张/)
+  return issuedCount ? `已发放 ${issuedCount[1]} 张` : '已有会员持有此卡'
+})
 const canSave = computed(() => Boolean(
   normalizeCardTemplateName(form.name)
   && Number(form.salePriceYuan) >= 0
@@ -98,7 +106,8 @@ function resetForm(type: CardType = 'count') {
     validDays: type === 'count' ? 365 : 30,
     lowBalanceThreshold: 2,
     serviceIds: [],
-    staffIds: []
+    staffIds: [],
+    status: 'active'
   })
   cardNameError.value = ''
   message.value = ''
@@ -106,6 +115,8 @@ function resetForm(type: CardType = 'count') {
   editorScrollTop.value = 0
   editorScrollPosition = 0
   scopeReturnScrollTop = 0
+  deleteDialog.value = ''
+  deleteBlockedMessage.value = ''
 }
 
 function openTypePicker() {
@@ -138,7 +149,8 @@ function edit(item: CardTemplate) {
     validDays: item.validDays,
     lowBalanceThreshold: item.lowBalanceThreshold ?? 2,
     serviceIds: item.serviceIds || [],
-    staffIds: item.staffIds || []
+    staffIds: item.staffIds || [],
+    status: item.status
   })
   showForm.value = true
 }
@@ -176,6 +188,119 @@ async function closeScope() {
 function toggleId(target: 'serviceIds' | 'staffIds', id: number) {
   const values = form[target]
   form[target] = values.includes(id) ? values.filter((value) => value !== id) : [...values, id]
+}
+
+function cardScopeLabel(item: CardTemplate) {
+  return item.status === 'disabled'
+    ? '已停用 · 不可发新卡'
+    : `适用 ${item.serviceIds?.length || 0} 个服务 · ${item.staffIds?.length || 0} 名员工`
+}
+
+function syncCardStatus(templateId: number, status: string) {
+  form.status = status
+  const currentTemplate = templates.value.find((item) => item.id === templateId)
+  if (currentTemplate) currentTemplate.status = status
+}
+
+async function updateCurrentCardStatus(status: 'active' | 'disabled') {
+  const templateId = form.id
+  try {
+    await api.request(
+      'PUT',
+      `/owner/card-templates/${templateId}/status`,
+      { status },
+      createIdempotencyKey('card-status')
+    )
+    syncCardStatus(templateId, status)
+    await Taro.showToast({
+      title: status === 'active' ? '会员卡已启用' : '会员卡已停用',
+      icon: 'success'
+    })
+    return true
+  } catch (error) {
+    message.value = messageOf(error, '会员卡状态更新失败')
+    return false
+  }
+}
+
+async function toggleCurrentCardStatus() {
+  if (!editing.value || loading.value) return
+  const nextStatus = form.status === 'active' ? 'disabled' : 'active'
+  if (nextStatus === 'disabled') {
+    const confirmation = await Taro.showModal({
+      title: '停用会员卡',
+      content: '停用后不能再向会员发放此卡，已发放会员的权益不受影响。',
+      confirmText: '确认停用',
+      confirmColor: '#a55345'
+    })
+    if (!confirmation.confirm) return
+  }
+  loading.value = true
+  message.value = ''
+  await updateCurrentCardStatus(nextStatus)
+  loading.value = false
+}
+
+function openDeleteDialog() {
+  if (!editing.value || loading.value) return
+  message.value = ''
+  deleteBlockedMessage.value = ''
+  deleteDialog.value = form.status === 'active' ? 'must-disable' : 'confirm'
+}
+
+function closeDeleteDialog() {
+  if (loading.value) return
+  deleteDialog.value = ''
+  deleteBlockedMessage.value = ''
+}
+
+async function disableBeforeDelete() {
+  if (!editing.value || loading.value) return
+  loading.value = true
+  message.value = ''
+  const changed = await updateCurrentCardStatus('disabled')
+  loading.value = false
+  if (changed) deleteDialog.value = ''
+}
+
+async function confirmDelete() {
+  if (!editing.value || loading.value) return
+  const templateId = form.id
+  loading.value = true
+  message.value = ''
+  try {
+    await api.request(
+      'DELETE',
+      `/owner/card-templates/${templateId}`,
+      {},
+      createIdempotencyKey('card-delete')
+    )
+    deleteDialog.value = ''
+    closeForm()
+    await Taro.showToast({ title: '会员卡已删除', icon: 'success' })
+    await load()
+  } catch (error) {
+    if (error instanceof SerenApiError && error.code === 'CARD_TEMPLATE_MUST_BE_DISABLED') {
+      syncCardStatus(templateId, 'active')
+      deleteDialog.value = 'must-disable'
+    } else if (error instanceof SerenApiError && error.code === 'CARD_TEMPLATE_IN_USE') {
+      deleteBlockedMessage.value = error.message
+      deleteDialog.value = 'blocked'
+    } else {
+      const deleteErrorMessage = messageOf(error, '会员卡暂不能删除，请稍后重试')
+      deleteDialog.value = ''
+      message.value = deleteErrorMessage
+      await Taro.showModal({
+        title: '会员卡未删除',
+        content: deleteErrorMessage,
+        showCancel: false,
+        confirmText: '我知道了',
+        confirmColor: '#176b5d'
+      })
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
 async function save() {
@@ -287,9 +412,10 @@ useDidShow(load)
             v-for="item in filteredTemplates"
             :key="item.id"
             class="card-template-row"
+            :class="{ 'is-disabled': item.status === 'disabled' }"
             hover-class="card-template-row-pressed"
             role="button"
-            :aria-label="`${item.name}，${item.cardType === 'count' ? '次数卡' : '期限卡'}，点击修改`"
+            :aria-label="`${item.name}，${item.cardType === 'count' ? '次数卡' : '期限卡'}，${item.status === 'disabled' ? '已停用' : '已启用'}，点击修改`"
             @tap="edit(item)"
           >
             <View class="card-template-main">
@@ -298,7 +424,7 @@ useDidShow(load)
                 <Text class="tag" :class="{ blue: item.cardType === 'period' }">{{ item.cardType === 'count' ? '次数卡' : '期限卡' }}</Text>
               </View>
               <Text class="card-template-meta">{{ item.cardType === 'count' ? `${item.totalCount} 次 · ${item.validDays} 天有效 · 低于 ${item.lowBalanceThreshold} 次提醒` : `${item.validDays} 天有效 · 有效期内不限次` }}</Text>
-              <Text class="card-template-scope">适用 {{ item.serviceIds?.length || 0 }} 个服务 · {{ item.staffIds?.length || 0 }} 名员工</Text>
+              <Text class="card-template-scope">{{ cardScopeLabel(item) }}</Text>
             </View>
             <View class="card-template-price" :class="{ period: item.cardType === 'period' }">
               <Text class="card-template-price-value">¥{{ item.salePriceYuan }}</Text>
@@ -359,9 +485,28 @@ useDidShow(load)
           </View>
         </View>
         <View v-if="message" class="error-banner">{{ message }}</View>
+        <button
+          v-if="editing"
+          class="card-delete-action"
+          :disabled="loading"
+          hover-class="card-delete-action-pressed"
+          @tap="openDeleteDialog"
+        >删除会员卡</button>
         <View class="form-footer card-page-form-footer">
-          <button class="button secondary" :disabled="loading" @tap="closeForm">返回列表</button>
-          <button class="button" :disabled="loading || !canSave" :loading="loading" @tap="save">{{ editing ? '保存修改' : '保存会员卡' }}</button>
+          <template v-if="editing">
+            <button
+              class="button"
+              :class="form.status === 'active' ? 'card-stop-action' : 'secondary'"
+              :disabled="loading"
+              :loading="loading"
+              @tap="toggleCurrentCardStatus"
+            >{{ form.status === 'active' ? '停用会员卡' : '重新启用' }}</button>
+            <button class="button" :disabled="loading || !canSave" :loading="loading" @tap="save">保存修改</button>
+          </template>
+          <template v-else>
+            <button class="button secondary" :disabled="loading" @tap="closeForm">返回列表</button>
+            <button class="button" :disabled="loading || !canSave" :loading="loading" @tap="save">保存会员卡</button>
+          </template>
         </View>
       </View>
     </scroll-view>
@@ -401,6 +546,49 @@ useDidShow(load)
           </View>
         </View>
         <View class="form-footer"><button class="button secondary" @tap="closeScope">取消</button><button class="button" @tap="closeScope">确认选择</button></View>
+      </View>
+    </View>
+
+    <View v-if="deleteDialog" class="card-delete-backdrop" @tap.self="closeDeleteDialog">
+      <View class="card-delete-dialog" @tap.stop>
+        <template v-if="deleteDialog === 'must-disable'">
+          <Text class="card-delete-kicker">删除会员卡</Text>
+          <Text class="card-delete-title">请先停用会员卡</Text>
+          <Text class="card-delete-copy">启用中的会员卡仍可用于发卡，不能直接删除。停用后，已发放会员的权益不受影响。</Text>
+          <View class="card-delete-note">
+            <Text class="card-delete-note-title">这一步只停用</Text>
+            <Text class="card-delete-note-copy">停用完成后，需要再次点击“删除会员卡”。</Text>
+          </View>
+          <View class="form-footer card-delete-dialog-footer">
+            <button class="button secondary" :disabled="loading" @tap="closeDeleteDialog">取消</button>
+            <button class="button coral" :disabled="loading" :loading="loading" @tap="disableBeforeDelete">先停用</button>
+          </View>
+        </template>
+        <template v-else-if="deleteDialog === 'confirm'">
+          <Text class="card-delete-kicker">删除前确认</Text>
+          <Text class="card-delete-title">删除“{{ form.name }}”？</Text>
+          <Text class="card-delete-copy">这张会员卡从未发放。删除后不可恢复，适用服务和员工范围也会一并删除。</Text>
+          <View class="card-delete-note safe">
+            <Text class="card-delete-note-title">可以删除</Text>
+            <Text class="card-delete-note-copy">没有会员权益或历史台账引用这张卡。</Text>
+          </View>
+          <View class="form-footer card-delete-dialog-footer">
+            <button class="button secondary" :disabled="loading" @tap="closeDeleteDialog">取消</button>
+            <button class="button coral" :disabled="loading" :loading="loading" @tap="confirmDelete">确认删除</button>
+          </View>
+        </template>
+        <template v-else>
+          <Text class="card-delete-kicker">删除受限</Text>
+          <Text class="card-delete-title">这张会员卡不能删除</Text>
+          <Text class="card-delete-copy">{{ deleteBlockedMessage || '这张会员卡已经发放给会员。为保留会员权益、售卡和核销记录，只能保持停用状态。' }}</Text>
+          <View class="card-delete-note">
+            <Text class="card-delete-note-title">{{ issuedCardSummary }}</Text>
+            <Text class="card-delete-note-copy">现有会员卡继续按原适用范围预约和核销。</Text>
+          </View>
+          <View class="form-footer single card-delete-dialog-footer">
+            <button class="button" :disabled="loading" @tap="closeDeleteDialog">我知道了</button>
+          </View>
+        </template>
       </View>
     </View>
   </View>

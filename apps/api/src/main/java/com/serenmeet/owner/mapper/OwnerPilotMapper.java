@@ -260,6 +260,12 @@ public interface OwnerPilotMapper {
   int countOwnedCardTemplate(
       @Param("tenantId") Long tenantId, @Param("templateId") Long templateId);
 
+  Map<String, Object> selectCardTemplateForUpdate(
+      @Param("tenantId") Long tenantId, @Param("templateId") Long templateId);
+
+  int countCardTemplateMemberCards(
+      @Param("tenantId") Long tenantId, @Param("templateId") Long templateId);
+
   Long insertCardTemplate(
       @Param("tenantId") Long tenantId,
       @Param("storeId") Long storeId,
@@ -300,6 +306,9 @@ public interface OwnerPilotMapper {
       @Param("tenantId") Long tenantId,
       @Param("templateId") Long templateId,
       @Param("status") String status);
+
+  int deleteCardTemplate(
+      @Param("tenantId") Long tenantId, @Param("templateId") Long templateId);
 
   int deleteCardServiceScopes(
       @Param("tenantId") Long tenantId, @Param("templateId") Long templateId);

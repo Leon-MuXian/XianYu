@@ -15,7 +15,7 @@
 5. `api-map.md`：店长端、教练端、会员端、平台后台四端完整 API。
 6. `deployment.md`：最终部署拓扑、环境、发布和运维边界。
 7. `implementation-status.md`：正式范围与当前代码状态矩阵。
-8. `prototype-implementation-map.json`：71 个原型画板/状态的机器可读实现映射。
+8. `prototype-implementation-map.json`：74 个原型画板/状态的机器可读实现映射。
 
 ## 设计原则
 

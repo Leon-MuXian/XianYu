@@ -465,6 +465,18 @@
     where tenant_id = #{tenantId} and id = #{templateId}
   </select>
 
+  <select id="selectCardTemplateForUpdate" resultType="map">
+    select id, name, status
+    from card_template
+    where tenant_id = #{tenantId} and id = #{templateId}
+    for update
+  </select>
+
+  <select id="countCardTemplateMemberCards" resultType="int">
+    select count(*) from member_card
+    where tenant_id = #{tenantId} and template_id = #{templateId}
+  </select>
+
   <select id="insertCardTemplate" resultType="long" flushCache="true" affectData="true">
     insert into card_template(
       tenant_id, store_id, name, card_type, sale_price_yuan, total_count, valid_days, low_balance_threshold
@@ -508,6 +520,10 @@
     update card_template set status = #{status}, updated_at = current_timestamp
     where tenant_id = #{tenantId} and id = #{templateId}
   </update>
+
+  <delete id="deleteCardTemplate">
+    delete from card_template where tenant_id = #{tenantId} and id = #{templateId}
+  </delete>
 
   <delete id="deleteCardServiceScopes">
     delete from card_template_service_scope where tenant_id = #{tenantId} and card_template_id = #{templateId}

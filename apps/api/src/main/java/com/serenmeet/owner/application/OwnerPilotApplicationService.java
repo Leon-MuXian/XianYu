@@ -832,6 +832,47 @@ public class OwnerPilotApplicationService {
     return Map.of("id", templateId, "status", status);
   }
 
+  @Transactional
+  public Map<String, Object> deleteCardTemplate(
+      SessionPrincipal principal, Long templateId) {
+    Long tenantId = principal.tenantId();
+    Map<String, Object> template =
+        requireOne(ownerMapper.selectCardTemplateForUpdate(tenantId, templateId));
+    String status = template.get("status").toString();
+    if ("active".equals(status)) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "CARD_TEMPLATE_MUST_BE_DISABLED",
+          "启用中的会员卡不能删除，请先停用会员卡");
+    }
+    int issuedCardCount = ownerMapper.countCardTemplateMemberCards(tenantId, templateId);
+    if (issuedCardCount > 0) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "CARD_TEMPLATE_IN_USE",
+          "这张会员卡已发放 " + issuedCardCount + " 张，不能删除，请保留停用状态");
+    }
+    try {
+      requireOwned(ownerMapper.deleteCardTemplate(tenantId, templateId));
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "CARD_TEMPLATE_IN_USE",
+          "这张会员卡已产生新的发卡记录，不能删除，请保留停用状态",
+          exception);
+    }
+    String templateName = template.get("name").toString();
+    audit(
+        tenantId,
+        principal,
+        "delete_card_template",
+        templateName,
+        "id=" + templateId + ",status=" + status,
+        "deleted",
+        null);
+    return Map.of("id", templateId, "deleted", true);
+  }
+
   public List<Map<String, Object>> members(SessionPrincipal principal) {
     return ownerMapper.selectMembers(principal.tenantId());
   }

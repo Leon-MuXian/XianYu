@@ -18,4 +18,4 @@
 
 详细规则见 `checks/doc-rules.md` 和 `checks/prototype-checklist.md`。
 
-当前自动化入口为根目录 `npm run check:docs`、`npm run check:java` 和 `.github/workflows/ci.yml`。文档检查会逐项校验 71 个原型标签与实现矩阵；Java 检查会阻止生产代码绕过 MyBatis-Plus，并执行命名、异常、集合、资源关闭和控制流规则；后端集成测试会比较运行时 `/v3/api-docs` 和已提交 OpenAPI 快照，前端检查会验证该快照生成 TypeScript 后无漂移。实现进度与剩余门禁见 `architecture/versions/mvp/implementation-status.md`。
+当前自动化入口为根目录 `npm run check:docs`、`npm run check:java` 和 `.github/workflows/ci.yml`。文档检查会逐项校验 74 个原型标签与实现矩阵；Java 检查会阻止生产代码绕过 MyBatis-Plus，并执行命名、异常、集合、资源关闭和控制流规则；后端集成测试会比较运行时 `/v3/api-docs` 和已提交 OpenAPI 快照，前端检查会验证该快照生成 TypeScript 后无漂移。实现进度与剩余门禁见 `architecture/versions/mvp/implementation-status.md`。

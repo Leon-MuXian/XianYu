@@ -872,6 +872,133 @@ class PilotWorkflowPostgresTest {
   }
 
   @Test
+  void cardTemplateDeletionRequiresDisabledNeverIssuedOwnedTemplate() throws Exception {
+    BusinessLoginResponse ownerLogin =
+      authService.ownerWechatLogin("owner-card-delete-primary");
+    SessionPrincipal owner = authService.requirePrincipal("Bearer " + ownerLogin.token());
+    TenantContext.set(owner.tenantId());
+    saveCompleteStoreDraft(owner, "会员卡删除校验门店", "021-13000003");
+    ownerService.completeOnboarding(owner);
+    Long resourceId = id(ownerService.resources(owner).getFirst());
+    Long staffId = id(ownerService.createStaff(
+      owner, "card-delete-staff", "card-delete-pass", "卡删除校验员工", "康复师"
+    ));
+    Long serviceId = id(ownerService.createService(
+      owner,
+      "会员卡删除校验服务",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(resourceId),
+      List.of(staffId),
+      "active"
+    ));
+
+    Long deletableTemplateId = id(ownerService.createCardTemplate(
+      owner,
+      "可安全删除会员卡",
+      "count",
+      new BigDecimal("499.00"),
+      5,
+      90,
+      1,
+      List.of(serviceId),
+      List.of(staffId)
+    ));
+    assertThatThrownBy(() -> ownerService.deleteCardTemplate(owner, deletableTemplateId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("CARD_TEMPLATE_MUST_BE_DISABLED")
+      );
+
+    Long issuedTemplateId = id(ownerService.createCardTemplate(
+      owner,
+      "已发放会员卡",
+      "period",
+      new BigDecimal("1200.00"),
+      null,
+      30,
+      null,
+      List.of(serviceId),
+      List.of(staffId)
+    ));
+    Long memberId = id(ownerService.createMember(
+      owner, "删除校验会员", "CARD-DELETE-001", ""
+    ));
+    ownerService.issueCard(
+      owner,
+      memberId,
+      issuedTemplateId,
+      new BigDecimal("1200.00"),
+      LocalDate.now(),
+      "现金"
+    );
+    ownerService.updateCardTemplateStatus(owner, issuedTemplateId, "disabled");
+    assertThatThrownBy(() -> ownerService.deleteCardTemplate(owner, issuedTemplateId))
+      .isInstanceOfSatisfying(ApiException.class, exception -> {
+        assertThat(exception.code()).isEqualTo("CARD_TEMPLATE_IN_USE");
+        assertThat(exception.getMessage()).contains("已发放 1 张");
+      });
+
+    SessionPrincipal otherOwner = ownerPrincipal("owner-card-delete-other");
+    TenantContext.set(otherOwner.tenantId());
+    assertThatThrownBy(() -> ownerService.deleteCardTemplate(otherOwner, deletableTemplateId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("NOT_FOUND")
+      );
+
+    TenantContext.set(owner.tenantId());
+    ownerService.updateCardTemplateStatus(owner, deletableTemplateId, "disabled");
+    mockMvc.perform(delete("/owner/card-templates/{templateId}", deletableTemplateId)
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .header("Idempotency-Key", "card-template-delete-retry"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.id").value(deletableTemplateId))
+      .andExpect(jsonPath("$.data.deleted").value(true));
+    mockMvc.perform(delete("/owner/card-templates/{templateId}", deletableTemplateId)
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .header("Idempotency-Key", "card-template-delete-retry"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.deleted").value(true));
+
+    TenantContext.set(owner.tenantId());
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from card_template where tenant_id = ? and id = ?",
+      Integer.class,
+      owner.tenantId(),
+      deletableTemplateId
+    )).isZero();
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from card_template_service_scope where tenant_id = ? and card_template_id = ?",
+      Integer.class,
+      owner.tenantId(),
+      deletableTemplateId
+    )).isZero();
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from card_template_staff_scope where tenant_id = ? and card_template_id = ?",
+      Integer.class,
+      owner.tenantId(),
+      deletableTemplateId
+    )).isZero();
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from audit_log where tenant_id = ? and action = 'delete_card_template'",
+      Integer.class,
+      owner.tenantId()
+    )).isEqualTo(1);
+    assertThat(ownerService.createCardTemplate(
+      owner,
+      "可安全删除会员卡",
+      "count",
+      new BigDecimal("499.00"),
+      5,
+      90,
+      1,
+      List.of(serviceId),
+      List.of(staffId)
+    )).containsEntry("name", "可安全删除会员卡");
+  }
+
+  @Test
   void staffLoginNamesAreNormalizedGloballyUniqueAndConcurrencySafe() throws Exception {
     SessionPrincipal firstOwner = ownerPrincipal("owner-staff-login-first");
     TenantContext.set(firstOwner.tenantId());

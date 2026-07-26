@@ -169,8 +169,11 @@
 | `POST` | `/owner/card-templates` | 创建次数卡或期限卡。 |
 | `PUT` | `/owner/card-templates/{templateId}` | 修改模板。 |
 | `PUT` | `/owner/card-templates/{templateId}/status` | 启用或停用。 |
+| `DELETE` | `/owner/card-templates/{templateId}` | 删除停用且从未发卡的模板。 |
 
 创建和修改会员卡时，名称按 Unicode NFKC、首尾空白清理、连续空白折叠和小写归一化后在当前租户内比较。当前租户已有同名会员卡时返回 HTTP 409 和 `CARD_TEMPLATE_NAME_TAKEN`；修改时排除当前会员卡，不同租户可以使用相同名称。
+
+删除会员卡时先校验租户归属并锁定模板。启用模板返回 HTTP 409 和 `CARD_TEMPLATE_MUST_BE_DISABLED`；存在任意已发放会员卡时返回 HTTP 409 和 `CARD_TEMPLATE_IN_USE`。删除成功后物理删除模板，级联清理服务与员工适用范围并释放租户内名称；不得删除会员权益或任何售卡、预约、核销历史。
 
 ### 4.7 会员和发卡
 

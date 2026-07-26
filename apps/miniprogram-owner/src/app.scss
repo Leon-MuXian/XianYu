@@ -410,6 +410,13 @@ button::after { border: 0; }
 .card-template-price.period { background: #f0f6f8; }
 .card-template-price-value { display: block; max-width: 100%; overflow: hidden; color: var(--ink); font-size: 17px; line-height: 1; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
 .card-template-price-label { display: block; margin-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.2; font-weight: 800; }
+.card-template-row.is-disabled { border-color: #dde3df; background: #f8f9f8; }
+.card-template-row.is-disabled .card-template-name,
+.card-template-row.is-disabled .card-template-meta,
+.card-template-row.is-disabled .card-template-scope { color: #7b8881; }
+.card-template-row.is-disabled .card-template-price { background: #f0f2f1; }
+.card-template-row.is-disabled .card-template-price-value,
+.card-template-row.is-disabled .card-template-price-label { color: #87938d; }
 .card-empty { margin-top: 6px; }
 .card-empty-action { width: 136px; min-height: 42px; margin: 16px auto 0; }
 .card-type-backdrop { z-index: 85; }
@@ -447,9 +454,55 @@ button::after { border: 0; }
 .card-number-field .field-input { width: calc(100% - 22px); font-size: 14px; }
 .card-number-unit { position: absolute; right: 8px; bottom: 10px; color: var(--muted); font-size: 9px; line-height: 28px; font-weight: 800; }
 .card-page-form-footer { margin-top: 16px; }
+.card-delete-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin: 16px 0 0;
+  border: 1px solid rgba(198, 74, 70, .38);
+  border-radius: 8px;
+  background: #fff9f7;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.card-delete-action-pressed { background: var(--red-soft); }
+.card-delete-action[disabled] { opacity: .55; }
+.card-stop-action { border-color: rgba(198, 74, 70, .34); background: #fff9f7; color: #a64f47; }
 .card-scope-backdrop { z-index: 90; }
 .sheet.card-scope-sheet { background: #f8faf7; scrollbar-width: none; -ms-overflow-style: none; }
 .card-scope-sheet::-webkit-scrollbar { display: none; width: 0; height: 0; color: transparent; }
+.card-delete-backdrop {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(23, 33, 27, .42);
+}
+.card-delete-dialog {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #ead8d3;
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 20px 18px 18px;
+  box-shadow: 0 26px 58px rgba(23, 33, 27, .22);
+}
+.card-delete-kicker { display: block; color: var(--coral); font-size: 11px; line-height: 1.2; font-weight: 900; }
+.card-delete-title { display: block; margin-top: 8px; color: var(--ink); font-size: 22px; line-height: 1.25; font-weight: 900; word-break: break-word; }
+.card-delete-copy { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.55; font-weight: 700; }
+.card-delete-note { margin-top: 14px; border-left: 3px solid #d7a194; padding: 2px 0 2px 11px; }
+.card-delete-note.safe { border-left-color: #77aa98; }
+.card-delete-note-title { display: block; color: var(--ink); font-size: 12px; line-height: 1.35; font-weight: 900; }
+.card-delete-note-copy { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.45; font-weight: 700; }
+.card-delete-dialog-footer { margin-top: 16px; }
+.card-delete-dialog-footer .button { min-height: 48px; }
 
 .owner-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .owner-form-grid .field.wide { grid-column: 1 / -1; }

@@ -190,7 +190,7 @@ export interface paths {
         get?: never;
         put: operations["updateCardTemplate"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteCardTemplate"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2115,6 +2115,32 @@ export interface operations {
                 "application/json": components["schemas"]["CreateCardTemplateRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    deleteCardTemplate: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                templateId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
