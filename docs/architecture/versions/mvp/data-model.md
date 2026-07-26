@@ -59,7 +59,7 @@ flowchart LR
 | `updated_by_type` | varchar(32) | 最近更新主体。 |
 | `updated_by_id` | varchar(80) | 最近更新主体 ID。 |
 
-软删除只用于需要保留历史关系的配置类数据。员工账号删除按产品要求为物理删除，但删除前必须校验关联服务项目、会员卡适用范围和未来排期。
+软删除只用于需要保留历史关系的配置类数据。员工账号删除按产品要求为物理删除，但删除前必须校验关联服务项目、会员卡适用范围和未来排期。服务项目只允许物理删除无业务关联的草稿或停用记录；启用状态、会员卡适用范围或任意排期会阻断删除。
 
 ### 2.3 金额与时间
 
@@ -267,12 +267,15 @@ flowchart LR
 | `tenant_id` | bigint | 租户 ID。 |
 | `store_id` | bigint | 门店 ID。 |
 | `name` | varchar(120) | 服务名称。 |
+| `name_key` | text | 名称规范化键；Unicode NFKC、首尾空白清理、连续空白折叠和小写归一化。与 `tenant_id` 组成唯一约束。 |
 | `service_type` | varchar(80) | 店长自填类型。 |
 | `duration_min` | integer | 时长。 |
 | `default_capacity` | integer | 默认容量。 |
 | `deduct_count` | integer | 默认核销次数。 |
 | `enabled` | boolean | 是否启用。 |
 | `status` | varchar(32) | `draft`、`active`、`disabled`。 |
+
+删除 `service_item` 时，`service_resource_binding` 和 `staff_service_binding` 通过外键级联清理。`card_template_service_scope` 和 `bookable_slot` 不级联，应用层先检查并阻断，数据库外键作为并发关联写入时的最终保护。安全删除后 `(tenant_id, name_key)` 唯一约束对应的名称立即释放。
 
 ### 6.2 `service_resource_binding`
 
@@ -517,6 +520,7 @@ MVP 报表优先实时查询，必要时使用快照。
 - `resource(tenant_id, store_id, enabled)`
 - `staff_account(login_name)` 全局唯一
 - `staff_account(tenant_id, store_id)`
+- `service_item(tenant_id, name_key)` 唯一
 - `service_item(tenant_id, store_id, status)`
 - `card_template(tenant_id, store_id, status)`
 - `member(tenant_id, store_id, bind_status)`

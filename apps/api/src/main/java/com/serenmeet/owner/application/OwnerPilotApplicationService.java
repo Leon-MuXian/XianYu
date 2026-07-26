@@ -11,6 +11,7 @@ import com.serenmeet.auth.support.TokenHasher;
 import com.serenmeet.common.ApiException;
 import com.serenmeet.owner.dto.StaffCredentialResponse;
 import com.serenmeet.owner.mapper.OwnerPilotMapper;
+import com.serenmeet.owner.support.ServiceNameNormalizer;
 import com.serenmeet.owner.support.StaffCredentialRevealRateLimiter;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -40,6 +41,7 @@ public class OwnerPilotApplicationService {
   private static final String CANCELLATION_DEADLINE_CONFIG = "booking.cancel.default_deadline_min";
   private static final int MAX_SERVICE_SCOPE_COUNT = 6;
   private static final int MAX_RESOURCE_TEXT_LENGTH = 80;
+  private static final int MAX_SERVICE_NAME_LENGTH = 120;
   private static final int MAX_STAFF_LOGIN_NAME_LENGTH = 80;
   private static final String CUSTOM_RESOURCE_TYPE_PLACEHOLDER = "自定义";
   private static final Pattern STORE_NAME_WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
@@ -567,29 +569,36 @@ public class OwnerPilotApplicationService {
       List<Long> staffIds,
       String requestedStatus) {
     Long tenantId = principal.tenantId();
+    String normalizedName = normalizeServiceName(name);
+    requireServiceNameAvailable(tenantId, normalizedName, null);
     List<Long> selectedStaffIds = staffIds == null ? List.of() : staffIds;
     validateStatus(requestedStatus, List.of("draft", "active"), "服务状态无效");
     validateSelectableIds(OwnedEntity.RESOURCE, resourceIds, tenantId);
     validateSelectableIds(OwnedEntity.STAFF, selectedStaffIds, tenantId);
     String status =
         "active".equals(requestedStatus) && !selectedStaffIds.isEmpty() ? "active" : "draft";
-    Long id =
-        ownerMapper.insertService(
-            tenantId,
-            requireStoreId(tenantId),
-            name,
-            type,
-            durationMin,
-            capacity,
-            deductCount,
-            status);
+    Long id;
+    try {
+      id =
+          ownerMapper.insertService(
+              tenantId,
+              requireStoreId(tenantId),
+              normalizedName,
+              type,
+              durationMin,
+              capacity,
+              deductCount,
+              status);
+    } catch (DuplicateKeyException exception) {
+      throw serviceNameTaken(exception);
+    }
     for (Long resourceId : resourceIds) {
       ownerMapper.insertServiceResourceBinding(tenantId, id, resourceId);
     }
     for (Long staffId : selectedStaffIds) {
       ownerMapper.insertStaffServiceBinding(tenantId, staffId, id);
     }
-    return Map.of("id", id, "name", name, "status", status);
+    return Map.of("id", id, "name", normalizedName, "status", status);
   }
 
   @Transactional
@@ -605,16 +614,31 @@ public class OwnerPilotApplicationService {
       List<Long> staffIds,
       String requestedStatus) {
     Long tenantId = principal.tenantId();
+    String normalizedName = normalizeServiceName(name);
     List<Long> selectedStaffIds = staffIds == null ? List.of() : staffIds;
     requireOwned(ownerMapper.countOwnedService(tenantId, serviceId));
+    requireServiceNameAvailable(tenantId, normalizedName, serviceId);
     validateStatus(requestedStatus, List.of("draft", "active"), "服务状态无效");
     validateSelectableIds(OwnedEntity.RESOURCE, resourceIds, tenantId);
     validateSelectableIds(OwnedEntity.STAFF, selectedStaffIds, tenantId);
     String status =
         "active".equals(requestedStatus) && !selectedStaffIds.isEmpty() ? "active" : "draft";
-    requireOwned(
-        ownerMapper.updateService(
-            tenantId, serviceId, name, type, durationMin, capacity, deductCount, status));
+    int updated;
+    try {
+      updated =
+          ownerMapper.updateService(
+              tenantId,
+              serviceId,
+              normalizedName,
+              type,
+              durationMin,
+              capacity,
+              deductCount,
+              status);
+    } catch (DuplicateKeyException exception) {
+      throw serviceNameTaken(exception);
+    }
+    requireOwned(updated);
     ownerMapper.deleteServiceResourceBindings(tenantId, serviceId);
     ownerMapper.deleteStaffServiceBindings(tenantId, serviceId);
     for (Long resourceId : resourceIds) {
@@ -623,8 +647,8 @@ public class OwnerPilotApplicationService {
     for (Long staffId : selectedStaffIds) {
       ownerMapper.insertStaffServiceBinding(tenantId, staffId, serviceId);
     }
-    audit(tenantId, principal, "update_service", name, null, status, null);
-    return Map.of("id", serviceId, "name", name, "status", status);
+    audit(tenantId, principal, "update_service", normalizedName, null, status, null);
+    return Map.of("id", serviceId, "name", normalizedName, "status", status);
   }
 
   @Transactional
@@ -642,6 +666,48 @@ public class OwnerPilotApplicationService {
     requireOwned(ownerMapper.updateServiceStatus(tenantId, serviceId, status));
     audit(tenantId, principal, "update_service_status", serviceId.toString(), null, status, null);
     return Map.of("id", serviceId, "status", status);
+  }
+
+  @Transactional
+  public Map<String, Object> deleteService(SessionPrincipal principal, Long serviceId) {
+    Long tenantId = principal.tenantId();
+    Map<String, Object> service =
+        requireOne(ownerMapper.selectServiceForUpdate(tenantId, serviceId));
+    String status = service.get("status").toString();
+    if ("active".equals(status)) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SERVICE_MUST_BE_DISABLED",
+          "启用中的服务不能删除，请先停用服务");
+    }
+    boolean blocked =
+        ownerMapper.countServiceCardScopes(tenantId, serviceId) > 0
+            || ownerMapper.countServiceSlots(tenantId, serviceId) > 0;
+    if (blocked) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SERVICE_IN_USE",
+          "服务仍关联会员卡适用范围或排期，不能删除，请保留停用状态");
+    }
+    try {
+      requireOwned(ownerMapper.deleteService(tenantId, serviceId));
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SERVICE_IN_USE",
+          "服务已产生新的业务关联，不能删除，请保留停用状态",
+          exception);
+    }
+    String serviceName = service.get("name").toString();
+    audit(
+        tenantId,
+        principal,
+        "delete_service",
+        serviceName,
+        "id=" + serviceId + ",status=" + status,
+        "deleted",
+        null);
+    return Map.of("id", serviceId, "deleted", true);
   }
 
   public List<Map<String, Object>> cardTemplates(SessionPrincipal principal) {
@@ -1098,6 +1164,33 @@ public class OwnerPilotApplicationService {
         HttpStatus.CONFLICT,
         "STAFF_LOGIN_NAME_TAKEN",
         "该登录账号已被使用，请更换账号",
+        cause);
+  }
+
+  private String normalizeServiceName(String name) {
+    String normalized = ServiceNameNormalizer.normalizeDisplayName(name);
+    if (normalized.isEmpty()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "服务项目名称不能为空");
+    }
+    if (normalized.length() > MAX_SERVICE_NAME_LENGTH) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "服务项目名称不能超过 120 个字符");
+    }
+    return normalized;
+  }
+
+  private void requireServiceNameAvailable(
+      Long tenantId, String normalizedName, Long excludeServiceId) {
+    String nameKey = ServiceNameNormalizer.keyOf(normalizedName);
+    if (ownerMapper.countServiceNameKey(tenantId, nameKey, excludeServiceId) > 0) {
+      throw serviceNameTaken(null);
+    }
+  }
+
+  private ApiException serviceNameTaken(Throwable cause) {
+    return new ApiException(
+        HttpStatus.CONFLICT,
+        "SERVICE_NAME_TAKEN",
+        "当前租户已存在同名服务项目，请更换名称",
         cause);
   }
 

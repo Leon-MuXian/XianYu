@@ -187,6 +187,11 @@ public interface OwnerPilotMapper {
 
   List<Map<String, Object>> selectServices(@Param("tenantId") Long tenantId);
 
+  int countServiceNameKey(
+      @Param("tenantId") Long tenantId,
+      @Param("nameKey") String nameKey,
+      @Param("excludeServiceId") Long excludeServiceId);
+
   Long insertService(
       @Param("tenantId") Long tenantId,
       @Param("storeId") Long storeId,
@@ -227,6 +232,17 @@ public interface OwnerPilotMapper {
       @Param("tenantId") Long tenantId,
       @Param("serviceId") Long serviceId,
       @Param("status") String status);
+
+  Map<String, Object> selectServiceForUpdate(
+      @Param("tenantId") Long tenantId, @Param("serviceId") Long serviceId);
+
+  int countServiceCardScopes(
+      @Param("tenantId") Long tenantId, @Param("serviceId") Long serviceId);
+
+  int countServiceSlots(
+      @Param("tenantId") Long tenantId, @Param("serviceId") Long serviceId);
+
+  int deleteService(@Param("tenantId") Long tenantId, @Param("serviceId") Long serviceId);
 
   int deleteServiceResourceBindings(
       @Param("tenantId") Long tenantId, @Param("serviceId") Long serviceId);

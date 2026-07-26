@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -49,6 +50,13 @@ public class ApiExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(NoResourceFoundException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
       .body(ApiResponse.fail("RESOURCE_NOT_FOUND", "请求资源不存在"));
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
+      HttpRequestMethodNotSupportedException exception) {
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+      .body(ApiResponse.fail("METHOD_NOT_ALLOWED", "当前接口不支持该请求方式"));
   }
 
   @ExceptionHandler(Exception.class)

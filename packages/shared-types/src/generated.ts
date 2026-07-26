@@ -94,7 +94,7 @@ export interface paths {
         get?: never;
         put: operations["updateService"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteService"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1895,6 +1895,32 @@ export interface operations {
                 "application/json": components["schemas"]["CreateServiceRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    deleteService: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                serviceId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

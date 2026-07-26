@@ -73,6 +73,9 @@
 | `NOT_FOUND` | 资源不存在。 |
 | `CONFLICT` | 状态冲突。 |
 | `STAFF_LOGIN_NAME_TAKEN` | 规范化后的员工登录账号已被占用。 |
+| `SERVICE_NAME_TAKEN` | 规范化后的服务项目名称已被当前租户占用。 |
+| `SERVICE_MUST_BE_DISABLED` | 启用中的服务项目必须先停用才能删除。 |
+| `SERVICE_IN_USE` | 服务项目仍关联会员卡适用范围或排期，不能删除。 |
 | `STAFF_CREDENTIAL_UNAVAILABLE` | 历史员工只有密码哈希，尚无可恢复的加密凭据。 |
 | `STAFF_CREDENTIAL_REVEAL_RATE_LIMITED` | 当前店长读取同一员工凭据过于频繁。 |
 | `REQUEST_DUPLICATED` | 重复提交。 |
@@ -151,7 +154,12 @@
 | `POST` | `/owner/services` | 创建服务项目。 |
 | `PUT` | `/owner/services/{serviceId}` | 修改服务项目。 |
 | `PUT` | `/owner/services/{serviceId}/status` | 启用或停用。 |
+| `DELETE` | `/owner/services/{serviceId}` | 删除无业务关联的草稿或停用服务项目。 |
 | `GET` | `/owner/services/options` | 服务、资源、员工下拉选项。 |
+
+创建和修改服务时，名称按 Unicode NFKC、首尾空白清理、连续空白折叠和小写归一化后在当前租户内比较。当前租户已有同名草稿、启用或停用项目时返回 HTTP 409 和 `SERVICE_NAME_TAKEN`；不同租户可以使用相同名称。
+
+删除服务时先校验租户归属并锁定服务记录。启用项目返回 HTTP 409 和 `SERVICE_MUST_BE_DISABLED`；会员卡适用范围或任意排期仍有关联时返回 HTTP 409 和 `SERVICE_IN_USE`。删除成功后物理删除服务，级联清理资源与员工绑定并释放租户内名称；不得自动删除会员卡范围、排期或预约历史。
 
 ### 4.6 会员卡
 

@@ -395,6 +395,20 @@ public class OwnerPilotController {
             () -> ownerService.updateServiceStatus(principal, serviceId, request.status())));
   }
 
+  @DeleteMapping("/services/{serviceId}")
+  public ApiResponse<Object> deleteService(
+      @CurrentSession SessionPrincipal principal,
+      @PathVariable Long serviceId,
+      @RequestHeader("Idempotency-Key") String key) {
+    return ApiResponse.ok(
+        idempotency.execute(
+            principal,
+            "owner.service.delete." + serviceId,
+            key,
+            Map.of("serviceId", serviceId),
+            () -> ownerService.deleteService(principal, serviceId)));
+  }
+
   @GetMapping("/services/options")
   public ApiResponse<Map<String, Object>> serviceOptions(
       @CurrentSession SessionPrincipal principal) {

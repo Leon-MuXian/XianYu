@@ -358,6 +358,15 @@
     order by id
   </select>
 
+  <select id="countServiceNameKey" resultType="int">
+    select count(*)
+    from service_item
+    where tenant_id = #{tenantId} and name_key = #{nameKey}
+    <if test="excludeServiceId != null">
+      and id != #{excludeServiceId}
+    </if>
+  </select>
+
   <select id="insertService" resultType="long" flushCache="true" affectData="true">
     insert into service_item(
       tenant_id, store_id, name, service_type, duration_min, default_capacity, deduct_count, status
@@ -401,6 +410,29 @@
     update service_item set status = #{status}, updated_at = current_timestamp
     where tenant_id = #{tenantId} and id = #{serviceId}
   </update>
+
+  <select id="selectServiceForUpdate" resultType="map">
+    select id, name, status
+    from service_item
+    where tenant_id = #{tenantId} and id = #{serviceId}
+    for update
+  </select>
+
+  <select id="countServiceCardScopes" resultType="int">
+    select count(*)
+    from card_template_service_scope
+    where tenant_id = #{tenantId} and service_item_id = #{serviceId}
+  </select>
+
+  <select id="countServiceSlots" resultType="int">
+    select count(*)
+    from bookable_slot
+    where tenant_id = #{tenantId} and service_item_id = #{serviceId}
+  </select>
+
+  <delete id="deleteService">
+    delete from service_item where tenant_id = #{tenantId} and id = #{serviceId}
+  </delete>
 
   <delete id="deleteServiceResourceBindings">
     delete from service_resource_binding where tenant_id = #{tenantId} and service_item_id = #{serviceId}

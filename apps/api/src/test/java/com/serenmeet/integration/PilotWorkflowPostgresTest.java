@@ -3,6 +3,7 @@ package com.serenmeet.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -461,6 +462,268 @@ class PilotWorkflowPostgresTest {
   }
 
   @Test
+  void serviceNamesAreNormalizedUniquePerTenantAndConcurrencySafe() throws Exception {
+    SessionPrincipal firstOwner = ownerPrincipal("owner-service-name-first");
+    TenantContext.set(firstOwner.tenantId());
+    saveCompleteStoreDraft(firstOwner, "服务名称唯一门店一", "021-11000001");
+    ownerService.completeOnboarding(firstOwner);
+    Long firstResourceId = id(ownerService.resources(firstOwner).getFirst());
+
+    Map<String, Object> firstService = ownerService.createService(
+      firstOwner,
+      "  Ｐose　 Care  ",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(firstResourceId),
+      List.of(),
+      "draft"
+    );
+    Long firstServiceId = id(firstService);
+    assertThat(firstService).containsEntry("name", "Pose Care");
+    assertThatThrownBy(() -> ownerService.createService(
+      firstOwner,
+      "pose care",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(firstResourceId),
+      List.of(),
+      "draft"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("SERVICE_NAME_TAKEN")
+    );
+
+    Long secondServiceId = id(ownerService.createService(
+      firstOwner,
+      "替代服务",
+      "一对一服务",
+      45,
+      1,
+      1,
+      List.of(firstResourceId),
+      List.of(),
+      "draft"
+    ));
+    assertThatThrownBy(() -> ownerService.updateService(
+      firstOwner,
+      secondServiceId,
+      "ＰＯＳＥ　ＣＡＲＥ",
+      "一对一服务",
+      45,
+      1,
+      1,
+      List.of(firstResourceId),
+      List.of(),
+      "draft"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("SERVICE_NAME_TAKEN")
+    );
+    assertThat(ownerService.updateService(
+      firstOwner,
+      firstServiceId,
+      " POSE CARE ",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(firstResourceId),
+      List.of(),
+      "draft"
+    )).containsEntry("name", "POSE CARE");
+
+    SessionPrincipal secondOwner = ownerPrincipal("owner-service-name-second");
+    TenantContext.set(secondOwner.tenantId());
+    saveCompleteStoreDraft(secondOwner, "服务名称唯一门店二", "021-11000002");
+    ownerService.completeOnboarding(secondOwner);
+    Long secondResourceId = id(ownerService.resources(secondOwner).getFirst());
+    assertThat(ownerService.createService(
+      secondOwner,
+      "pose care",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(secondResourceId),
+      List.of(),
+      "draft"
+    )).containsEntry("name", "pose care");
+
+    TenantContext.set(firstOwner.tenantId());
+    CountDownLatch ready = new CountDownLatch(2);
+    CountDownLatch start = new CountDownLatch(1);
+    AtomicInteger successes = new AtomicInteger();
+    AtomicInteger conflicts = new AtomicInteger();
+    CompletableFuture<Void> firstAttempt = serviceCreationAttempt(
+      firstOwner, firstResourceId, " concurrent service ", ready, start, successes, conflicts
+    );
+    CompletableFuture<Void> secondAttempt = serviceCreationAttempt(
+      firstOwner, firstResourceId, "ＣＯＮＣＵＲＲＥＮＴ　ＳＥＲＶＩＣＥ",
+      ready, start, successes, conflicts
+    );
+    assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+    start.countDown();
+    firstAttempt.get(10, TimeUnit.SECONDS);
+    secondAttempt.get(10, TimeUnit.SECONDS);
+
+    assertThat(successes).hasValue(1);
+    assertThat(conflicts).hasValue(1);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from service_item where tenant_id = ? and name_key = 'concurrent service'",
+      Integer.class,
+      firstOwner.tenantId()
+    )).isEqualTo(1);
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from pg_constraint where conname = 'uq_service_tenant_name_key'",
+      Integer.class
+    )).isEqualTo(1);
+  }
+
+  @Test
+  void serviceDeletionRequiresDisabledUnreferencedOwnedService() throws Exception {
+    BusinessLoginResponse ownerLogin =
+      authService.ownerWechatLogin("owner-service-delete-primary");
+    SessionPrincipal owner = authService.requirePrincipal("Bearer " + ownerLogin.token());
+    TenantContext.set(owner.tenantId());
+    saveCompleteStoreDraft(owner, "服务删除校验门店", "021-11000003");
+    ownerService.completeOnboarding(owner);
+    Long resourceId = id(ownerService.resources(owner).getFirst());
+    Long staffId = id(ownerService.createStaff(
+      owner, "service-delete-staff", "service-delete-pass", "删除校验员工", "康复师"
+    ));
+
+    Long deletableServiceId = id(ownerService.createService(
+      owner,
+      "可安全删除服务",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(resourceId),
+      List.of(staffId),
+      "active"
+    ));
+    assertThatThrownBy(() -> ownerService.deleteService(owner, deletableServiceId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("SERVICE_MUST_BE_DISABLED")
+      );
+
+    Long cardBoundServiceId = id(ownerService.createService(
+      owner,
+      "会员卡关联服务",
+      "一对一服务",
+      45,
+      1,
+      1,
+      List.of(resourceId),
+      List.of(staffId),
+      "active"
+    ));
+    ownerService.createCardTemplate(
+      owner,
+      "删除校验次数卡",
+      "count",
+      new BigDecimal("300.00"),
+      10,
+      365,
+      2,
+      List.of(cardBoundServiceId),
+      List.of(staffId)
+    );
+    ownerService.updateServiceStatus(owner, cardBoundServiceId, "disabled");
+    assertThatThrownBy(() -> ownerService.deleteService(owner, cardBoundServiceId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("SERVICE_IN_USE")
+      );
+
+    Long scheduledServiceId = id(ownerService.createService(
+      owner,
+      "排期关联服务",
+      "一对一服务",
+      50,
+      1,
+      1,
+      List.of(resourceId),
+      List.of(staffId),
+      "active"
+    ));
+    OffsetDateTime startAt = OffsetDateTime.now().plusDays(5);
+    ownerService.publishSlot(
+      owner,
+      scheduledServiceId,
+      staffId,
+      resourceId,
+      startAt,
+      startAt.plusMinutes(50),
+      1
+    );
+    ownerService.updateServiceStatus(owner, scheduledServiceId, "disabled");
+    assertThatThrownBy(() -> ownerService.deleteService(owner, scheduledServiceId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("SERVICE_IN_USE")
+      );
+
+    SessionPrincipal otherOwner = ownerPrincipal("owner-service-delete-other");
+    TenantContext.set(otherOwner.tenantId());
+    assertThatThrownBy(() -> ownerService.deleteService(otherOwner, deletableServiceId))
+      .isInstanceOfSatisfying(ApiException.class, exception ->
+        assertThat(exception.code()).isEqualTo("NOT_FOUND")
+      );
+
+    TenantContext.set(owner.tenantId());
+    ownerService.updateServiceStatus(owner, deletableServiceId, "disabled");
+    mockMvc.perform(delete("/owner/services/{serviceId}", deletableServiceId)
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .header("Idempotency-Key", "service-delete-retry"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.id").value(deletableServiceId))
+      .andExpect(jsonPath("$.data.deleted").value(true));
+    mockMvc.perform(delete("/owner/services/{serviceId}", deletableServiceId)
+        .header("Authorization", "Bearer " + ownerLogin.token())
+        .header("Idempotency-Key", "service-delete-retry"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data.deleted").value(true));
+
+    TenantContext.set(owner.tenantId());
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from service_item where tenant_id = ? and id = ?",
+      Integer.class,
+      owner.tenantId(),
+      deletableServiceId
+    )).isZero();
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from service_resource_binding where tenant_id = ? and service_item_id = ?",
+      Integer.class,
+      owner.tenantId(),
+      deletableServiceId
+    )).isZero();
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from staff_service_binding where tenant_id = ? and service_item_id = ?",
+      Integer.class,
+      owner.tenantId(),
+      deletableServiceId
+    )).isZero();
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from audit_log where tenant_id = ? and action = 'delete_service'",
+      Integer.class,
+      owner.tenantId()
+    )).isEqualTo(1);
+    assertThat(ownerService.createService(
+      owner,
+      "可安全删除服务",
+      "一对一服务",
+      60,
+      1,
+      1,
+      List.of(resourceId),
+      List.of(staffId),
+      "draft"
+    )).containsEntry("name", "可安全删除服务");
+  }
+
+  @Test
   void staffLoginNamesAreNormalizedGloballyUniqueAndConcurrencySafe() throws Exception {
     SessionPrincipal firstOwner = ownerPrincipal("owner-staff-login-first");
     TenantContext.set(firstOwner.tenantId());
@@ -906,6 +1169,46 @@ class PilotWorkflowPostgresTest {
         successes.incrementAndGet();
       } catch (ApiException exception) {
         if (!"STAFF_LOGIN_NAME_TAKEN".equals(exception.code())) {
+          throw exception;
+        }
+        conflicts.incrementAndGet();
+      } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(exception);
+      } finally {
+        TenantContext.clear();
+      }
+    });
+  }
+
+  private CompletableFuture<Void> serviceCreationAttempt(
+    SessionPrincipal owner,
+    Long resourceId,
+    String serviceName,
+    CountDownLatch ready,
+    CountDownLatch start,
+    AtomicInteger successes,
+    AtomicInteger conflicts
+  ) {
+    return CompletableFuture.runAsync(() -> {
+      TenantContext.set(owner.tenantId());
+      ready.countDown();
+      try {
+        start.await(5, TimeUnit.SECONDS);
+        ownerService.createService(
+          owner,
+          serviceName,
+          "一对一服务",
+          60,
+          1,
+          1,
+          List.of(resourceId),
+          List.of(),
+          "draft"
+        );
+        successes.incrementAndGet();
+      } catch (ApiException exception) {
+        if (!"SERVICE_NAME_TAKEN".equals(exception.code())) {
           throw exception;
         }
         conflicts.incrementAndGet();

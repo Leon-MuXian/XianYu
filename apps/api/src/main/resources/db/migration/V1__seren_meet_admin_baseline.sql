@@ -159,6 +159,9 @@ create table service_item (
   tenant_id bigint not null references tenant(id),
   store_id bigint not null references store(id),
   name varchar(120) not null,
+  name_key text generated always as (
+    lower(regexp_replace(btrim(normalize(name, NFKC)), E'\\s+', ' ', 'g'))
+  ) stored,
   service_type varchar(80) not null,
   duration_min integer not null,
   default_capacity integer not null,
@@ -169,7 +172,8 @@ create table service_item (
   constraint chk_service_duration check (duration_min > 0),
   constraint chk_service_capacity check (default_capacity > 0),
   constraint chk_service_deduct check (deduct_count > 0),
-  constraint chk_service_status check (status in ('draft', 'active', 'disabled'))
+  constraint chk_service_status check (status in ('draft', 'active', 'disabled')),
+  constraint uq_service_tenant_name_key unique (tenant_id, name_key)
 );
 
 create table service_resource_binding (
