@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/schedules/{slotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateScheduleDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/owner/resources/{resourceId}": {
         parameters: {
             query?: never;
@@ -366,6 +382,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["publishSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/schedules/precheck": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["precheckSchedule"];
         delete?: never;
         options?: never;
         head?: never;
@@ -796,6 +828,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["schedules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/schedules/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["scheduleOptions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1267,6 +1315,16 @@ export interface components {
             staffIds?: number[];
             status: string;
         };
+        ScheduleSlotRequest: {
+            /** Format: int64 */
+            serviceId: number;
+            /** Format: int64 */
+            staffId: number;
+            /** Format: int64 */
+            resourceId: number;
+            /** Format: date-time */
+            startAt: string;
+        };
         UpdateResourceRequest: {
             name: string;
             resourceType: string;
@@ -1365,6 +1423,8 @@ export interface components {
         };
         PublishSlotRequest: {
             /** Format: int64 */
+            slotId?: number;
+            /** Format: int64 */
             serviceId: number;
             /** Format: int64 */
             staffId: number;
@@ -1372,10 +1432,6 @@ export interface components {
             resourceId: number;
             /** Format: date-time */
             startAt: string;
-            /** Format: date-time */
-            endAt: string;
-            /** Format: int32 */
-            capacity?: number;
         };
         CreateMemberRequest: {
             name: string;
@@ -1962,6 +2018,36 @@ export interface operations {
             };
         };
     };
+    updateScheduleDraft: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                slotId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
     updateResource: {
         parameters: {
             query: {
@@ -2518,6 +2604,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    precheckSchedule: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMapStringObject"];
                 };
             };
         };
@@ -3281,6 +3393,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListMapStringObject"];
+                };
+            };
+        };
+    };
+    scheduleOptions: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+                serviceId?: number;
+                startAt?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMapStringObject"];
                 };
             };
         };

@@ -19,11 +19,51 @@
       (select count(*)::integer from staff_account where tenant_id = #{tenantId} and status = 'active') as "staffCount",
       (select count(*)::integer from service_item where tenant_id = #{tenantId} and status = 'active') as "serviceCount",
       (select count(*)::integer from card_template where tenant_id = #{tenantId} and status = 'active') as "cardTemplateCount",
+      (select count(*)::integer from resource where tenant_id = #{tenantId} and enabled) as "resourceCount",
       (select count(*)::integer from member where tenant_id = #{tenantId}) as "memberCount",
       (select count(*)::integer from bookable_slot
         where tenant_id = #{tenantId} and status = 'published' and start_at &gt; current_timestamp) as "futureSlotCount",
-      (select count(*)::integer from booking
-        where tenant_id = #{tenantId} and reserved_at::date = current_date and status != 'cancelled') as "todayBookings",
+      (select count(*)::integer
+        from booking b
+        join bookable_slot bs on bs.id = b.bookable_slot_id
+        where b.tenant_id = #{tenantId}
+          and (bs.start_at at time zone 'Asia/Shanghai')::date = current_date
+          and b.status != 'cancelled') as "todayBookings",
+      (select count(*)::integer
+        from booking b
+        join bookable_slot bs on bs.id = b.bookable_slot_id
+        where b.tenant_id = #{tenantId}
+          and (bs.start_at at time zone 'Asia/Shanghai')::date = current_date
+          and b.status in ('reserved', 'arrived')) as "todayPendingFulfillment",
+      (select count(*)::integer
+        from booking b
+        join bookable_slot bs on bs.id = b.bookable_slot_id
+        where b.tenant_id = #{tenantId}
+          and (bs.start_at at time zone 'Asia/Shanghai')::date = current_date
+          and b.status in ('deducted', 'note_done')) as "todayCompletedFulfillment",
+      (select count(*)::integer from bookable_slot
+        where tenant_id = #{tenantId} and status = 'draft' and start_at &gt; current_timestamp) as "scheduleDraftCount",
+      (select id from bookable_slot
+        where tenant_id = #{tenantId} and status = 'draft' and start_at &gt; current_timestamp
+        order by start_at limit 1) as "nextScheduleDraftId",
+      (select (start_at at time zone 'Asia/Shanghai')::date from bookable_slot
+        where tenant_id = #{tenantId} and status = 'draft' and start_at &gt; current_timestamp
+        order by start_at limit 1) as "nextScheduleDraftDate",
+      exists(
+        select 1
+        from service_item si
+        join staff_service_binding ssb on ssb.service_item_id = si.id and ssb.tenant_id = si.tenant_id
+        join staff_account sa on sa.id = ssb.staff_account_id and sa.status = 'active'
+        join service_resource_binding srb on srb.service_item_id = si.id and srb.tenant_id = si.tenant_id
+        join resource r on r.id = srb.resource_id and r.enabled
+        join card_template_service_scope ctss on ctss.service_item_id = si.id and ctss.tenant_id = si.tenant_id
+        join card_template_staff_scope ctst
+          on ctst.card_template_id = ctss.card_template_id
+          and ctst.staff_account_id = sa.id
+          and ctst.tenant_id = si.tenant_id
+        join card_template ct on ct.id = ctss.card_template_id and ct.status = 'active'
+        where si.tenant_id = #{tenantId} and si.status = 'active'
+      ) as "scheduleReady",
       (select count(*)::integer
         from member_card mc
         join card_template ct on ct.id = mc.template_id
@@ -603,17 +643,115 @@
   <select id="selectSchedules" resultType="map">
     select bs.id, bs.start_at as "startAt", bs.end_at as "endAt", bs.capacity,
       bs.reserved_count as "reservedCount", bs.status, si.name as "serviceName",
-      sa.staff_name as "staffName", r.name as "resourceName"
+      sa.staff_name as "staffName", r.name as "resourceName",
+      bs.service_item_id as "serviceId", bs.staff_account_id as "staffId",
+      bs.resource_id as "resourceId"
     from bookable_slot bs
     join service_item si on si.id = bs.service_item_id
     join staff_account sa on sa.id = bs.staff_account_id
     join resource r on r.id = bs.resource_id
-    where bs.tenant_id = #{tenantId} and bs.start_at::date = #{scheduleDate}
+    where bs.tenant_id = #{tenantId}
+      and (bs.start_at at time zone 'Asia/Shanghai')::date = #{scheduleDate}
     order by bs.start_at
   </select>
 
+  <select id="selectScheduleServices" resultType="map">
+    select id, name, duration_min as "durationMin", default_capacity as "defaultCapacity",
+      deduct_count as "deductCount"
+    from service_item
+    where tenant_id = #{tenantId} and status = 'active'
+    order by id
+  </select>
+
+  <select id="selectScheduleStore" resultType="map">
+    select id, business_hours as "businessHours"
+    from store
+    where tenant_id = #{tenantId}
+    order by id
+    limit 1
+  </select>
+
+  <select id="selectScheduleStaffOptions" resultType="map">
+    select sa.id, sa.staff_name as "staffName", sa.role_label as "roleLabel",
+      not exists(
+        select 1 from bookable_slot bs
+        where bs.tenant_id = #{tenantId}
+          and bs.staff_account_id = sa.id
+          and bs.status = 'published'
+          and #{startAt} is not null
+          and tstzrange(bs.start_at, bs.end_at, '[)') &amp;&amp; tstzrange(#{startAt}, #{endAt}, '[)')
+      ) as available
+    from staff_account sa
+    join staff_service_binding ssb
+      on ssb.staff_account_id = sa.id and ssb.tenant_id = sa.tenant_id
+    where sa.tenant_id = #{tenantId} and sa.status = 'active'
+      and ssb.service_item_id = #{serviceId}
+    order by sa.id
+  </select>
+
+  <select id="selectScheduleResourceOptions" resultType="map">
+    select r.id, r.name, r.resource_type as "resourceType", r.capacity,
+      not exists(
+        select 1 from bookable_slot bs
+        where bs.tenant_id = #{tenantId}
+          and bs.resource_id = r.id
+          and bs.status = 'published'
+          and #{startAt} is not null
+          and tstzrange(bs.start_at, bs.end_at, '[)') &amp;&amp; tstzrange(#{startAt}, #{endAt}, '[)')
+      ) as available
+    from resource r
+    join service_resource_binding srb
+      on srb.resource_id = r.id and srb.tenant_id = r.tenant_id
+    where r.tenant_id = #{tenantId} and r.enabled
+      and srb.service_item_id = #{serviceId}
+    order by r.sort_order, r.id
+  </select>
+
+  <select id="selectScheduleContext" resultType="map">
+    select si.id as "serviceId", si.store_id as "storeId", si.name as "serviceName",
+      si.duration_min as "durationMin", si.default_capacity as "defaultCapacity",
+      sa.id as "staffId", sa.staff_name as "staffName",
+      r.id as "resourceId", r.name as "resourceName", r.capacity as "resourceCapacity",
+      s.business_hours as "businessHours",
+      exists(select 1 from staff_service_binding ssb
+        where ssb.tenant_id = #{tenantId} and ssb.service_item_id = #{serviceId}
+          and ssb.staff_account_id = #{staffId}) as "staffBound",
+      exists(select 1 from service_resource_binding srb
+        where srb.tenant_id = #{tenantId} and srb.service_item_id = #{serviceId}
+          and srb.resource_id = #{resourceId}) as "resourceBound"
+    from service_item si
+    join store s on s.id = si.store_id and s.tenant_id = si.tenant_id
+    join staff_account sa on sa.id = #{staffId} and sa.tenant_id = si.tenant_id and sa.status = 'active'
+    join resource r on r.id = #{resourceId} and r.tenant_id = si.tenant_id and r.enabled
+    where si.id = #{serviceId} and si.tenant_id = #{tenantId} and si.status = 'active'
+  </select>
+
+  <select id="countScheduleStaffOverlaps" resultType="int">
+    select count(*) from bookable_slot
+    where tenant_id = #{tenantId} and staff_account_id = #{staffId} and status = 'published'
+      and tstzrange(start_at, end_at, '[)') &amp;&amp; tstzrange(#{startAt}, #{endAt}, '[)')
+  </select>
+
+  <select id="countScheduleResourceOverlaps" resultType="int">
+    select count(*) from bookable_slot
+    where tenant_id = #{tenantId} and resource_id = #{resourceId} and status = 'published'
+      and tstzrange(start_at, end_at, '[)') &amp;&amp; tstzrange(#{startAt}, #{endAt}, '[)')
+  </select>
+
+  <select id="countScheduleCardCoverage" resultType="int">
+    select count(distinct ct.id)
+    from card_template ct
+    join card_template_service_scope ctss
+      on ctss.card_template_id = ct.id and ctss.tenant_id = ct.tenant_id
+    join card_template_staff_scope ctst
+      on ctst.card_template_id = ct.id and ctst.tenant_id = ct.tenant_id
+    where ct.tenant_id = #{tenantId} and ct.status = 'active'
+      and ctss.service_item_id = #{serviceId} and ctst.staff_account_id = #{staffId}
+  </select>
+
   <select id="selectActiveService" resultType="map">
-    select id, store_id as "storeId"
+    select id, store_id as "storeId", name, duration_min as "durationMin",
+      default_capacity as "defaultCapacity", deduct_count as "deductCount"
     from service_item
     where id = #{serviceId} and tenant_id = #{tenantId} and status = 'active'
   </select>
@@ -652,6 +790,21 @@
     )
     returning id
   </select>
+
+  <select id="selectScheduleDraft" resultType="map">
+    select id, status
+    from bookable_slot
+    where tenant_id = #{tenantId} and id = #{slotId} and status = 'draft'
+    for update
+  </select>
+
+  <update id="updateScheduleDraft">
+    update bookable_slot
+    set service_item_id = #{serviceId}, staff_account_id = #{staffId}, resource_id = #{resourceId},
+      start_at = #{startAt}, end_at = #{endAt}, capacity = #{capacity}, status = #{status},
+      updated_at = current_timestamp
+    where tenant_id = #{tenantId} and id = #{slotId} and status = 'draft' and reserved_count = 0
+  </update>
 
   <select id="selectReportSummary" resultType="map">
     select (select coalesce(sum(sale_amount_yuan), 0)

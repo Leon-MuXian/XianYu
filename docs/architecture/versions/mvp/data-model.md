@@ -399,7 +399,9 @@ flowchart LR
 | `status` | varchar(32) | `draft`、`published`、`cancelled`、`disabled`。 |
 | `cancel_deadline_min` | integer | 取消截止分钟数。 |
 
-发布前必须预检服务、员工、资源、营业时间、容量和可用会员卡范围。
+`end_at` 必须由服务端使用 `service_item.duration_min` 从 `start_at` 推导，客户端提交值不作为事实来源。发布前必须预检未来时间、营业时间、服务绑定、员工/资源重叠、服务与资源容量上限，以及同一个启用会员卡模板是否同时覆盖服务和员工。
+
+仅对 `status = 'published'` 的记录建立两条 PostgreSQL GiST 排他约束：`(tenant_id, staff_account_id, tstzrange(start_at, end_at, '[)'))` 和 `(tenant_id, resource_id, tstzrange(start_at, end_at, '[)'))`。草稿可暂存预检未通过的完整选择；发布时应用层重跑预检，数据库约束负责处理并发请求。
 
 ### 7.2 `booking`
 

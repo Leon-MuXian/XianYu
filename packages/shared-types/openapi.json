@@ -5,6 +5,12 @@
     "description": "店长、员工、会员和平台后台统一 API",
     "version": "mvp"
   },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "description": "Generated server url"
+    }
+  ],
   "paths": {
     "/staff/profile": {
       "get": {
@@ -506,6 +512,63 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/schedules/{slotId}": {
+      "put": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "updateScheduleDraft",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          },
+          {
+            "name": "slotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleSlotRequest"
               }
             }
           },
@@ -1444,6 +1507,46 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/schedules/precheck": {
+      "post": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "precheckSchedule",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleSlotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
                 }
               }
             }
@@ -2615,6 +2718,54 @@
         }
       }
     },
+    "/owner/schedules/options": {
+      "get": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "scheduleOptions",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "startAt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/owner/reports/summary": {
       "get": {
         "tags": [
@@ -3693,6 +3844,33 @@
           }
         }
       },
+      "ScheduleSlotRequest": {
+        "required": [
+          "resourceId",
+          "serviceId",
+          "staffId",
+          "startAt"
+        ],
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "staffId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "resourceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "UpdateResourceRequest": {
         "required": [
           "name",
@@ -4052,7 +4230,6 @@
       },
       "PublishSlotRequest": {
         "required": [
-          "endAt",
           "resourceId",
           "serviceId",
           "staffId",
@@ -4060,6 +4237,10 @@
         ],
         "type": "object",
         "properties": {
+          "slotId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "serviceId": {
             "type": "integer",
             "format": "int64"
@@ -4075,15 +4256,6 @@
           "startAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "capacity": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
           }
         }
       },

@@ -10,7 +10,6 @@ export default defineAppConfig({
     'pages/services/index',
     'pages/cards/index',
     'pages/member-issue/index',
-    'pages/schedule-create/index',
     'pages/schedules/index',
     'pages/members/index',
     'pages/report/index',

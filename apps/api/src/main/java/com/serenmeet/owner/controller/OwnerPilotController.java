@@ -567,6 +567,29 @@ public class OwnerPilotController {
     return ApiResponse.ok(ownerService.schedules(principal, date));
   }
 
+  @GetMapping("/schedules/options")
+  public ApiResponse<Map<String, Object>> scheduleOptions(
+      @CurrentSession SessionPrincipal principal,
+      @RequestParam(required = false) Long serviceId,
+      @RequestParam(required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+          OffsetDateTime startAt) {
+    return ApiResponse.ok(ownerService.scheduleOptions(principal, serviceId, startAt));
+  }
+
+  @PostMapping("/schedules/precheck")
+  public ApiResponse<Map<String, Object>> precheckSchedule(
+      @CurrentSession SessionPrincipal principal,
+      @Valid @RequestBody ScheduleSlotRequest request) {
+    return ApiResponse.ok(
+        ownerService.precheckSchedule(
+            principal,
+            request.serviceId(),
+            request.staffId(),
+            request.resourceId(),
+            request.startAt()));
+  }
+
   @PostMapping("/schedules/publish")
   public ApiResponse<Object> publishSchedule(
       @CurrentSession SessionPrincipal principal,
@@ -581,12 +604,11 @@ public class OwnerPilotController {
             () ->
                 ownerService.saveSlot(
                     principal,
+                    request.slotId(),
                     request.serviceId(),
                     request.staffId(),
                     request.resourceId(),
                     request.startAt(),
-                    request.endAt(),
-                    request.capacity(),
                     "published")));
   }
 
@@ -608,8 +630,29 @@ public class OwnerPilotController {
                     request.staffId(),
                     request.resourceId(),
                     request.startAt(),
-                    request.endAt(),
-                    request.capacity(),
+                    "draft")));
+  }
+
+  @PutMapping("/schedules/{slotId}")
+  public ApiResponse<Object> updateScheduleDraft(
+      @CurrentSession SessionPrincipal principal,
+      @PathVariable Long slotId,
+      @RequestHeader("Idempotency-Key") String key,
+      @Valid @RequestBody ScheduleSlotRequest request) {
+    return ApiResponse.ok(
+        idempotency.execute(
+            principal,
+            "owner.schedule.update." + slotId,
+            key,
+            request,
+            () ->
+                ownerService.updateSlot(
+                    principal,
+                    slotId,
+                    request.serviceId(),
+                    request.staffId(),
+                    request.resourceId(),
+                    request.startAt(),
                     "draft")));
   }
 
@@ -734,11 +777,16 @@ public class OwnerPilotController {
       @NotNull LocalDate saleDate,
       @NotBlank String payMethodLabel) {}
 
-  public record PublishSlotRequest(
+  public record ScheduleSlotRequest(
       @NotNull Long serviceId,
       @NotNull Long staffId,
       @NotNull Long resourceId,
-      @NotNull OffsetDateTime startAt,
-      @NotNull OffsetDateTime endAt,
-      @Min(1) int capacity) {}
+      @NotNull OffsetDateTime startAt) {}
+
+  public record PublishSlotRequest(
+      Long slotId,
+      @NotNull Long serviceId,
+      @NotNull Long staffId,
+      @NotNull Long resourceId,
+      @NotNull OffsetDateTime startAt) {}
 }

@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -304,9 +305,7 @@ class PilotWorkflowPostgresTest {
       List.of("瑜伽", "小班课"),
       "0571-00000000"
     );
-    ownerService.saveBusinessHours(owner, Map.of(
-      "days", Map.of("monday", Map.of("open", true, "start", "09:00", "end", "21:00"))
-    ));
+    ownerService.saveBusinessHours(owner, Map.of("days", allDaysBusinessHours()));
     mockMvc.perform(put("/owner/onboarding/resources")
         .header("Authorization", "Bearer " + ownerLogin.token())
         .contentType(MediaType.APPLICATION_JSON)
@@ -337,6 +336,7 @@ class PilotWorkflowPostgresTest {
       .containsEntry("enabled", true)
       .containsEntry("sortOrder", 4);
     Long resourceId = id(primaryResource);
+    ownerService.updateResource(owner, resourceId, "一号教室", "静语舱", 1, true, 4);
     assertThat(ownerService.createResource(owner, " 二号教室 ", " 设备 ", 1, false, 8))
       .containsEntry("name", "二号教室")
       .containsEntry("resourceType", "设备")
@@ -351,9 +351,9 @@ class PilotWorkflowPostgresTest {
     ));
 
     MemberLogin firstMember = createAndBindMember(owner, templateId, "M-001", "member-one");
-    OffsetDateTime startAt = OffsetDateTime.now().plusDays(1).withMinute(0).withSecond(0).withNano(0);
+    OffsetDateTime startAt = OffsetDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
     Long firstSlotId = id(ownerService.publishSlot(
-      owner, serviceId, staffId, resourceId, startAt, startAt.plusHours(1), 1
+      owner, serviceId, staffId, resourceId, startAt
     ));
     assertThat(ownerService.dashboard(owner).get("futureSlotCount")).isEqualTo(1);
     assertThat(ownerService.schedules(owner, startAt.toLocalDate())).hasSize(1);
@@ -395,7 +395,7 @@ class PilotWorkflowPostgresTest {
 
     MemberLogin secondMember = createAndBindMember(owner, templateId, "M-002", "member-two");
     Long contestedSlotId = id(ownerService.publishSlot(
-      owner, serviceId, staffId, resourceId, startAt.plusDays(1), startAt.plusDays(1).plusHours(1), 1
+      owner, serviceId, staffId, resourceId, startAt.plusDays(1)
     ));
     CountDownLatch ready = new CountDownLatch(2);
     CountDownLatch start = new CountDownLatch(1);
@@ -432,6 +432,112 @@ class PilotWorkflowPostgresTest {
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.success").value(false))
       .andExpect(jsonPath("$.error.code").value("TENANT_FROZEN"));
+  }
+
+  private Map<String, Map<String, Object>> allDaysBusinessHours() {
+    Map<String, Object> openDay = Map.of("open", true, "start", "09:00", "end", "21:00");
+    return Map.ofEntries(
+      Map.entry("monday", openDay),
+      Map.entry("tuesday", openDay),
+      Map.entry("wednesday", openDay),
+      Map.entry("thursday", openDay),
+      Map.entry("friday", openDay),
+      Map.entry("saturday", openDay),
+      Map.entry("sunday", openDay)
+    );
+  }
+
+  @Test
+  void schedulePublishingUsesAuthoritativePrecheckDerivedEndAndDraftContinuation() {
+    SessionPrincipal owner = ownerPrincipal("owner-schedule-precheck");
+    TenantContext.set(owner.tenantId());
+    saveCompleteStoreDraft(owner, "排期预检门店", "021-14000001");
+    ownerService.completeOnboarding(owner);
+
+    Long resourceId = id(ownerService.resources(owner).getFirst());
+    Long staffId = id(ownerService.createStaff(
+      owner, "schedule-staff", "staff-pass-2026", "排期员工", "理疗师"
+    ));
+    Long serviceId = id(ownerService.createService(
+      owner,
+      "排期预检服务",
+      "一对一服务",
+      60,
+      2,
+      1,
+      List.of(resourceId),
+      List.of(staffId),
+      "active"
+    ));
+    OffsetDateTime base = OffsetDateTime.now(ZoneOffset.ofHours(8))
+      .plusDays(2)
+      .withHour(10)
+      .withMinute(0)
+      .withSecond(0)
+      .withNano(0);
+
+    Map<String, Object> withoutCard = ownerService.precheckSchedule(
+      owner, serviceId, staffId, resourceId, base
+    );
+    assertThat(withoutCard).containsEntry("eligible", false).containsEntry("cardTemplateCount", 0);
+
+    Map<String, Object> draft = ownerService.saveSlot(
+      owner, serviceId, staffId, resourceId, base.withHour(8), "draft"
+    );
+    assertThat(draft).containsEntry("status", "draft");
+    Long draftId = id(draft);
+
+    ownerService.createCardTemplate(
+      owner,
+      "排期适用卡",
+      "count",
+      new BigDecimal("399.00"),
+      5,
+      90,
+      1,
+      List.of(serviceId),
+      List.of(staffId)
+    );
+    Map<String, Object> options = ownerService.scheduleOptions(owner, serviceId, base);
+    assertThat(options.get("staff")).isInstanceOfSatisfying(List.class, rows -> assertThat(rows).hasSize(1));
+    assertThat(options.get("resources")).isInstanceOfSatisfying(List.class, rows -> assertThat(rows).hasSize(1));
+    assertThat(ownerService.precheckSchedule(owner, serviceId, staffId, resourceId, base))
+      .containsEntry("eligible", true)
+      .containsEntry("cardTemplateCount", 1)
+      .containsEntry("capacity", 2);
+
+    Map<String, Object> published = ownerService.saveSlot(
+      owner, serviceId, staffId, resourceId, base, "published"
+    );
+    assertThat(published)
+      .containsEntry("status", "published")
+      .containsEntry("endAt", base.plusMinutes(60));
+    assertThat(jdbcTemplate.queryForObject(
+      "select capacity from bookable_slot where id = ?", Integer.class, id(published)
+    )).isEqualTo(2);
+    assertThat(ownerService.precheckSchedule(
+      owner, serviceId, staffId, resourceId, base.plusMinutes(30)
+    )).containsEntry("eligible", false);
+    assertThatThrownBy(() -> ownerService.saveSlot(
+      owner, serviceId, staffId, resourceId, base.plusMinutes(30), "published"
+    )).isInstanceOfSatisfying(ApiException.class, exception ->
+      assertThat(exception.code()).isEqualTo("SCHEDULE_PRECHECK_FAILED")
+    );
+
+    Map<String, Object> continued = ownerService.updateSlot(
+      owner, draftId, serviceId, staffId, resourceId, base.plusHours(2), "published"
+    );
+    assertThat(continued).containsEntry("status", "published");
+    assertThat(ownerService.dashboard(owner).get("scheduleReadiness"))
+      .isInstanceOfSatisfying(Map.class, readiness ->
+        assertThat(readiness).containsEntry("ready", true)
+      );
+    assertThat(jdbcTemplate.queryForObject(
+      "select count(*) from pg_constraint where conname in (?, ?)",
+      Integer.class,
+      "ex_slot_published_staff_time",
+      "ex_slot_published_resource_time"
+    )).isEqualTo(2);
   }
 
   @Test
@@ -797,15 +903,14 @@ class PilotWorkflowPostgresTest {
       List.of(staffId),
       "active"
     ));
-    OffsetDateTime startAt = OffsetDateTime.now().plusDays(5);
-    ownerService.publishSlot(
+    OffsetDateTime startAt = OffsetDateTime.now().plusDays(5).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    ownerService.saveSlot(
       owner,
       scheduledServiceId,
       staffId,
       resourceId,
       startAt,
-      startAt.plusMinutes(50),
-      1
+      "draft"
     );
     ownerService.updateServiceStatus(owner, scheduledServiceId, "disabled");
     assertThatThrownBy(() -> ownerService.deleteService(owner, scheduledServiceId))
@@ -1384,7 +1489,7 @@ class PilotWorkflowPostgresTest {
     OffsetDateTime startAt
   ) throws Exception {
     MemberLogin member = createAndBindMember(owner, templateId, "M-DEDUCT", "member-deduction");
-    Long slotId = id(ownerService.publishSlot(owner, serviceId, staffId, resourceId, startAt, startAt.plusHours(1), 1));
+    Long slotId = id(ownerService.publishSlot(owner, serviceId, staffId, resourceId, startAt));
     Long bookingId = id(memberService.createBooking(member.principal(), slotId, member.cardId()));
     staffService.confirmAttendance(staff, bookingId);
 
@@ -1459,9 +1564,7 @@ class PilotWorkflowPostgresTest {
       List.of("瑜伽", "小班课"),
       contactPhone
     );
-    ownerService.saveBusinessHours(owner, Map.of(
-      "days", Map.of("monday", Map.of("open", true, "start", "09:00", "end", "21:00"))
-    ));
+    ownerService.saveBusinessHours(owner, Map.of("days", allDaysBusinessHours()));
     ownerService.saveResourcesDraft(owner, List.of(Map.of(
       "name", "一号教室", "resourceType", "房间", "capacity", 2
     )));

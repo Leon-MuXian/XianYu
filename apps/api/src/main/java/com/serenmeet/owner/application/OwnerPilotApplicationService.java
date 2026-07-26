@@ -19,7 +19,10 @@ import java.security.SecureRandom;
 import java.text.Normalizer;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,6 +51,8 @@ public class OwnerPilotApplicationService {
   private static final int MAX_MEMBER_NAME_LENGTH = 80;
   private static final int MAX_MEMBER_CONTACT_LENGTH = 120;
   private static final String CUSTOM_RESOURCE_TYPE_PLACEHOLDER = "自定义";
+  private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
+  private static final int SCHEDULE_SUGGESTION_DAYS = 14;
   private static final Pattern STORE_NAME_WHITESPACE = Pattern.compile("[\\s\\p{Z}]+");
 
   private final OwnerPilotMapper ownerMapper;
@@ -160,7 +165,39 @@ public class OwnerPilotApplicationService {
   }
 
   public Map<String, Object> dashboard(SessionPrincipal principal) {
-    return requireOne(ownerMapper.selectDashboard(principal.tenantId()));
+    Map<String, Object> row =
+        new LinkedHashMap<>(requireOne(ownerMapper.selectDashboard(principal.tenantId())));
+    boolean scheduleReady = asBoolean(row.remove("scheduleReady"));
+    int draftCount = asInteger(row.remove("scheduleDraftCount"));
+    Object nextDraftId = row.remove("nextScheduleDraftId");
+    Object nextDraftDate = row.remove("nextScheduleDraftDate");
+    List<String> missing = new ArrayList<>();
+    if (!asBoolean(row.get("storeReady"))) {
+      missing.add("store");
+    }
+    if (asInteger(row.get("serviceCount")) == 0) {
+      missing.add("service");
+    }
+    if (asInteger(row.get("staffCount")) == 0) {
+      missing.add("staff");
+    }
+    if (asInteger(row.get("resourceCount")) == 0) {
+      missing.add("resource");
+    }
+    if (asInteger(row.get("cardTemplateCount")) == 0) {
+      missing.add("card");
+    }
+    if (missing.isEmpty() && !scheduleReady) {
+      missing.add("scope");
+    }
+    Map<String, Object> readiness = new LinkedHashMap<>();
+    readiness.put("ready", scheduleReady);
+    readiness.put("missing", missing);
+    readiness.put("draftCount", draftCount);
+    readiness.put("nextDraftId", nextDraftId);
+    readiness.put("nextDraftDate", nextDraftDate);
+    row.put("scheduleReadiness", readiness);
+    return row;
   }
 
   public Map<String, Object> onboardingDraft(SessionPrincipal principal) {
@@ -973,17 +1010,123 @@ public class OwnerPilotApplicationService {
     return ownerMapper.selectSchedules(principal.tenantId(), date);
   }
 
+  public Map<String, Object> scheduleOptions(
+      SessionPrincipal principal, Long serviceId, OffsetDateTime startAt) {
+    Long tenantId = principal.tenantId();
+    List<Map<String, Object>> services = ownerMapper.selectScheduleServices(tenantId);
+    Map<String, Object> store = requireOne(ownerMapper.selectScheduleStore(tenantId));
+    int duration = 60;
+    Map<String, Object> service = null;
+    if (serviceId != null) {
+      service = ownerMapper.selectActiveService(tenantId, serviceId);
+      if (service == null) {
+        throw new ApiException(
+            HttpStatus.CONFLICT, "SCHEDULE_SELECTION_INVALID", "服务已停用，请重新选择");
+      }
+      duration = asInteger(service.get("durationMin"));
+    }
+    SuggestedScheduleTime suggestion =
+        suggestScheduleTime(json(store.get("businessHours")), duration);
+    OffsetDateTime effectiveStart = startAt == null ? suggestion.startAt() : startAt;
+    OffsetDateTime endAt = effectiveStart.plusMinutes(duration);
+    List<Map<String, Object>> staff =
+        serviceId == null
+            ? List.of()
+            : ownerMapper.selectScheduleStaffOptions(tenantId, serviceId, effectiveStart, endAt);
+    List<Map<String, Object>> resources =
+        serviceId == null
+            ? List.of()
+            : ownerMapper.selectScheduleResourceOptions(tenantId, serviceId, effectiveStart, endAt);
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("services", services);
+    response.put("staff", staff);
+    response.put("resources", resources);
+    response.put("suggestedDate", suggestion.startAt().toLocalDate());
+    response.put("suggestedStartTime", suggestion.startAt().toLocalTime().toString());
+    response.put("endAt", service == null ? null : endAt);
+    return response;
+  }
+
+  public Map<String, Object> precheckSchedule(
+      SessionPrincipal principal,
+      Long serviceId,
+      Long staffId,
+      Long resourceId,
+      OffsetDateTime startAt) {
+    Long tenantId = principal.tenantId();
+    Map<String, Object> context =
+        ownerMapper.selectScheduleContext(tenantId, serviceId, staffId, resourceId);
+    if (context == null || context.isEmpty()) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SCHEDULE_SELECTION_INVALID",
+          "服务、员工或资源已停用，请重新选择");
+    }
+    int duration = asInteger(context.get("durationMin"));
+    OffsetDateTime endAt = startAt.plusMinutes(duration);
+    int resourceCapacity = asInteger(context.get("resourceCapacity"));
+    boolean future = startAt.toInstant().isAfter(clock.instant());
+    boolean staffBound = asBoolean(context.get("staffBound"));
+    boolean resourceBound = asBoolean(context.get("resourceBound"));
+    boolean withinBusinessHours =
+        isWithinBusinessHours(json(context.get("businessHours")), startAt, endAt);
+    boolean staffAvailable =
+        ownerMapper.countScheduleStaffOverlaps(tenantId, staffId, startAt, endAt) == 0;
+    boolean resourceAvailable =
+        ownerMapper.countScheduleResourceOverlaps(tenantId, resourceId, startAt, endAt) == 0;
+    int cardTemplateCount =
+        ownerMapper.countScheduleCardCoverage(tenantId, serviceId, staffId);
+    List<Map<String, Object>> checks = new ArrayList<>();
+    checks.add(
+        scheduleCheck(
+            "future_time", "预约时间", future, future ? "时间有效" : "只能选择未来时段"));
+    checks.add(
+        scheduleCheck(
+            "business_hours",
+            "营业时间",
+            withinBusinessHours,
+            withinBusinessHours ? "在门店营业时间内" : "该时段不在门店营业时间内"));
+    checks.add(
+        scheduleCheck(
+            "staff",
+            "履约员工",
+            staffBound && staffAvailable,
+            !staffBound ? "员工不适用于该服务" : staffAvailable ? "员工时段可用" : "员工已有重叠排期"));
+    checks.add(
+        scheduleCheck(
+            "resource",
+            "履约资源",
+            resourceBound && resourceAvailable,
+            !resourceBound
+                ? "资源不适用于该服务"
+                : resourceAvailable ? "资源时段可用" : "资源已有重叠排期"));
+    checks.add(
+        scheduleCheck(
+            "card_coverage",
+            "会员卡范围",
+            cardTemplateCount > 0,
+            cardTemplateCount > 0
+                ? cardTemplateCount + " 个会员卡可预约"
+                : "没有同时适用该服务和员工的启用会员卡"));
+    boolean eligible = checks.stream().allMatch(check -> asBoolean(check.get("passed")));
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("eligible", eligible);
+    response.put("startAt", startAt);
+    response.put("endAt", endAt);
+    response.put("capacity", resourceCapacity);
+    response.put("cardTemplateCount", cardTemplateCount);
+    response.put("checks", checks);
+    return response;
+  }
+
   @Transactional
   public Map<String, Object> publishSlot(
       SessionPrincipal principal,
       Long serviceId,
       Long staffId,
       Long resourceId,
-      OffsetDateTime startAt,
-      OffsetDateTime endAt,
-      int capacity) {
-    return saveSlot(
-        principal, serviceId, staffId, resourceId, startAt, endAt, capacity, "published");
+      OffsetDateTime startAt) {
+    return saveSlot(principal, serviceId, staffId, resourceId, startAt, "published");
   }
 
   @Transactional
@@ -993,38 +1136,121 @@ public class OwnerPilotApplicationService {
       Long staffId,
       Long resourceId,
       OffsetDateTime startAt,
-      OffsetDateTime endAt,
-      int capacity,
+      String status) {
+    return saveSlot(principal, null, serviceId, staffId, resourceId, startAt, status);
+  }
+
+  @Transactional
+  public Map<String, Object> saveSlot(
+      SessionPrincipal principal,
+      Long slotId,
+      Long serviceId,
+      Long staffId,
+      Long resourceId,
+      OffsetDateTime startAt,
+      String status) {
+    if (slotId != null) {
+      return updateSlot(
+          principal, slotId, serviceId, staffId, resourceId, startAt, status);
+    }
+    validateStatus(status, List.of("draft", "published"), "排期状态无效");
+    Long tenantId = principal.tenantId();
+    Map<String, Object> precheck =
+        precheckSchedule(principal, serviceId, staffId, resourceId, startAt);
+    if (!asBoolean(precheck.get("eligible")) && "published".equals(status)) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SCHEDULE_PRECHECK_FAILED",
+          firstFailedScheduleCheck(precheck));
+    }
+    if (!startAt.toInstant().isAfter(clock.instant())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "只能保存未来时段");
+    }
+    Map<String, Object> service = requireOne(ownerMapper.selectActiveService(tenantId, serviceId));
+    OffsetDateTime endAt = (OffsetDateTime) precheck.get("endAt");
+    int capacity = asInteger(precheck.get("capacity"));
+    try {
+      Long id =
+          ownerMapper.insertBookableSlot(
+              tenantId,
+              asLong(service.get("storeId")),
+              serviceId,
+              staffId,
+              resourceId,
+              startAt,
+              endAt,
+              capacity,
+              status,
+              requireConfig(CANCELLATION_DEADLINE_CONFIG));
+      Map<String, Object> response = new LinkedHashMap<>();
+      response.put("id", id);
+      response.put("status", status);
+      response.put("startAt", startAt);
+      response.put("endAt", endAt);
+      response.put("capacity", capacity);
+      response.put("precheck", precheck);
+      return response;
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SCHEDULE_TIME_CONFLICT",
+          "员工或资源刚刚新增了重叠排期，请刷新后重新选择",
+          exception);
+    }
+  }
+
+  @Transactional
+  public Map<String, Object> updateSlot(
+      SessionPrincipal principal,
+      Long slotId,
+      Long serviceId,
+      Long staffId,
+      Long resourceId,
+      OffsetDateTime startAt,
       String status) {
     validateStatus(status, List.of("draft", "published"), "排期状态无效");
     Long tenantId = principal.tenantId();
-    Map<String, Object> service = requireOne(ownerMapper.selectActiveService(tenantId, serviceId));
-    requireOwned(ownerMapper.countActiveStaff(tenantId, staffId));
-    requireOwned(ownerMapper.countEnabledResource(tenantId, resourceId));
-    validateSlotTime(startAt, endAt);
-    int staffBound = ownerMapper.countStaffServiceBinding(tenantId, serviceId, staffId);
-    int resourceBound = ownerMapper.countServiceResourceBinding(tenantId, serviceId, resourceId);
-    if (staffBound == 0 || resourceBound == 0) {
-      throw new ApiException(HttpStatus.CONFLICT, "FORM_ERROR", "员工或资源不在该服务的适用范围内");
+    requireOne(ownerMapper.selectScheduleDraft(tenantId, slotId));
+    Map<String, Object> precheck =
+        precheckSchedule(principal, serviceId, staffId, resourceId, startAt);
+    if (!startAt.toInstant().isAfter(clock.instant())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "只能保存未来时段");
     }
-    Long id =
-        ownerMapper.insertBookableSlot(
-            tenantId,
-            asLong(service.get("storeId")),
-            serviceId,
-            staffId,
-            resourceId,
-            startAt,
-            endAt,
-            capacity,
-            status,
-            requireConfig(CANCELLATION_DEADLINE_CONFIG));
-    return Map.of(
-        "id", id,
-        "status", status,
-        "startAt", startAt,
-        "endAt", endAt,
-        "capacity", capacity);
+    if (!asBoolean(precheck.get("eligible")) && "published".equals(status)) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SCHEDULE_PRECHECK_FAILED",
+          firstFailedScheduleCheck(precheck));
+    }
+    OffsetDateTime endAt = (OffsetDateTime) precheck.get("endAt");
+    int capacity = asInteger(precheck.get("capacity"));
+    try {
+      requireOwned(
+          ownerMapper.updateScheduleDraft(
+              tenantId,
+              slotId,
+              serviceId,
+              staffId,
+              resourceId,
+              startAt,
+              endAt,
+              capacity,
+              status));
+      Map<String, Object> response = new LinkedHashMap<>();
+      response.put("id", slotId);
+      response.put("status", status);
+      response.put("startAt", startAt);
+      response.put("endAt", endAt);
+      response.put("capacity", capacity);
+      response.put("precheck", precheck);
+      return response;
+    } catch (DataIntegrityViolationException exception) {
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "SCHEDULE_TIME_CONFLICT",
+          "员工或资源刚刚新增了重叠排期，请刷新后重新选择",
+          exception);
+    }
   }
 
   public Map<String, Object> reportSummary(SessionPrincipal principal) {
@@ -1319,13 +1545,77 @@ public class OwnerPilotApplicationService {
     }
   }
 
-  private void validateSlotTime(OffsetDateTime startAt, OffsetDateTime endAt) {
-    if (endAt == null || startAt == null || !endAt.isAfter(startAt)) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "结束时间必须晚于开始时间");
+  private Map<String, Object> scheduleCheck(
+      String code, String label, boolean passed, String message) {
+    return Map.of("code", code, "label", label, "passed", passed, "message", message);
+  }
+
+  private String firstFailedScheduleCheck(Map<String, Object> precheck) {
+    Object value = precheck.get("checks");
+    if (value instanceof List<?> checks) {
+      for (Object item : checks) {
+        if (item instanceof Map<?, ?> check && !asBoolean(check.get("passed"))) {
+          return check.get("message").toString();
+        }
+      }
     }
-    if (startAt.isBefore(OffsetDateTime.now(clock))) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "只能发布未来时段");
+    return "发布前检查未通过，请调整后重试";
+  }
+
+  private boolean isWithinBusinessHours(
+      JsonNode businessHours, OffsetDateTime startAt, OffsetDateTime endAt) {
+    ZonedDateTime localStart = startAt.atZoneSameInstant(BUSINESS_ZONE);
+    ZonedDateTime localEnd = endAt.atZoneSameInstant(BUSINESS_ZONE);
+    if (!localStart.toLocalDate().equals(localEnd.toLocalDate())) {
+      return false;
     }
+    JsonNode day =
+        businessHours
+            .path("days")
+            .path(localStart.getDayOfWeek().name().toLowerCase(Locale.ROOT));
+    if (!day.path("open").asBoolean()) {
+      return false;
+    }
+    String openingText = day.path("start").asText("");
+    String closingText = day.path("end").asText("");
+    if (openingText.isEmpty() || closingText.isEmpty()) {
+      return false;
+    }
+    LocalTime opening = LocalTime.parse(openingText);
+    LocalTime closing = LocalTime.parse(closingText);
+    return !localStart.toLocalTime().isBefore(opening)
+        && !localEnd.toLocalTime().isAfter(closing);
+  }
+
+  private SuggestedScheduleTime suggestScheduleTime(JsonNode businessHours, int durationMinutes) {
+    ZonedDateTime now = ZonedDateTime.now(clock).withZoneSameInstant(BUSINESS_ZONE);
+    for (int offset = 0; offset < SCHEDULE_SUGGESTION_DAYS; offset++) {
+      LocalDate date = now.toLocalDate().plusDays(offset);
+      JsonNode day =
+          businessHours.path("days").path(date.getDayOfWeek().name().toLowerCase(Locale.ROOT));
+      if (!day.path("open").asBoolean()) {
+        continue;
+      }
+      LocalTime opening = LocalTime.parse(day.path("start").asText());
+      LocalTime closing = LocalTime.parse(day.path("end").asText());
+      LocalTime candidate = opening;
+      if (offset == 0 && now.toLocalTime().isAfter(opening)) {
+        int minuteOfDay = now.getHour() * 60 + now.getMinute() + 1;
+        int roundedMinute = ((minuteOfDay + 29) / 30) * 30;
+        if (roundedMinute >= 24 * 60) {
+          continue;
+        }
+        candidate = LocalTime.of(roundedMinute / 60, roundedMinute % 60);
+      }
+      int candidateEndSecond = candidate.toSecondOfDay() + durationMinutes * 60;
+      if (candidateEndSecond <= closing.toSecondOfDay()) {
+        ZonedDateTime suggested = date.atTime(candidate).atZone(BUSINESS_ZONE);
+        return new SuggestedScheduleTime(suggested.toOffsetDateTime());
+      }
+    }
+    ZonedDateTime fallback =
+        now.plusDays(1).toLocalDate().atTime(LocalTime.of(10, 0)).atZone(BUSINESS_ZONE);
+    return new SuggestedScheduleTime(fallback.toOffsetDateTime());
   }
 
   private void updateDraft(Long tenantId, DraftSection section, Object request) {
@@ -1560,6 +1850,12 @@ public class OwnerPilotApplicationService {
     return value == null ? null : ((Number) value).intValue();
   }
 
+  private boolean asBoolean(Object value) {
+    return value instanceof Boolean booleanValue
+        ? booleanValue
+        : value != null && Boolean.parseBoolean(value.toString());
+  }
+
   private enum DraftSection {
     STORE_PROFILE,
     BUSINESS_HOURS,
@@ -1583,4 +1879,6 @@ public class OwnerPilotApplicationService {
       String address,
       String contactPhone,
       List<String> serviceScopes) {}
+
+  private record SuggestedScheduleTime(OffsetDateTime startAt) {}
 }

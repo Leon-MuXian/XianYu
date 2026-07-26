@@ -195,12 +195,13 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `GET` | `/owner/schedules` | 按日期查看排期首页。 |
-| `POST` | `/owner/schedules/drafts` | 保存排期草稿。 |
-| `POST` | `/owner/schedules/precheck` | 发布前预检。 |
-| `POST` | `/owner/schedules/publish` | 发布时段。 |
-| `POST` | `/owner/schedules/{slotId}/copy` | 复制时段。 |
-| `PUT` | `/owner/schedules/{slotId}` | 修改时段。 |
-| `PUT` | `/owner/schedules/{slotId}/status` | 停用、恢复或取消时段。 |
+| `GET` | `/owner/schedules/options` | 返回启用服务、所选服务绑定的员工/资源、占用状态和建议营业时间。 |
+| `POST` | `/owner/schedules/precheck` | 在提交发布时返回未来时间、营业时间、绑定、重叠和会员卡范围的结构化预检；时段容量由履约资源容量自动确定。 |
+| `POST` | `/owner/schedules/drafts` | 保存完整排期草稿；允许业务预检未通过。 |
+| `PUT` | `/owner/schedules/{slotId}` | 修改当前租户下尚未发布的排期草稿。 |
+| `POST` | `/owner/schedules/publish` | 新建已发布时段，或携带 `slotId` 发布已有草稿；事务内重新预检。 |
+
+排期请求不接收可信 `endAt`，服务端依据服务项目时长生成结束时间。发布前应用层先检查冲突，数据库再通过已发布时段的员工/资源排他约束处理并发竞争；冲突统一返回 `SCHEDULE_PRECHECK_FAILED` 或 `SCHEDULE_TIME_CONFLICT`。
 
 ### 4.9 报表和预警
 

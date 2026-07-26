@@ -24,8 +24,8 @@ const cardForm = reactive({ name: '', salePriceYuan: 0, totalCount: 10, validDay
 const memberForm = reactive({ name: '', contactText: '' })
 const issueForm = reactive({ receivedAmountYuan: 0, saleDate: new Date().toISOString().slice(0, 10), payMethodLabel: '线下收款' })
 const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
-startAt.setMinutes(0, 0, 0)
-const slotForm = reactive({ startAt: startAt.toISOString(), endAt: new Date(startAt.getTime() + 60 * 60 * 1000).toISOString(), capacity: 1 })
+startAt.setHours(10, 0, 0, 0)
+const slotForm = reactive({ startAt: startAt.toISOString(), capacity: 1 })
 
 const readyForService = computed(() => resources.value.length > 0 && staff.value.length > 0)
 const readyForCard = computed(() => services.value.length > 0)
@@ -184,7 +184,6 @@ useDidShow(load)
       <Text class="panel-title">5. 发布最小时段</Text>
       <Text class="subtitle">默认使用列表中的第一个服务、员工与资源。</Text>
       <View class="field"><Text class="label">开始时间（ISO 8601）</Text><input v-model="slotForm.startAt" class="input" /></View>
-      <View class="field"><Text class="label">结束时间（ISO 8601）</Text><input v-model="slotForm.endAt" class="input" /></View>
       <View class="field"><Text class="label">容量</Text><input v-model.number="slotForm.capacity" class="input" type="number" /></View>
       <button class="button" :disabled="loading || !readyForSlot" @tap="publishSlot">发布时段</button>
     </View>

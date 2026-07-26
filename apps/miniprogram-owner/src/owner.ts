@@ -13,7 +13,6 @@ export const ownerRoutes = {
   services: '/pages/services/index',
   cards: '/pages/cards/index',
   memberIssue: '/pages/member-issue/index',
-  scheduleCreate: '/pages/schedule-create/index',
   schedules: '/pages/schedules/index',
   members: '/pages/members/index',
   report: '/pages/report/index',
@@ -133,6 +132,9 @@ export interface Member {
 
 export interface Schedule {
   id: number
+  serviceId?: number
+  staffId?: number
+  resourceId?: number
   startAt: string
   endAt: string
   capacity: number

@@ -365,6 +365,45 @@ public interface OwnerPilotMapper {
   List<Map<String, Object>> selectSchedules(
       @Param("tenantId") Long tenantId, @Param("scheduleDate") LocalDate scheduleDate);
 
+  List<Map<String, Object>> selectScheduleServices(@Param("tenantId") Long tenantId);
+
+  Map<String, Object> selectScheduleStore(@Param("tenantId") Long tenantId);
+
+  List<Map<String, Object>> selectScheduleStaffOptions(
+      @Param("tenantId") Long tenantId,
+      @Param("serviceId") Long serviceId,
+      @Param("startAt") OffsetDateTime startAt,
+      @Param("endAt") OffsetDateTime endAt);
+
+  List<Map<String, Object>> selectScheduleResourceOptions(
+      @Param("tenantId") Long tenantId,
+      @Param("serviceId") Long serviceId,
+      @Param("startAt") OffsetDateTime startAt,
+      @Param("endAt") OffsetDateTime endAt);
+
+  Map<String, Object> selectScheduleContext(
+      @Param("tenantId") Long tenantId,
+      @Param("serviceId") Long serviceId,
+      @Param("staffId") Long staffId,
+      @Param("resourceId") Long resourceId);
+
+  int countScheduleStaffOverlaps(
+      @Param("tenantId") Long tenantId,
+      @Param("staffId") Long staffId,
+      @Param("startAt") OffsetDateTime startAt,
+      @Param("endAt") OffsetDateTime endAt);
+
+  int countScheduleResourceOverlaps(
+      @Param("tenantId") Long tenantId,
+      @Param("resourceId") Long resourceId,
+      @Param("startAt") OffsetDateTime startAt,
+      @Param("endAt") OffsetDateTime endAt);
+
+  int countScheduleCardCoverage(
+      @Param("tenantId") Long tenantId,
+      @Param("serviceId") Long serviceId,
+      @Param("staffId") Long staffId);
+
   Map<String, Object> selectActiveService(
       @Param("tenantId") Long tenantId, @Param("serviceId") Long serviceId);
 
@@ -393,6 +432,20 @@ public interface OwnerPilotMapper {
       @Param("capacity") int capacity,
       @Param("status") String status,
       @Param("cancelDeadlineMin") int cancelDeadlineMin);
+
+  Map<String, Object> selectScheduleDraft(
+      @Param("tenantId") Long tenantId, @Param("slotId") Long slotId);
+
+  int updateScheduleDraft(
+      @Param("tenantId") Long tenantId,
+      @Param("slotId") Long slotId,
+      @Param("serviceId") Long serviceId,
+      @Param("staffId") Long staffId,
+      @Param("resourceId") Long resourceId,
+      @Param("startAt") OffsetDateTime startAt,
+      @Param("endAt") OffsetDateTime endAt,
+      @Param("capacity") int capacity,
+      @Param("status") String status);
 
   Map<String, Object> selectReportSummary(@Param("tenantId") Long tenantId);
 
