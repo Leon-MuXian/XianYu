@@ -567,6 +567,20 @@ public class OwnerPilotController {
     return ApiResponse.ok(ownerService.schedules(principal, date));
   }
 
+  @PostMapping("/schedules/copy")
+  public ApiResponse<Object> copySchedules(
+      @CurrentSession SessionPrincipal principal,
+      @RequestHeader("Idempotency-Key") String key,
+      @Valid @RequestBody CopyScheduleRequest request) {
+    return ApiResponse.ok(
+        idempotency.execute(
+            principal,
+            "owner.schedule.copy",
+            key,
+            request,
+            () -> ownerService.copySchedules(principal, request.sourceDate(), request.targetDate())));
+  }
+
   @GetMapping("/schedules/options")
   public ApiResponse<Map<String, Object>> scheduleOptions(
       @CurrentSession SessionPrincipal principal,
@@ -789,4 +803,7 @@ public class OwnerPilotController {
       @NotNull Long staffId,
       @NotNull Long resourceId,
       @NotNull OffsetDateTime startAt) {}
+
+  public record CopyScheduleRequest(
+      @NotNull LocalDate sourceDate, @NotNull LocalDate targetDate) {}
 }

@@ -82,7 +82,7 @@ const prototype = read('docs/design-docs/versions/mvp/prototype.html')
 if (!prototype.startsWith('<!doctype html>') || !prototype.includes('</html>')) fail('prototype HTML structure is incomplete')
 const prototypeLabels = [...prototype.matchAll(/class="frame-label">([^<]+)/g)].map((match) => match[1])
 const frameCount = prototypeLabels.length
-if (frameCount !== 74) fail(`prototype frame count expected 74, received ${frameCount}`)
+if (frameCount !== 75) fail(`prototype frame count expected 75, received ${frameCount}`)
 
 const implementationMapPath = 'docs/architecture/versions/mvp/prototype-implementation-map.json'
 try {

@@ -58,7 +58,17 @@ interface SchedulePrecheck {
   checks: ScheduleCheck[]
 }
 
+interface CopyScheduleResult {
+  sourceDate: string
+  targetDate: string
+  sourceCount: number
+  createdCount: number
+  skippedCount: number
+  createdIds: number[]
+}
+
 const rows = ref<Schedule[]>([])
+const previousRows = ref<Schedule[]>([])
 const dates = ref(buildDates(localDateValue()))
 const selectedDate = ref(dates.value[0].value)
 const filter = ref<ScheduleFilter>('all')
@@ -67,6 +77,7 @@ const editorMessage = ref('')
 const highlightedId = ref(0)
 const showEditor = ref(false)
 const loading = ref(false)
+const copying = ref(false)
 const services = ref<Service[]>([])
 const staff = ref<ScheduleStaffOption[]>([])
 const resources = ref<ScheduleResourceOption[]>([])
@@ -86,6 +97,9 @@ let routeConsumed = false
 const filteredRows = computed(() =>
   filter.value === 'all' ? rows.value : rows.value.filter((item) => item.status === filter.value)
 )
+const previousDate = computed(() => shiftDate(selectedDate.value, -1))
+const isFutureDate = computed(() => selectedDate.value > localDateValue())
+const previousCopyableCount = computed(() => previousRows.value.filter(isCopyableSchedule).length)
 const publishedCount = computed(() => rows.value.filter((item) => item.status === 'published').length)
 const draftCount = computed(() => rows.value.filter((item) => item.status === 'draft').length)
 const selectedService = computed(() => services.value.find((item) => item.id === form.serviceId))
@@ -116,6 +130,17 @@ const resourcePickerRows = computed(() => resources.value.map((item) => ({
 
 function localDateValue(value = new Date()) {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+}
+
+function shiftDate(value: string, offset: number) {
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() + offset)
+  return localDateValue(date)
+}
+
+function isCopyableSchedule(schedule: Schedule) {
+  return schedule.status === 'draft' || schedule.status === 'published'
 }
 
 function buildDates(anchor: string) {
@@ -150,7 +175,16 @@ async function load() {
   message.value = ''
   try {
     if (!await guardOwner()) return
-    rows.value = await api.request<Schedule[]>('GET', `/owner/schedules?date=${selectedDate.value}`)
+    const targetDate = selectedDate.value
+    const sourceDate = targetDate > localDateValue() ? shiftDate(targetDate, -1) : ''
+    const [targetRows, sourceRows] = await Promise.all([
+      api.request<Schedule[]>('GET', `/owner/schedules?date=${targetDate}`),
+      sourceDate
+        ? api.request<Schedule[]>('GET', `/owner/schedules?date=${sourceDate}`)
+        : Promise.resolve([] as Schedule[])
+    ])
+    rows.value = targetRows
+    previousRows.value = sourceRows
   } catch (error) {
     message.value = messageOf(error, '排期加载失败')
   }
@@ -357,6 +391,39 @@ async function selectDate(value: string) {
   await load()
 }
 
+async function copyPrevious() {
+  if (!isFutureDate.value || previousCopyableCount.value === 0 || copying.value) return
+  const confirmed = await Taro.showModal({
+    title: '复制昨日排期',
+    content: `将昨日 ${previousDate.value} 的 ${previousCopyableCount.value} 个排期复制到 ${selectedDate.value}，复制后保存为草稿。`,
+    confirmText: '复制'
+  })
+  if (!confirmed.confirm) return
+  copying.value = true
+  message.value = ''
+  try {
+    const result = await api.request<CopyScheduleResult>(
+      'POST',
+      '/owner/schedules/copy',
+      { sourceDate: previousDate.value, targetDate: selectedDate.value },
+      createIdempotencyKey('schedule-copy')
+    )
+    filter.value = 'all'
+    highlightedId.value = result.createdIds[0] || 0
+    await load()
+    const title = result.createdCount > 0
+      ? result.skippedCount > 0
+        ? `已复制 ${result.createdCount} 个，跳过 ${result.skippedCount} 个`
+        : `已复制 ${result.createdCount} 个`
+      : '目标日期已有排期'
+    await Taro.showToast({ title, icon: result.createdCount > 0 ? 'success' : 'none' })
+  } catch (error) {
+    message.value = messageOf(error, '复制昨日排期失败')
+  } finally {
+    copying.value = false
+  }
+}
+
 useLoad((params) => {
   if (params.date) {
     selectedDate.value = params.date
@@ -391,12 +458,21 @@ useDidShow(async () => {
             <Text class="page-title">预约时段</Text>
             <Text class="page-copy">按日期安排服务，发布前统一检查员工、资源与会员卡范围。</Text>
           </View>
-          <button
-            class="owner-add-action"
-            aria-label="新增预约时段"
-            hover-class="owner-add-action-pressed"
-            @tap="openCreate()"
-          ><View class="owner-add-action-icon" /></button>
+          <View class="schedule-head-actions">
+            <button
+              v-if="isFutureDate"
+              class="schedule-copy-action"
+              :disabled="copying || previousCopyableCount === 0"
+              :loading="copying"
+              @tap="copyPrevious"
+            >复制昨日排期</button>
+            <button
+              class="owner-add-action"
+              aria-label="新增预约时段"
+              hover-class="owner-add-action-pressed"
+              @tap="openCreate()"
+            ><View class="owner-add-action-icon" /></button>
+          </View>
         </View>
 
         <View class="owner-status-strip schedule-status-strip">

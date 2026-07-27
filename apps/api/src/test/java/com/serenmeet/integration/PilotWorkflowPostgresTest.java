@@ -359,6 +359,17 @@ class PilotWorkflowPostgresTest {
       .containsEntry("futureSlotCount", 1)
       .containsEntry("operationalSlotCount", 1);
     assertThat(ownerService.schedules(owner, startAt.toLocalDate())).hasSize(1);
+    LocalDate copiedDate = startAt.toLocalDate().plusDays(1);
+    assertThat(ownerService.copySchedules(owner, startAt.toLocalDate(), copiedDate))
+      .containsEntry("sourceCount", 1)
+      .containsEntry("createdCount", 1)
+      .containsEntry("skippedCount", 0);
+    assertThat(ownerService.schedules(owner, copiedDate)).hasSize(1);
+    assertThat(ownerService.schedules(owner, copiedDate).get(0))
+      .containsEntry("status", "draft");
+    assertThat(ownerService.copySchedules(owner, startAt.toLocalDate(), copiedDate))
+      .containsEntry("createdCount", 0)
+      .containsEntry("skippedCount", 1);
     assertThat(ownerService.cardWarnings(owner)).hasSize(1);
     assertThat(memberService.home(firstMember.principal()).get("activeCardCount")).isEqualTo(1);
     assertThat(memberService.cards(firstMember.principal())).hasSize(1);

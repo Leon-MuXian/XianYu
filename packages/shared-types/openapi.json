@@ -1602,6 +1602,54 @@
         }
       }
     },
+    "/owner/schedules/copy": {
+      "post": {
+        "tags": [
+          "owner-pilot-controller"
+        ],
+        "operationId": "copySchedules",
+        "parameters": [
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionPrincipal"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/owner/resources": {
       "get": {
         "tags": [
@@ -4256,6 +4304,23 @@
           "startAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "CopyScheduleRequest": {
+        "required": [
+          "sourceDate",
+          "targetDate"
+        ],
+        "type": "object",
+        "properties": {
+          "sourceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date"
           }
         }
       },

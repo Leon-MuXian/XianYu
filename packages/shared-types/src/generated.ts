@@ -420,6 +420,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/schedules/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["copySchedules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/owner/resources": {
         parameters: {
             query?: never;
@@ -1432,6 +1448,12 @@ export interface components {
             resourceId: number;
             /** Format: date-time */
             startAt: string;
+        };
+        CopyScheduleRequest: {
+            /** Format: date */
+            sourceDate: string;
+            /** Format: date */
+            targetDate: string;
         };
         CreateMemberRequest: {
             name: string;
@@ -2648,6 +2670,34 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PublishSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    copySchedules: {
+        parameters: {
+            query: {
+                principal: components["schemas"]["SessionPrincipal"];
+            };
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyScheduleRequest"];
             };
         };
         responses: {

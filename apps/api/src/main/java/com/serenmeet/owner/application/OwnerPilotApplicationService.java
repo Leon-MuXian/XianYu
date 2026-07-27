@@ -16,18 +16,22 @@ import com.serenmeet.owner.support.ServiceNameNormalizer;
 import com.serenmeet.owner.support.StaffCredentialRevealRateLimiter;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.text.Normalizer;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -1010,6 +1014,71 @@ public class OwnerPilotApplicationService {
     return ownerMapper.selectSchedules(principal.tenantId(), date);
   }
 
+  @Transactional
+  public Map<String, Object> copySchedules(
+      SessionPrincipal principal, LocalDate sourceDate, LocalDate targetDate) {
+    LocalDate today = LocalDate.now(clock);
+    if (!targetDate.isAfter(today) || !targetDate.minusDays(1).equals(sourceDate)) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          "SCHEDULE_COPY_DATE_INVALID",
+          "只能将昨日排期复制到明日及之后的日期");
+    }
+    List<Map<String, Object>> sourceRows = copyableSchedules(principal.tenantId(), sourceDate);
+    if (sourceRows.isEmpty()) {
+      throw new ApiException(
+          HttpStatus.CONFLICT, "SCHEDULE_COPY_SOURCE_EMPTY", "昨日没有可复制的排期");
+    }
+    Set<ScheduleCopyKey> existingKeys = new HashSet<>();
+    for (Map<String, Object> row : copyableSchedules(principal.tenantId(), targetDate)) {
+      existingKeys.add(scheduleCopyKey(row, asOffsetDateTime(row.get("startAt"))));
+    }
+    List<Long> createdIds = new ArrayList<>();
+    int skippedCount = 0;
+    for (Map<String, Object> sourceRow : sourceRows) {
+      OffsetDateTime sourceStart = asOffsetDateTime(sourceRow.get("startAt"));
+      LocalTime localTime = sourceStart.atZoneSameInstant(BUSINESS_ZONE).toLocalTime();
+      OffsetDateTime targetStart =
+          ZonedDateTime.of(targetDate, localTime, BUSINESS_ZONE).toOffsetDateTime();
+      ScheduleCopyKey targetKey = scheduleCopyKey(sourceRow, targetStart);
+      if (!existingKeys.add(targetKey)) {
+        skippedCount++;
+        continue;
+      }
+      Map<String, Object> created =
+          saveSlot(
+              principal,
+              asLong(sourceRow.get("serviceId")),
+              asLong(sourceRow.get("staffId")),
+              asLong(sourceRow.get("resourceId")),
+              targetStart,
+              "draft");
+      createdIds.add(asLong(created.get("id")));
+    }
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("sourceDate", sourceDate);
+    response.put("targetDate", targetDate);
+    response.put("sourceCount", sourceRows.size());
+    response.put("createdCount", createdIds.size());
+    response.put("skippedCount", skippedCount);
+    response.put("createdIds", createdIds);
+    return response;
+  }
+
+  private List<Map<String, Object>> copyableSchedules(Long tenantId, LocalDate date) {
+    return ownerMapper.selectSchedules(tenantId, date).stream()
+        .filter(row -> List.of("draft", "published").contains(String.valueOf(row.get("status"))))
+        .toList();
+  }
+
+  private ScheduleCopyKey scheduleCopyKey(Map<String, Object> row, OffsetDateTime startAt) {
+    return new ScheduleCopyKey(
+        asLong(row.get("serviceId")),
+        asLong(row.get("staffId")),
+        asLong(row.get("resourceId")),
+        startAt.toInstant());
+  }
+
   public Map<String, Object> scheduleOptions(
       SessionPrincipal principal, Long serviceId, OffsetDateTime startAt) {
     Long tenantId = principal.tenantId();
@@ -1846,6 +1915,19 @@ public class OwnerPilotApplicationService {
     return ((Number) value).longValue();
   }
 
+  private OffsetDateTime asOffsetDateTime(Object value) {
+    if (value instanceof OffsetDateTime offsetDateTime) {
+      return offsetDateTime;
+    }
+    if (value instanceof Timestamp timestamp) {
+      return timestamp.toInstant().atZone(BUSINESS_ZONE).toOffsetDateTime();
+    }
+    if (value instanceof Instant instant) {
+      return instant.atZone(BUSINESS_ZONE).toOffsetDateTime();
+    }
+    return OffsetDateTime.parse(value.toString());
+  }
+
   private Integer asInteger(Object value) {
     return value == null ? null : ((Number) value).intValue();
   }
@@ -1867,6 +1949,9 @@ public class OwnerPilotApplicationService {
     STAFF,
     SERVICE
   }
+
+  private record ScheduleCopyKey(
+      Long serviceId, Long staffId, Long resourceId, Instant startAt) {}
 
   private record StoreProfileData(
       String name,

@@ -862,6 +862,9 @@ button::after { border: 0; }
 .warning-hero { border-color: #9a742f; background: #7b5315; box-shadow: 0 18px 42px rgba(123,83,21,.18); }
 .new-slot { border-color: rgba(47,125,110,.5); background: #eef8f3; }
 .schedule-page { padding-bottom: 34px; }
+.schedule-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.schedule-copy-action { min-height: 36px; margin: 0; border: 1px solid #cfe4da; border-radius: 8px; background: var(--green-soft); color: var(--green-dark); padding: 0 10px; font-size: 11px; line-height: 36px; font-weight: 900; white-space: nowrap; }
+.schedule-copy-action[disabled] { opacity: .48; }
 .schedule-status-strip { margin-bottom: 12px; }
 .schedule-tabs { margin-top: 0; }
 .schedule-empty { margin-top: 10px; }
