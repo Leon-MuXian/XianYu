@@ -871,6 +871,9 @@ button::after { border: 0; }
 .schedule-state { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; color: var(--green-dark); font-size: 10px; line-height: 1.2; font-weight: 900; }
 .schedule-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .schedule-state.draft { color: #9c6d20; }
+.schedule-state.ended,
+.schedule-state.cancelled,
+.schedule-state.disabled { color: var(--muted); }
 .schedule-editor-backdrop { z-index: 90; }
 .sheet.schedule-editor-sheet {
   display: flex;

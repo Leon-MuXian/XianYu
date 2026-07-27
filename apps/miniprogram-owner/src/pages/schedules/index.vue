@@ -9,6 +9,7 @@ import {
   formatTime,
   guardOwner,
   messageOf,
+  scheduleDisplayState,
   type Schedule,
   type Service
 } from '../../owner'
@@ -437,7 +438,10 @@ useDidShow(async () => {
             <View class="schedule-item-main">
               <Text class="schedule-title">{{ slot.serviceName }}</Text>
               <Text class="schedule-copy">{{ slot.staffName }} · {{ slot.resourceName }}</Text>
-              <Text class="schedule-state" :class="slot.status">{{ slot.status === 'published' ? '会员可预约' : '草稿 · 点击继续' }}</Text>
+              <Text
+                class="schedule-state"
+                :class="scheduleDisplayState(slot).state"
+              >{{ scheduleDisplayState(slot).label }}</Text>
             </View>
             <Text class="tag" :class="slot.reservedCount >= slot.capacity ? 'warn' : slot.status === 'draft' ? 'red' : ''">{{ slot.id === highlightedId ? '新时段' : slot.reservedCount >= slot.capacity ? '满员' : `${slot.reservedCount}/${slot.capacity}` }}</Text>
           </View>

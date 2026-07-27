@@ -4,6 +4,7 @@ import { computed, reactive, ref } from 'vue'
 import OwnerTabbar from '../../components/OwnerTabbar.vue'
 import OwnerTopbar from '../../components/OwnerTopbar.vue'
 import { api } from '../../api'
+import { hasCompletedScheduleTask, isDashboardOperational, pendingDashboardTaskCount } from '../../dashboard-state'
 import { guardOwner, messageOf, navigate, type OwnerProfile, ownerRoutes } from '../../owner'
 
 interface DashboardMetrics {
@@ -14,6 +15,7 @@ interface DashboardMetrics {
   resourceCount: number
   memberCount: number
   futureSlotCount: number
+  operationalSlotCount: number
   todayBookings: number
   todayPendingFulfillment: number
   todayCompletedFulfillment: number
@@ -34,6 +36,7 @@ const metrics = reactive<DashboardMetrics>({
   resourceCount: 0,
   memberCount: 0,
   futureSlotCount: 0,
+  operationalSlotCount: 0,
   todayBookings: 0,
   todayPendingFulfillment: 0,
   todayCompletedFulfillment: 0,
@@ -43,9 +46,9 @@ const metrics = reactive<DashboardMetrics>({
 const profile = ref<OwnerProfile | null>(null)
 const loading = ref(true)
 const message = ref('')
-const operational = computed(() => metrics.staffCount > 0 && metrics.serviceCount > 0 && metrics.cardTemplateCount > 0 && metrics.memberCount > 0 && metrics.futureSlotCount > 0)
-const pendingCount = computed(() => [metrics.staffCount, metrics.serviceCount, metrics.cardTemplateCount, metrics.memberCount, metrics.futureSlotCount].filter((value) => !value).length)
-const setupCopy = computed(() => metrics.futureSlotCount > 0
+const operational = computed(() => isDashboardOperational(metrics))
+const pendingCount = computed(() => pendingDashboardTaskCount(metrics))
+const setupCopy = computed(() => metrics.operationalSlotCount > 0
   ? `${profile.value?.name || '门店'}已创建。继续补齐剩余运营配置。`
   : `${profile.value?.name || '门店'}已创建。先补齐员工、服务、会员卡、会员和首个时段。`)
 
@@ -79,7 +82,7 @@ const scheduleTask = computed(() => {
       url: missingRoutes[firstMissing] || ownerRoutes.services
     }
   }
-  if (!metrics.futureSlotCount && metrics.scheduleReadiness.draftCount > 0) {
+  if (!metrics.operationalSlotCount && metrics.scheduleReadiness.draftCount > 0) {
     const query = ['intent=edit']
     if (metrics.scheduleReadiness.nextDraftDate) query.push(`date=${metrics.scheduleReadiness.nextDraftDate}`)
     if (metrics.scheduleReadiness.nextDraftId) query.push(`highlight=${metrics.scheduleReadiness.nextDraftId}`)
@@ -140,12 +143,12 @@ const tasks = computed(() => {
     { key: 'card', title: '创建会员卡', copy: '录入售价、次数、有效期和适用服务，用于发卡和预约校验。', count: metrics.cardTemplateCount, action: '去创建', url: ownerRoutes.cards },
     { key: 'member', title: '添加会员并发卡', copy: '生成邀请码交给会员绑定，会员才能使用卡预约。', count: metrics.memberCount, action: '去添加', url: ownerRoutes.memberIssue }
   ]
-  if (metrics.futureSlotCount > 0) return baseTasks
+  if (hasCompletedScheduleTask(metrics)) return baseTasks
   return [...baseTasks, {
     key: 'slot',
     title: '发布预约时段',
     copy: scheduleTask.value.copy,
-    count: metrics.futureSlotCount,
+    count: hasCompletedScheduleTask(metrics) ? metrics.operationalSlotCount : 0,
     action: scheduleTask.value.action,
     url: scheduleTask.value.url
   }]

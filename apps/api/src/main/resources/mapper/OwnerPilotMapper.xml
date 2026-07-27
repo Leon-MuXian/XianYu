@@ -23,6 +23,8 @@
       (select count(*)::integer from member where tenant_id = #{tenantId}) as "memberCount",
       (select count(*)::integer from bookable_slot
         where tenant_id = #{tenantId} and status = 'published' and start_at &gt; current_timestamp) as "futureSlotCount",
+      (select count(*)::integer from bookable_slot
+        where tenant_id = #{tenantId} and status = 'published' and end_at &gt; current_timestamp) as "operationalSlotCount",
       (select count(*)::integer
         from booking b
         join bookable_slot bs on bs.id = b.bookable_slot_id

@@ -355,7 +355,9 @@ class PilotWorkflowPostgresTest {
     Long firstSlotId = id(ownerService.publishSlot(
       owner, serviceId, staffId, resourceId, startAt
     ));
-    assertThat(ownerService.dashboard(owner).get("futureSlotCount")).isEqualTo(1);
+    assertThat(ownerService.dashboard(owner))
+      .containsEntry("futureSlotCount", 1)
+      .containsEntry("operationalSlotCount", 1);
     assertThat(ownerService.schedules(owner, startAt.toLocalDate())).hasSize(1);
     assertThat(ownerService.cardWarnings(owner)).hasSize(1);
     assertThat(memberService.home(firstMember.principal()).get("activeCardCount")).isEqualTo(1);
@@ -523,6 +525,15 @@ class PilotWorkflowPostgresTest {
     )).isInstanceOfSatisfying(ApiException.class, exception ->
       assertThat(exception.code()).isEqualTo("SCHEDULE_PRECHECK_FAILED")
     );
+    jdbcTemplate.update(
+      "update bookable_slot set start_at = current_timestamp - interval '30 minutes', "
+        + "end_at = current_timestamp + interval '30 minutes' where id = ?",
+      id(published)
+    );
+    assertThat(ownerService.dashboard(owner))
+      .containsEntry("memberCount", 0)
+      .containsEntry("futureSlotCount", 0)
+      .containsEntry("operationalSlotCount", 1);
 
     Map<String, Object> continued = ownerService.updateSlot(
       owner, draftId, serviceId, staffId, resourceId, base.plusHours(2), "published"
